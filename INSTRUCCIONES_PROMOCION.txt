@@ -1,0 +1,25 @@
+INSTRUCCIONES PARA CAMBIAR LA PROMOCION MENSUAL
+
+Para cambiar la promocion que se muestra en la web, solo debes editar el archivo "public/promo.json".
+
+Pasos sencillos:
+1. Abre el archivo "promo.json" que esta en la carpeta "public" utilizando el Bloc de notas o cualquier editor de texto.
+2. Veras un contenido como este:
+   {
+     "active": true,
+     "badge": "PROMO DE JUNIO",
+     "title": "15% de Descuento en Ecografía 5D",
+     "description": "Este mes llévate tu sesión 5D con un descuento especial y el reportaje de fotos/vídeos en pen drive gratis.",
+     "discountCode": "PROMO5D",
+     "whatsappText": "Hola, me interesa reservar con la promoción de este mes: 15% de Descuento en Ecografía 5D."
+   }
+
+3. Modifica los textos que estan dentro de las comillas:
+   - active: pon "true" (sin comillas) para que la promocion se vea en la web, o "false" (sin comillas) para ocultar el apartado por completo.
+   - badge: es el texto corto que se muestra arriba en rosa (ejemplo: "PROMO DE JULIO").
+   - title: es el titulo principal de la oferta (ejemplo: "2x1 en Pack Recuerdos").
+   - description: es el parrafo explicativo con los detalles de la oferta.
+   - discountCode: es el codigo del descuento que se copiara o enviara (ejemplo: "VERANO26").
+   - whatsappText: es el mensaje automatico que recibiras en tu movil cuando el cliente pulse en reservar.
+
+4. Guarda el archivo (Archivo -> Guardar) y subelo al servidor. La web se actualizara al instante sin necesidad de tocar codigo de programacion.
