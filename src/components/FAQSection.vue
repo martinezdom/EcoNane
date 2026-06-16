@@ -1,8 +1,9 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { ChevronDown } from '@lucide/vue'
+import type { FAQ } from '@/types'
 
-const faqs = [
+const faqs: FAQ[] = [
   {
     question: '¿Cuál es la mejor semana para hacerse una ecografía 5D?',
     answer:
@@ -25,9 +26,9 @@ const faqs = [
   }
 ]
 
-const activeIndex = ref(null)
+const activeIndex = ref<number | null>(null)
 
-const toggleFaq = (index) => {
+const toggleFaq = (index: number) => {
   activeIndex.value = activeIndex.value === index ? null : index
 }
 </script>

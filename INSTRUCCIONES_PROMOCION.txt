@@ -1,25 +1,24 @@
-INSTRUCCIONES PARA CAMBIAR LA PROMOCION MENSUAL
+INSTRUCCIONES PARA CAMBIAR LA PROMOCIÓN MENSUAL
 
-Para cambiar la promocion que se muestra en la web, solo debes editar el archivo "public/promo.json".
+Para cambiar la promoción que se muestra en la web, solo debes editar el archivo de texto "public/promo.txt".
 
 Pasos sencillos:
-1. Abre el archivo "promo.json" que esta en la carpeta "public" utilizando el Bloc de notas o cualquier editor de texto.
-2. Veras un contenido como este:
-   {
-     "active": true,
-     "badge": "PROMO DE JUNIO",
-     "title": "15% de Descuento en Ecografía 5D",
-     "description": "Este mes llévate tu sesión 5D con un descuento especial y el reportaje de fotos/vídeos en pen drive gratis.",
-     "discountCode": "PROMO5D",
-     "whatsappText": "Hola, me interesa reservar con la promoción de este mes: 15% de Descuento en Ecografía 5D."
-   }
+1. Abre el archivo "promo.txt" que está en la carpeta "public" utilizando el Bloc de notas o cualquier editor de texto básico.
+2. Verás un contenido estructurado línea por línea como este:
 
-3. Modifica los textos que estan dentro de las comillas:
-   - active: pon "true" (sin comillas) para que la promocion se vea en la web, o "false" (sin comillas) para ocultar el apartado por completo.
-   - badge: es el texto corto que se muestra arriba en rosa (ejemplo: "PROMO DE JULIO").
-   - title: es el titulo principal de la oferta (ejemplo: "2x1 en Pack Recuerdos").
-   - description: es el parrafo explicativo con los detalles de la oferta.
-   - discountCode: es el codigo del descuento que se copiara o enviara (ejemplo: "VERANO26").
-   - whatsappText: es el mensaje automatico que recibiras en tu movil cuando el cliente pulse en reservar.
+ACTIVA: SI
+ETIQUETA: PROMO DE JUNIO
+TITULO: 15% de Descuento en Ecografía 5D
+DESCRIPCION: Este mes llévate tu sesión 5D con un descuento especial y el reportaje de fotos/vídeos en pen drive gratis.
+CODIGO: PROMO5D
+WHATSAPP: Hola, me interesa reservar con la promoción de este mes: 15% de Descuento en Ecografía 5D.
 
-4. Guarda el archivo (Archivo -> Guardar) y subelo al servidor. La web se actualizara al instante sin necesidad de tocar codigo de programacion.
+3. Modifica el texto que está justo DESPUÉS de los dos puntos (:) en cada línea:
+   - ACTIVA: Escribe "SI" (en mayúsculas) para mostrar la promoción, o "NO" para ocultar la promoción por completo de la web.
+   - ETIQUETA: El texto corto de la etiqueta (ejemplo: "PROMO DE JULIO").
+   - TITULO: El título principal de la oferta (ejemplo: "2x1 en Pack Recuerdos").
+   - DESCRIPCION: El párrafo explicativo con los detalles de la oferta.
+   - CODIGO: El código de descuento que se mostrará en pantalla (ejemplo: "VERANO26").
+   - WHATSAPP: El mensaje automático que recibirás cuando el cliente pulse en reservar.
+
+4. Guarda el archivo (Archivo -> Guardar) y súbelo al servidor. La web se actualizará al instante. Al usar un archivo de texto plano, es casi imposible romper la web, ya que no hay comas, comillas ni llaves de programación de las que preocuparse.

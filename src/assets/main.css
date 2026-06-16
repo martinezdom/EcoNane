@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-cream: #fdfbf7;
+  --color-brand-beige: #f6efe9;
+  --color-brand-pink-light: #e8d5c4;
+  --color-brand-pink: #d9a58f;
+  --color-brand-brown: #8c5a47;
+  --color-brand-brown-dark: #5a382a;
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Outfit', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-brand-cream);
+  color: var(--color-brand-brown-dark);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-brown text-brand-cream hover:bg-brand-brown-dark inline-flex cursor-pointer items-center justify-center rounded-full px-8 py-3.5 text-base font-semibold shadow-md transition-all duration-300 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply border-brand-brown/30 text-brand-brown-dark hover:bg-brand-pink-light/20 inline-flex cursor-pointer items-center justify-center rounded-full border bg-white/50 px-8 py-3.5 text-base font-semibold backdrop-blur-sm transition-all duration-300;
+  }
+
+  .btn-pink {
+    @apply bg-brand-pink hover:bg-brand-pink/90 inline-flex cursor-pointer items-center justify-center rounded-full px-8 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-300 hover:shadow-lg;
+  }
+
+  .btn-outline {
+    @apply border-brand-brown/30 hover:bg-brand-brown text-brand-brown-dark inline-flex cursor-pointer items-center justify-center rounded-full border bg-white px-5 py-2.5 text-xs font-bold tracking-wide uppercase transition-all duration-300 hover:text-white;
+  }
+
+  .btn-pill-small {
+    @apply bg-brand-pink-light/60 hover:bg-brand-pink text-brand-brown-dark inline-flex cursor-pointer items-center justify-center rounded-full px-6 py-2.5 text-xs font-bold tracking-wide uppercase transition-all duration-300 hover:text-white;
+  }
+
+  .form-input {
+    @apply border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink w-full rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none;
+  }
+
+  .form-select {
+    @apply border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink w-full rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none;
+  }
+
+  .form-textarea {
+    @apply border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink w-full resize-none rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none;
+  }
+
+  .card-container {
+    @apply border-brand-pink-light/20 rounded-3xl border bg-white/60 p-8 shadow-sm;
+  }
+
+  .modal-overlay {
+    @apply bg-brand-brown-dark/50 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4;
+  }
+
+  .modal-card {
+    @apply border border-brand-pink-light/35 bg-brand-cream rounded-3xl w-full max-w-lg p-8 shadow-2xl;
+  }
+}

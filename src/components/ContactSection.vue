@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { MapPin, Phone, Mail, Clock } from '@lucide/vue'
 
@@ -7,7 +7,7 @@ const phone = ref('')
 const selectedScan = ref('Ecografía 5D')
 const message = ref('')
 
-const scanOptions = ['Ecografía 3D', 'Ecografía 4D', 'Ecografía 5D', 'Pack Recuerdos']
+const scanOptions: string[] = ['Ecografía 3D', 'Ecografía 4D', 'Ecografía 5D', 'Pack Recuerdos']
 
 const sendWhatsApp = () => {
   const baseText = `Hola, mi nombre es ${name.value} (Tlf: ${phone.value}). Me gustaría solicitar cita para la experiencia ${selectedScan.value}.`
@@ -34,9 +34,7 @@ const sendWhatsApp = () => {
 
       <div class="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-16">
         <div class="space-y-8 lg:col-span-5">
-          <div
-            class="border-brand-pink-light/20 space-y-6 rounded-3xl border bg-white/60 p-8 shadow-sm"
-          >
+          <div class="card-container space-y-6">
             <h3 class="text-brand-brown-dark mb-4 font-serif text-xl font-bold">
               Información de la clínica
             </h3>
@@ -112,7 +110,7 @@ const sendWhatsApp = () => {
                   type="text"
                   required
                   placeholder="Tu nombre"
-                  class="border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none"
+                  class="form-input"
                 />
               </div>
 
@@ -126,7 +124,7 @@ const sendWhatsApp = () => {
                   type="tel"
                   required
                   placeholder="Tu teléfono"
-                  class="border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none"
+                  class="form-input"
                 />
               </div>
             </div>
@@ -135,11 +133,7 @@ const sendWhatsApp = () => {
               <label for="scan" class="text-brand-brown-dark/70 mb-2 text-xs font-bold uppercase"
                 >Tipo de ecografía</label
               >
-              <select
-                id="scan"
-                v-model="selectedScan"
-                class="border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none"
-              >
+              <select id="scan" v-model="selectedScan" class="form-select">
                 <option v-for="opt in scanOptions" :key="opt" :value="opt">
                   {{ opt }}
                 </option>
@@ -155,14 +149,11 @@ const sendWhatsApp = () => {
                 v-model="message"
                 rows="4"
                 placeholder="Cuéntanos qué día o rango de hora prefieres..."
-                class="border-brand-pink-light/50 bg-brand-cream/10 focus:border-brand-pink resize-none rounded-xl border px-4 py-3 text-sm transition-colors focus:outline-none"
+                class="form-textarea"
               ></textarea>
             </div>
 
-            <button
-              type="submit"
-              class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark inline-flex w-full cursor-pointer items-center justify-center rounded-full py-4 text-center text-sm font-bold shadow-md transition-all duration-300 hover:shadow-lg"
-            >
+            <button type="submit" class="btn-primary w-full py-4 text-sm font-bold">
               Enviar solicitud por WhatsApp
             </button>
           </form>

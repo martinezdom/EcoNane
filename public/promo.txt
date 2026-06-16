@@ -1,0 +1,6 @@
+ACTIVA: SI
+ETIQUETA: PROMO DE JUNIO
+TITULO: 15% de Descuento en Ecografía 5D
+DESCRIPCION: Este mes llévate tu sesión 5D con un descuento especial y el reportaje de fotos/vídeos en pen drive gratis.
+CODIGO: PROMO5D
+WHATSAPP: Hola, me interesa reservar con la promoción de este mes: 15% de Descuento en Ecografía 5D.

@@ -1,16 +1,38 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Sparkles, Gift } from '@lucide/vue'
+import type { Promotion } from '@/types'
 
-const promo = ref(null)
+const promo = ref<Promotion | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/promo.json')
+    const res = await fetch('/promo.txt')
     if (res.ok) {
-      const data = await res.json()
-      if (data && data.active) {
-        promo.value = data
+      const text = await res.text()
+      const lines = text.split('\n')
+      const getValue = (key: string): string => {
+        const line = lines.find((l) =>
+          l
+            .trim()
+            .toUpperCase()
+            .startsWith(key.toUpperCase() + ':')
+        )
+        if (!line) return ''
+        const index = line.indexOf(':')
+        return line.substring(index + 1).trim()
+      }
+      const activeText = getValue('ACTIVA').toUpperCase()
+      const active = activeText === 'SI' || activeText === 'YES' || activeText === 'TRUE'
+      if (active) {
+        promo.value = {
+          active,
+          badge: getValue('ETIQUETA'),
+          title: getValue('TITULO'),
+          description: getValue('DESCRIPCION'),
+          discountCode: getValue('CODIGO'),
+          whatsappText: getValue('WHATSAPP')
+        }
       }
     }
   } catch (err) {}
@@ -54,7 +76,7 @@ onMounted(async () => {
           <a
             :href="`https://wa.me/34600000000?text=${encodeURIComponent(promo.whatsappText)}`"
             target="_blank"
-            class="bg-brand-pink hover:bg-brand-pink/90 inline-flex w-full cursor-pointer items-center justify-center rounded-full px-8 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-300 hover:shadow-lg md:w-auto"
+            class="btn-pink w-full md:w-auto"
           >
             Reservar promoción
           </a>

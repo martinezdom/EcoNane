@@ -1,7 +1,11 @@
-<script setup>
+<script setup lang="ts">
+import { ref } from 'vue'
 import { MapPin, Calendar, Gift, Sparkles } from '@lucide/vue'
+import type { Benefit } from '@/types'
 
-const benefits = [
+const isAvisoOpen = ref(false)
+
+const benefits: Benefit[] = [
   {
     icon: MapPin,
     title: 'Fácil Acceso',
@@ -134,11 +138,66 @@ const benefits = [
       <div
         class="text-brand-pink-light/50 flex flex-col items-center justify-between gap-4 pt-8 text-xs sm:flex-row"
       >
-        <p>© 2026 EcoNane. Todos los derechos reservados.</p>
+        <p>
+          © 2026 EcoNane. Todos los derechos reservados. Desarrollado por
+          <a
+            href="https://confitic.es"
+            target="_blank"
+            class="hover:text-brand-cream decoration-brand-pink-light/30 underline transition-colors"
+            >ConfiTIC</a
+          >.
+        </p>
         <div class="flex gap-4">
-          <a href="#" class="hover:text-brand-cream transition-colors">Aviso Legal</a>
+          <button
+            @click="isAvisoOpen = true"
+            class="hover:text-brand-cream cursor-pointer transition-colors"
+          >
+            Aviso Legal
+          </button>
           <a href="#" class="hover:text-brand-cream transition-colors">Política de Privacidad</a>
           <a href="#" class="hover:text-brand-cream transition-colors">Cookies</a>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="isAvisoOpen" class="modal-overlay" @click.self="isAvisoOpen = false">
+      <div class="modal-card text-brand-brown-dark flex flex-col gap-4">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
+          <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Aviso Legal</h3>
+          <button
+            @click="isAvisoOpen = false"
+            class="text-brand-brown hover:text-brand-brown-dark cursor-pointer p-1 text-lg font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="space-y-4 text-sm leading-relaxed">
+          <p>
+            En cumplimiento del deber de información, se hace constar que este sitio web es una
+            presentación comercial para la clínica de ecografías EcoNane.
+          </p>
+          <p>
+            El desarrollo técnico y diseño web ha sido realizado a cargo de
+            <a
+              href="https://martinezdom.github.io/"
+              target="_blank"
+              class="text-brand-pink font-semibold hover:underline"
+              >Miguel Ángel Martínez Domínguez</a
+            >, bajo la marca comercial
+            <a
+              href="https://confitic.es"
+              target="_blank"
+              class="text-brand-pink font-semibold hover:underline"
+              >ConfiTIC</a
+            >.
+          </p>
+          <p>
+            Todos los derechos sobre los contenidos, imágenes y código fuente de esta página web
+            están protegidos por la normativa de propiedad intelectual.
+          </p>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button @click="isAvisoOpen = false" class="btn-pill-small">Cerrar</button>
         </div>
       </div>
     </div>

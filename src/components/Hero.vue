@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Heart } from '@lucide/vue'
 </script>
 
@@ -33,14 +33,14 @@ import { Heart } from '@lucide/vue'
             <a
               href="https://wa.me/34600000000?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
               target="_blank"
-              class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark inline-flex items-center justify-center rounded-full px-8 py-3.5 text-base font-semibold shadow-md transition-all duration-300 hover:shadow-lg"
+              class="btn-primary"
             >
               Pide tu cita
             </a>
             <a
               href="https://wa.me/34600000000?text=Hola,%20tengo%20una%20consulta%20sobre%20las%20ecografías."
               target="_blank"
-              class="border-brand-brown/30 text-brand-brown-dark hover:bg-brand-pink-light/20 inline-flex items-center justify-center rounded-full border bg-white/50 px-8 py-3.5 text-base font-semibold backdrop-blur-sm transition-all duration-300"
+              class="btn-secondary"
             >
               WhatsApp
             </a>

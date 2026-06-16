@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { Heart } from '@lucide/vue'
 
-const galleryImages = [
+const galleryImages: string[] = [
   '/ultrasound-baby.png',
   '/ultrasound-baby.png',
   '/ultrasound-baby.png',
@@ -15,9 +15,7 @@ const galleryImages = [
   <section id="sobre-nosotros" class="bg-brand-cream/30 py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
-        <div
-          class="border-brand-pink-light/20 flex flex-col justify-between rounded-3xl border bg-white/60 p-8 shadow-sm lg:col-span-6"
-        >
+        <div class="card-container flex flex-col justify-between lg:col-span-6">
           <div>
             <div
               class="text-brand-pink mb-4 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
@@ -36,14 +34,14 @@ const galleryImages = [
             <a
               href="https://wa.me/34600000000?text=Hola,%20quiero%20conocer%20más%20sobre%20EcoNane%20y%20vuestras%20instalaciones."
               target="_blank"
-              class="bg-brand-pink-light/60 hover:bg-brand-pink text-brand-brown-dark mb-8 inline-flex items-center justify-center rounded-full px-6 py-2.5 text-xs font-bold tracking-wide uppercase transition-all duration-300 hover:text-white"
+              class="btn-pill-small mb-8"
             >
               Conócenos
             </a>
           </div>
 
           <div
-            class="border-brand-pink-light/10 aspect-[16/10] overflow-hidden rounded-2xl border shadow-inner"
+            class="border-brand-pink-light/10 aspect-16/10 overflow-hidden rounded-2xl border shadow-inner"
           >
             <img
               src="/clinic-room.png"
@@ -53,10 +51,7 @@ const galleryImages = [
           </div>
         </div>
 
-        <div
-          id="galeria"
-          class="border-brand-pink-light/20 flex flex-col justify-between rounded-3xl border bg-white/60 p-8 shadow-sm lg:col-span-6"
-        >
+        <div id="galeria" class="card-container flex flex-col justify-between lg:col-span-6">
           <div>
             <div
               class="text-brand-pink mb-4 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
@@ -82,7 +77,7 @@ const galleryImages = [
           <a
             href="https://wa.me/34600000000?text=Hola,%20me%20gustaría%20ver%20más%20fotos%20de%20ecografías%20reales."
             target="_blank"
-            class="border-brand-brown/30 hover:bg-brand-brown text-brand-brown-dark inline-flex w-full items-center justify-center rounded-full border bg-white py-3 text-sm font-bold tracking-wide uppercase transition-all duration-300 hover:text-white"
+            class="btn-outline w-full py-3 text-sm"
           >
             Ver Galería Completa
           </a>

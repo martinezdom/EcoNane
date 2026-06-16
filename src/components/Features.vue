@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { Sparkles, Heart, ShieldCheck, Camera } from '@lucide/vue'
+import type { Feature } from '@/types'
 
-const features = [
+const features: Feature[] = [
   {
     icon: Sparkles,
     title: 'Imágenes de Alta Definición',

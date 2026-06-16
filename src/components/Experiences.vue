@@ -1,5 +1,7 @@
-<script setup>
-const experiences = [
+<script setup lang="ts">
+import type { Experience } from '@/types'
+
+const experiences: Experience[] = [
   {
     title: 'Ecografía 3D',
     description:
@@ -51,30 +53,24 @@ const experiences = [
           :key="exp.title"
           class="bg-brand-cream/40 border-brand-pink-light/10 group flex flex-col overflow-hidden rounded-3xl border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
         >
-          <div class="bg-brand-beige relative aspect-[4/3] overflow-hidden">
+          <div class="bg-brand-beige relative aspect-4/3 overflow-hidden">
             <img
               :src="exp.image"
               :alt="exp.title"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div
-              class="from-brand-brown-dark/20 absolute inset-0 bg-gradient-to-t to-transparent"
+              class="from-brand-brown-dark/20 absolute inset-0 bg-linear-to-t to-transparent"
             ></div>
           </div>
-          <div class="flex flex-grow flex-col p-6">
+          <div class="flex grow flex-col p-6">
             <h3 class="text-brand-brown-dark mb-3 font-serif text-xl font-bold">
               {{ exp.title }}
             </h3>
-            <p class="text-brand-brown/75 mb-6 flex-grow text-sm leading-relaxed">
+            <p class="text-brand-brown/75 mb-6 grow text-sm leading-relaxed">
               {{ exp.description }}
             </p>
-            <a
-              :href="exp.link"
-              target="_blank"
-              class="border-brand-brown/30 hover:bg-brand-brown text-brand-brown-dark inline-flex w-full items-center justify-center rounded-full border bg-white px-5 py-2.5 text-xs font-bold tracking-wide uppercase transition-all duration-300 hover:text-white"
-            >
-              Más información
-            </a>
+            <a :href="exp.link" target="_blank" class="btn-outline w-full"> Más información </a>
           </div>
         </div>
       </div>
