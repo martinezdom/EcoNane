@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NavBar from '@/components/NavBar.vue'
+import Navbar from '@/components/Navbar.vue'
 import Hero from '@/components/Hero.vue'
 import PromotionSection from '@/components/PromotionSection.vue'
 import Features from '@/components/Features.vue'
@@ -14,7 +14,7 @@ import Footer from '@/components/Footer.vue'
   <div
     class="bg-brand-cream text-brand-brown-dark selection:bg-brand-pink-light/40 selection:text-brand-brown-dark flex min-h-screen flex-col"
   >
-    <NavBar />
+    <Navbar />
     <main class="grow">
       <Hero />
       <PromotionSection />

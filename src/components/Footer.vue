@@ -62,40 +62,16 @@ const benefits: Benefit[] = [
         class="border-brand-cream/10 grid grid-cols-1 items-center gap-8 border-b pb-12 md:grid-cols-12"
       >
         <div class="text-center md:col-span-5 md:text-left">
-          <div class="mb-4 flex items-center justify-center gap-2 md:justify-start">
-            <svg
-              class="text-brand-cream h-8 w-8"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                stroke="currentColor"
-                stroke-width="2.5"
-                class="opacity-30"
-              />
-              <path
-                d="M42 38C42 32 46 28 50 28C54 28 58 32 58 38C58 42 55 45 52 48C49 51 46 54 46 58"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-              />
-              <path d="M48 68C48 65 52 65 52 68C52 71 48 71 48 68Z" fill="currentColor" />
-              <path
-                d="M30 50C30 61 39 70 50 70C61 70 70 61 70 50C70 39 61 30 50 30"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-dasharray="4 4"
-              />
-            </svg>
+          <div class="mb-4 flex items-center justify-center gap-3 md:justify-start">
+            <img
+              src="/logo.png"
+              alt="Logo EcoNane"
+              class="border-brand-cream/20 shadow-xs h-10 w-10 rounded-full object-cover"
+            />
             <span class="font-serif text-xl leading-none font-bold tracking-wider">ECONANE</span>
           </div>
           <p class="text-brand-pink-light/70 max-w-sm text-xs leading-relaxed">
-            Tu clínica de confianza en ecografías 3D, 4D y 5D. Vive una experiencia única conectando
-            emocionalmente con tu bebé antes de su llegada.
+            Tu clínica de confianza en ecografías 4D y 5D en Villajoyosa. Vive una experiencia única conectando emocionalmente con tu bebé antes de su llegada.
           </p>
         </div>
 

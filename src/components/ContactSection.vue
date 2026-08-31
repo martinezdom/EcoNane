@@ -4,16 +4,24 @@ import { MapPin, Phone, Mail, Clock } from '@lucide/vue'
 
 const name = ref('')
 const phone = ref('')
-const selectedScan = ref('Ecografía 5D')
+const selectedScan = ref('Eco Básica 4D/5D (45€)')
 const message = ref('')
 
-const scanOptions: string[] = ['Ecografía 3D', 'Ecografía 4D', 'Ecografía 5D', 'Pack Recuerdos']
+const scanOptions: string[] = [
+  'Eco Básica 4D/5D (45€)',
+  'Eco para Conocer el Sexo (30€)',
+  'Eco + Revelación de Sexo (70€)',
+  'Experiencia Gafas Virtuales + Eco 4D/5D (75€)',
+  'Pack 2 Ecos (80€)',
+  'Pack 3 Ecos (115€)',
+  'Consulta general'
+]
 
 const sendWhatsApp = () => {
-  const baseText = `Hola, mi nombre es ${name.value} (Tlf: ${phone.value}). Me gustaría solicitar cita para la experiencia ${selectedScan.value}.`
+  const baseText = `Hola, mi nombre es ${name.value} (Tlf: ${phone.value}). Me gustaría solicitar cita para: ${selectedScan.value}.`
   const optionalMsg = message.value ? ` Nota: ${message.value}` : ''
   const encodedText = encodeURIComponent(baseText + optionalMsg)
-  const url = `https://wa.me/34600000000?text=${encodedText}`
+  const url = `https://wa.me/34644189856?text=${encodedText}`
   window.open(url, '_blank')
 }
 </script>
@@ -46,9 +54,9 @@ const sendWhatsApp = () => {
                 <MapPin class="h-5 w-5" />
               </div>
               <div>
-                <h4 class="text-brand-brown-dark text-sm font-semibold">Dirección</h4>
+                <h4 class="text-brand-brown-dark text-sm font-semibold">Ubicación</h4>
                 <p class="text-brand-brown/80 mt-1 text-sm">
-                  Calle de la Maternidad, 12, Planta Baja, Madrid
+                  Villajoyosa, Alicante
                 </p>
               </div>
             </div>
@@ -61,7 +69,7 @@ const sendWhatsApp = () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Teléfono / WhatsApp</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">+34 600 00 00 00</p>
+                <p class="text-brand-brown/80 mt-1 text-sm">+34 644 18 98 56</p>
               </div>
             </div>
 
@@ -73,7 +81,7 @@ const sendWhatsApp = () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Correo Electrónico</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">contacto@econane.com</p>
+                <p class="text-brand-brown/80 mt-1 text-sm">info@econane.es</p>
               </div>
             </div>
 

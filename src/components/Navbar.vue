@@ -19,35 +19,12 @@ const navItems = [
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-20 items-center justify-between">
         <div class="flex items-center gap-3">
-          <a href="#inicio" class="flex items-center gap-2">
-            <svg
-              class="text-brand-brown h-10 w-10"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                stroke="currentColor"
-                stroke-width="2.5"
-                class="opacity-30"
-              />
-              <path
-                d="M42 38C42 32 46 28 50 28C54 28 58 32 58 38C58 42 55 45 52 48C49 51 46 54 46 58"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-              />
-              <path d="M48 68C48 65 52 65 52 68C52 71 48 71 48 68Z" fill="currentColor" />
-              <path
-                d="M30 50C30 61 39 70 50 70C61 70 70 61 70 50C70 39 61 30 50 30"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-dasharray="4 4"
-              />
-            </svg>
+          <a href="#inicio" class="group flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Logo EcoNane"
+              class="border-brand-pink/30 shadow-xs h-12 w-12 rounded-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
             <div class="flex flex-col">
               <span
                 class="text-brand-brown-dark font-serif text-lg leading-none font-bold tracking-wider"
@@ -73,7 +50,7 @@ const navItems = [
             </a>
           </div>
           <a
-            href="https://wa.me/34600000000?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
+            href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
             target="_blank"
             class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium shadow-md transition-all duration-300 hover:shadow-lg"
           >
@@ -124,7 +101,7 @@ const navItems = [
         </a>
         <div class="border-brand-pink-light/20 border-t pt-4">
           <a
-            href="https://wa.me/34600000000?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
+            href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
             target="_blank"
             class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark flex w-full items-center justify-center rounded-full py-3 text-center text-base font-medium transition-all duration-300"
           >

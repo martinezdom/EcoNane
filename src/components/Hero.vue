@@ -31,14 +31,14 @@ import { Heart } from '@lucide/vue'
 
           <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
             <a
-              href="https://wa.me/34600000000?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
+              href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
               target="_blank"
               class="btn-primary"
             >
               Pide tu cita
             </a>
             <a
-              href="https://wa.me/34600000000?text=Hola,%20tengo%20una%20consulta%20sobre%20las%20ecografías."
+              href="https://wa.me/34644189856?text=Hola,%20tengo%20una%20consulta%20sobre%20las%20ecografías."
               target="_blank"
               class="btn-secondary"
             >

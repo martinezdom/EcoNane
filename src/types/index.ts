@@ -15,8 +15,19 @@ export type Feature = {
 
 export type Experience = {
   title: string
+  duration?: string
   description: string
-  image: string
+  price: string
+  features: string[]
+  badge?: string
+  link: string
+}
+
+export type Pack = {
+  title: string
+  price: string
+  save: string
+  description: string
   link: string
 }
 

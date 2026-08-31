@@ -74,7 +74,7 @@ onMounted(async () => {
 
         <div class="w-full shrink-0 md:w-auto">
           <a
-            :href="`https://wa.me/34600000000?text=${encodeURIComponent(promo.whatsappText)}`"
+            :href="`https://wa.me/34644189856?text=${encodeURIComponent(promo.whatsappText)}`"
             target="_blank"
             class="btn-pink w-full md:w-auto"
           >

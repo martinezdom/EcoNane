@@ -32,7 +32,7 @@ const galleryImages: string[] = [
               un equipo humano que te guiará en este viaje emocional.
             </p>
             <a
-              href="https://wa.me/34600000000?text=Hola,%20quiero%20conocer%20más%20sobre%20EcoNane%20y%20vuestras%20instalaciones."
+              href="https://wa.me/34644189856?text=Hola,%20quiero%20conocer%20más%20sobre%20EcoNane%20y%20vuestras%20instalaciones."
               target="_blank"
               class="btn-pill-small mb-8"
             >
@@ -75,7 +75,7 @@ const galleryImages: string[] = [
           </div>
 
           <a
-            href="https://wa.me/34600000000?text=Hola,%20me%20gustaría%20ver%20más%20fotos%20de%20ecografías%20reales."
+            href="https://wa.me/34644189856?text=Hola,%20me%20gustaría%20ver%20más%20fotos%20de%20ecografías%20reales."
             target="_blank"
             class="btn-outline w-full py-3 text-sm"
           >
