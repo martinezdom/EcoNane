@@ -131,7 +131,9 @@ const benefits: Benefit[] = [
             Aviso Legal
           </button>
           <a href="#" class="hover:text-brand-cream transition-colors">Política de Privacidad</a>
-          <a href="#" class="hover:text-brand-cream transition-colors">Cookies</a>
+          <router-link to="/admin" class="hover:text-brand-cream transition-colors opacity-75 hover:opacity-100">
+            Acceso Panel
+          </router-link>
         </div>
       </div>
     </div>
@@ -150,7 +152,10 @@ const benefits: Benefit[] = [
         <div class="space-y-4 text-sm leading-relaxed">
           <p>
             En cumplimiento del deber de información, se hace constar que este sitio web es una
-            presentación comercial para la clínica de ecografías EcoNane.
+            presentación comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Villajoyosa (Alicante).
+          </p>
+          <p class="rounded-xl border border-brand-pink-light/60 bg-brand-cream/60 p-3 text-xs italic text-brand-brown-dark">
+            <strong>Aviso de carácter no diagnóstico:</strong> Las sesiones de ecografía emocional 4D y 5D realizadas en EcoNane tienen una finalidad exclusivamente afectiva, lúdica y de recuerdo familiar. En ningún caso sustituyen las ecografías médicas diagnósticas ni el seguimiento ginecológico y obstétrico oficial de la salud del embarazo.
           </p>
           <p>
             El desarrollo técnico y diseño web ha sido realizado a cargo de

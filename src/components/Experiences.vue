@@ -1,79 +1,8 @@
 <script setup lang="ts">
 import { Check, Clock, Heart, Sparkles, Gift } from '@lucide/vue'
-import type { Experience, Pack } from '@/types'
+import { useSiteData } from '@/composables/useSiteData'
 
-const experiences: Experience[] = [
-  {
-    title: 'Eco Básica 4D/5D',
-    duration: 'Sesión de 30-45 min',
-    price: '45€',
-    description: 'Visualiza a tu bebé en 4D/5D, escucha su latido y llévate recuerdos inolvidables.',
-    features: [
-      'Visualización 4D/5D',
-      'Fotos y vídeos digitales',
-      'Latido del corazón',
-      'Acompañantes incluidos'
-    ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20Básica%204D/5D%20(45€).'
-  },
-  {
-    title: 'Eco para Conocer el Sexo',
-    duration: 'Sesión rápida de 15 min',
-    price: '30€',
-    description: 'Confirmamos el sexo de tu bebé de forma segura, íntima y especial.',
-    features: [
-      'Confirmación del sexo',
-      'Fotos digitales',
-      'Latido del corazón',
-      'Acompañantes incluidos'
-    ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20para%20Conocer%20el%20Sexo%20(30€).'
-  },
-  {
-    title: 'Eco + Revelación de Sexo',
-    duration: 'Sesión especial en familia',
-    price: '70€',
-    description: 'Vive uno de los momentos más bonitos y emocionantes junto a tu familia.',
-    features: [
-      'Eco 4D/5D',
-      'Revelación con globo',
-      'Pequeño regalo',
-      'Fotos y vídeos digitales'
-    ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20+%20Revelación%20de%20Sexo%20(70€).'
-  },
-  {
-    title: 'Experiencia Gafas Virtuales + Eco 4D/5D',
-    duration: 'Sesión inmersiva VR',
-    price: '75€',
-    badge: '4D/5D VR',
-    description: 'Siente a tu bebé como nunca antes con nuestra experiencia inmersiva con gafas virtuales.',
-    features: [
-      'Eco 4D/5D en directo',
-      'Experiencia con gafas VR',
-      'Fotos y vídeos digitales',
-      'Acompañantes incluidos'
-    ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Experiencia%20Gafas%20Virtuales%20+%20Eco%204D/5D%20(75€).'
-  }
-]
-
-const packs: Pack[] = [
-  {
-    title: 'Pack 2 Ecos',
-    price: '80€',
-    save: 'Ahorra 10€',
-    description: '2 sesiones para seguir cada etapa de tu embarazo y revivir la emoción.',
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20reservar%20el%20Pack%202%20Ecos%20(80€).'
-  },
-  {
-    title: 'Pack 3 Ecos',
-    price: '115€',
-    save: 'Ahorra 20€',
-    description: '3 momentos únicos para recordar la evolución completa para siempre.',
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20reservar%20el%20Pack%203%20Ecos%20(115€).'
-  }
-]
+const { experiences, packs } = useSiteData()
 
 const generalIncludes = [
   'Espacio cálido y acogedor',

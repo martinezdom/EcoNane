@@ -41,3 +41,17 @@ export type Benefit = {
   title: string
   desc: string
 }
+
+export type ClientSession = {
+  id: string
+  code: string
+  clientName: string
+  clientPhone: string
+  sessionDate: string
+  serviceType: string
+  expiryDays: number
+  createdAt: string
+  note?: string
+  photos: string[]
+  zipUrl?: string
+}
