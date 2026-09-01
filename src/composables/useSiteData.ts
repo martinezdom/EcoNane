@@ -24,9 +24,8 @@ const defaultPromotion: Promotion = {
   title: '¡Gran Promoción de Apertura en Octubre!',
   description:
     'Celebra con nosotros nuestra apertura durante todo el mes de octubre. Disfruta de un 20% de descuento en tu primera ecografía 4D/5D para conocer a tu bebé.',
-  discountCode: 'APERTURA20',
   whatsappText:
-    'Hola, me gustaría reservar mi ecografía con el 20% de descuento de apertura (APERTURA20).'
+    'Hola, me gustaría reservar mi ecografía con el 20% de descuento de apertura.'
 }
 
 const defaultExperiences: Experience[] = [
@@ -114,7 +113,7 @@ const defaultDemoSessions: ClientSession[] = [
     expiryDays: 120,
     createdAt: new Date().toISOString(),
     note: 'Sesión inolvidable, el bebé se tapaba la carita al inicio pero luego pudimos ver su sonrisa con claridad.',
-    photos: ['/gallery-4.jpg', '/gallery-5.jpg', '/gallery-6.jpg', '/gallery-1.jpg', '/gallery-2.jpg', '/gallery-3.jpg']
+    photos: ['/gallery-4.webp', '/gallery-5.webp', '/gallery-6.webp', '/gallery-1.webp', '/gallery-2.webp', '/gallery-3.webp']
   }
 ]
 
@@ -340,7 +339,7 @@ export function useSiteData() {
       expiryDays: data.expiryDays ?? 120,
       createdAt: new Date().toISOString(),
       note: data.note || '',
-      photos: data.photos && data.photos.length > 0 ? data.photos : ['/gallery-4.jpg', '/gallery-5.jpg', '/gallery-6.jpg']
+      photos: data.photos && data.photos.length > 0 ? data.photos : ['/gallery-4.webp', '/gallery-5.webp', '/gallery-6.webp']
     }
 
     sessions.value.unshift(newSession)

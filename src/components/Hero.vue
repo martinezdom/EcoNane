@@ -31,18 +31,16 @@ import { Heart } from '@lucide/vue'
 
           <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
             <a
-              href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
-              target="_blank"
-              class="btn-primary"
+              href="#contacto"
+              class="btn-primary flex items-center justify-center text-center"
             >
               Pide tu cita
             </a>
             <a
-              href="https://wa.me/34644189856?text=Hola,%20tengo%20una%20consulta%20sobre%20las%20ecografías."
-              target="_blank"
-              class="btn-secondary"
+              href="#ecografias"
+              class="btn-secondary flex items-center justify-center text-center"
             >
-              WhatsApp
+              Ver Experiencias
             </a>
           </div>
         </div>
@@ -53,7 +51,7 @@ import { Heart } from '@lucide/vue'
               class="bg-brand-beige ml-auto aspect-square w-[85%] overflow-hidden rounded-tl-[40px] rounded-tr-[120px] rounded-br-[40px] rounded-bl-[120px] border-[6px] border-white shadow-xl"
             >
               <img
-                src="/hero-woman.png"
+                src="/hero-woman.webp"
                 alt="Madre embarazada"
                 class="h-full w-full object-cover"
               />
@@ -63,7 +61,7 @@ import { Heart } from '@lucide/vue'
               class="absolute bottom-4 left-0 aspect-square w-[55%] overflow-hidden rounded-full border-[6px] border-white bg-black shadow-2xl"
             >
               <img
-                src="/ultrasound-baby.png"
+                src="/ultrasound-baby.webp"
                 alt="Ecografía 3D de bebé"
                 class="h-full w-full object-cover"
               />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles, Gift } from '@lucide/vue'
+import { Sparkles } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
 
 const { promotion } = useSiteData()
@@ -24,18 +24,6 @@ const { promotion } = useSiteData()
           <p class="text-brand-brown/85 text-sm leading-relaxed sm:text-base">
             {{ promotion.description }}
           </p>
-          <div
-            v-if="promotion.discountCode"
-            class="text-brand-pink mt-4 flex items-center gap-2 text-xs font-semibold"
-          >
-            <Gift class="h-4 w-4" />
-            Código:
-            <span
-              class="bg-brand-pink/10 border-brand-pink/20 rounded-lg border px-2.5 py-1 font-mono tracking-wider uppercase"
-            >
-              {{ promotion.discountCode }}
-            </span>
-          </div>
         </div>
 
         <div class="w-full shrink-0 md:w-auto">

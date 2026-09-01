@@ -21,7 +21,7 @@ const navItems = [
         <div class="flex items-center gap-3">
           <a href="#inicio" class="group flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="Logo EcoNane"
               class="border-brand-pink/30 shadow-xs h-12 w-12 rounded-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
@@ -50,8 +50,7 @@ const navItems = [
             </a>
           </div>
           <a
-            href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
-            target="_blank"
+            href="#contacto"
             class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium shadow-md transition-all duration-300 hover:shadow-lg"
           >
             Pide tu cita
@@ -101,8 +100,8 @@ const navItems = [
         </a>
         <div class="border-brand-pink-light/20 border-t pt-4">
           <a
-            href="https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20una%20ecografía%20en%20EcoNane."
-            target="_blank"
+            href="#contacto"
+            @click="isOpen = false"
             class="bg-brand-brown text-brand-cream hover:bg-brand-brown-dark flex w-full items-center justify-center rounded-full py-3 text-center text-base font-medium transition-all duration-300"
           >
             Pide tu cita

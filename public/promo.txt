@@ -1,6 +1,0 @@
-ACTIVA: SI
-ETIQUETA: NUEVA APERTURA
-TITULO: 20% de Descuento en tu Primera Eco
-DESCRIPCION: Celebramos nuestra apertura con un 20% de descuento en tu primera ecografía durante todo el mes de octubre. ¡Te esperamos!
-CODIGO: APERTURA20
-WHATSAPP: Hola, me gustaría reservar mi primera ecografía en EcoNane aprovechando la promoción de Nueva Apertura (20% de descuento en octubre).

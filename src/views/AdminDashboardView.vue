@@ -178,7 +178,7 @@ function handleCreateSession() {
   const photos =
     uploadedPhotos.value.length > 0
       ? [...uploadedPhotos.value]
-      : ['/gallery-4.jpg', '/gallery-5.jpg', '/gallery-6.jpg', '/gallery-1.jpg', '/gallery-2.jpg', '/gallery-3.jpg']
+      : ['/gallery-4.webp', '/gallery-5.webp', '/gallery-6.webp', '/gallery-1.webp', '/gallery-2.webp', '/gallery-3.webp']
 
   const created = createSession({
     clientName: newSession.value.clientName,
@@ -271,7 +271,7 @@ function handleLogout() {
     <header class="sticky top-0 z-30 border-b border-brand-pink-light/40 bg-white/95 shadow-sm backdrop-blur-md">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         <div class="flex items-center gap-3">
-          <img src="/logo.png" alt="EcoNane" class="h-10 w-auto" />
+          <img src="/logo.webp" alt="EcoNane" class="h-10 w-auto" />
           <div>
             <h1 class="font-serif text-lg font-bold leading-tight text-brand-brown-dark">Panel EcoNane</h1>
             <p class="text-xs text-brand-brown/80">Gestión de Promociones, Precios y Entregas</p>
@@ -460,19 +460,6 @@ function handleLogout() {
                 ></textarea>
               </div>
 
-              <!-- Discount Code -->
-              <div>
-                <label class="block text-xs font-bold tracking-wider text-brand-brown-dark/80 uppercase">
-                  Código de Descuento (Opcional)
-                </label>
-                <input
-                  v-model="promoForm.discountCode"
-                  type="text"
-                  placeholder="Ej: APERTURA20"
-                  class="mt-1.5 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 text-sm font-mono font-bold text-brand-brown focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-pink/20"
-                />
-              </div>
-
               <!-- WhatsApp Text -->
               <div>
                 <label class="block text-xs font-bold tracking-wider text-brand-brown-dark/80 uppercase">
@@ -510,11 +497,6 @@ function handleLogout() {
               <p class="mt-2 text-xs leading-relaxed text-brand-brown/90">
                 {{ promoForm.description || 'Descripción de la promoción...' }}
               </p>
-
-              <div v-if="promoForm.discountCode" class="mt-4 inline-flex items-center gap-2 rounded-xl border border-brand-pink-light/60 bg-white px-3.5 py-1.5 text-xs font-mono font-bold text-brand-brown">
-                <span>Código:</span>
-                <span class="rounded bg-brand-pink/15 px-2 py-0.5 text-brand-brown-dark">{{ promoForm.discountCode }}</span>
-              </div>
 
               <div class="mt-6">
                 <div class="inline-flex w-full items-center justify-center rounded-2xl bg-brand-pink py-3 text-center text-xs font-bold text-white shadow-md">

@@ -250,7 +250,7 @@ function downloadSinglePhoto(photoUrl: string) {
     <header class="sticky top-0 z-30 border-b border-brand-pink-light/40 bg-white/90 backdrop-blur-md">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
         <router-link to="/" class="flex items-center gap-2.5">
-          <img src="/logo.png" alt="EcoNane" class="h-8 w-auto sm:h-9" />
+          <img src="/logo.webp" alt="EcoNane" class="h-8 w-auto sm:h-9" />
           <span class="font-serif text-base font-bold tracking-tight text-brand-brown-dark sm:text-lg">EcoNane</span>
         </router-link>
 

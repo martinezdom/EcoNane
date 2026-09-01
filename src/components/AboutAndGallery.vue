@@ -2,12 +2,12 @@
 import { Heart } from '@lucide/vue'
 
 const galleryImages: string[] = [
-  '/gallery-1.jpg',
-  '/gallery-2.jpg',
-  '/gallery-3.jpg',
-  '/gallery-4.jpg',
-  '/gallery-5.jpg',
-  '/gallery-6.jpg'
+  '/gallery-1.webp',
+  '/gallery-2.webp',
+  '/gallery-3.webp',
+  '/gallery-4.webp',
+  '/gallery-5.webp',
+  '/gallery-6.webp'
 ]
 </script>
 
@@ -44,7 +44,7 @@ const galleryImages: string[] = [
             class="border-brand-pink-light/10 aspect-16/10 overflow-hidden rounded-2xl border shadow-inner"
           >
             <img
-              src="/clinic-room.png"
+              src="/clinic-room.webp"
               alt="Instalaciones EcoNane"
               class="h-full w-full object-cover"
             />

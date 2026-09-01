@@ -4,6 +4,7 @@ import { MapPin, Calendar, Gift, Sparkles } from '@lucide/vue'
 import type { Benefit } from '@/types'
 
 const isAvisoOpen = ref(false)
+const isPrivacidadOpen = ref(false)
 
 const benefits: Benefit[] = [
   {
@@ -64,7 +65,7 @@ const benefits: Benefit[] = [
         <div class="text-center md:col-span-5 md:text-left">
           <div class="mb-4 flex items-center justify-center gap-3 md:justify-start">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="Logo EcoNane"
               class="border-brand-cream/20 shadow-xs h-10 w-10 rounded-full object-cover"
             />
@@ -121,6 +122,13 @@ const benefits: Benefit[] = [
             target="_blank"
             class="hover:text-brand-cream decoration-brand-pink-light/30 underline transition-colors"
             >ConfiTIC</a
+          >
+          <span class="mx-1 opacity-60">|</span>
+          <a
+            href="https://martinezdom.github.io/"
+            target="_blank"
+            class="hover:text-brand-cream decoration-brand-pink-light/30 underline transition-colors"
+            >@martinezdom</a
           >.
         </p>
         <div class="flex gap-4">
@@ -130,7 +138,12 @@ const benefits: Benefit[] = [
           >
             Aviso Legal
           </button>
-          <a href="#" class="hover:text-brand-cream transition-colors">Política de Privacidad</a>
+          <button
+            @click="isPrivacidadOpen = true"
+            class="hover:text-brand-cream cursor-pointer transition-colors"
+          >
+            Política de Privacidad
+          </button>
           <router-link to="/admin" class="hover:text-brand-cream transition-colors opacity-75 hover:opacity-100">
             Acceso Panel
           </router-link>
@@ -138,6 +151,7 @@ const benefits: Benefit[] = [
       </div>
     </div>
 
+    <!-- Modal: Aviso Legal -->
     <div v-if="isAvisoOpen" class="modal-overlay" @click.self="isAvisoOpen = false">
       <div class="modal-card text-brand-brown-dark flex flex-col gap-4">
         <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
@@ -152,19 +166,19 @@ const benefits: Benefit[] = [
         <div class="space-y-4 text-sm leading-relaxed">
           <p>
             En cumplimiento del deber de información, se hace constar que este sitio web es una
-            presentación comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Villajoyosa (Alicante).
+            presentación informativa y comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Villajoyosa (Alicante).
           </p>
           <p class="rounded-xl border border-brand-pink-light/60 bg-brand-cream/60 p-3 text-xs italic text-brand-brown-dark">
             <strong>Aviso de carácter no diagnóstico:</strong> Las sesiones de ecografía emocional 4D y 5D realizadas en EcoNane tienen una finalidad exclusivamente afectiva, lúdica y de recuerdo familiar. En ningún caso sustituyen las ecografías médicas diagnósticas ni el seguimiento ginecológico y obstétrico oficial de la salud del embarazo.
           </p>
           <p>
-            El desarrollo técnico y diseño web ha sido realizado a cargo de
+            El desarrollo técnico y diseño web ha sido realizado por
             <a
               href="https://martinezdom.github.io/"
               target="_blank"
               class="text-brand-pink font-semibold hover:underline"
-              >Miguel Ángel Martínez Domínguez</a
-            >, bajo la marca comercial
+              >Miguel Ángel Martínez Domínguez (@martinezdom)</a
+            > ·
             <a
               href="https://confitic.es"
               target="_blank"
@@ -179,6 +193,72 @@ const benefits: Benefit[] = [
         </div>
         <div class="mt-6 flex justify-end">
           <button @click="isAvisoOpen = false" class="btn-pill-small">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Política de Privacidad -->
+    <div v-if="isPrivacidadOpen" class="modal-overlay" @click.self="isPrivacidadOpen = false">
+      <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-white z-10">
+          <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Política de Privacidad</h3>
+          <button
+            @click="isPrivacidadOpen = false"
+            class="text-brand-brown hover:text-brand-brown-dark cursor-pointer p-1 text-lg font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="space-y-4 text-xs sm:text-sm leading-relaxed text-brand-brown/90">
+          <p>
+            Esta Política de Privacidad describe cómo <strong>EcoNane</strong> recopila, utiliza y protege la información personal de sus usuarias y clientas, en estricto cumplimiento del Reglamento General de Protección de Datos (RGPD) y la Ley Orgánica de Protección de Datos (LOPDGDD).
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">1. Responsable del Tratamiento</h4>
+          <p>
+            <strong>EcoNane</strong> (Centro de Ecografía Emocional)<br />
+            Ubicación: Villajoyosa, Alicante · Correo: <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> · Teléfono: +34 644 18 98 56.
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">2. Datos Personales Recopilados</h4>
+          <p>
+            A través del formulario de reserva, contacto por WhatsApp y el portal de entrega digital, recopilamos los siguientes datos proporcionados voluntariamente:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Nombre y apellidos de la madre o familia.</li>
+            <li>Número de teléfono móvil de contacto.</li>
+            <li>Dirección de correo electrónico (si se facilita para notificaciones).</li>
+            <li>Semana de gestación aproximada y servicio solicitado.</li>
+            <li>Fotografías y vídeos de la ecografía emocional realizadas durante la sesión acordada.</li>
+          </ul>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">3. Finalidad y Base Legal</h4>
+          <p>
+            Tus datos son tratados exclusivamente con la base legal de tu consentimiento para:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Gestionar y coordinar tu cita previa en el centro.</li>
+            <li>Poner a tu disposición el portal privado y seguro para la visualización y descarga de tus fotografías y archivos ZIP.</li>
+            <li>No se realizarán envíos publicitarios no solicitados ni se cederán datos a terceros bajo ninguna circunstancia.</li>
+          </ul>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">4. Seguridad y Privacidad de las Ecografías</h4>
+          <p>
+            Las fotografías y recuerdos de tu ecografía se almacenan en un entorno en la nube cifrado y solo son accesibles mediante el enlace único de tu sesión protegido por tu clave PIN personal (los 4 últimos dígitos de tu teléfono móvil).
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">5. Ejercicio de Derechos (ARCO)</h4>
+          <p>
+            Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, supresión (derecho al olvido) y limitación del tratamiento enviando un correo a <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> indicando tu solicitud.
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">6. Uso de Cookies</h4>
+          <p>
+            Este sitio web no utiliza cookies publicitarias, de rastreo de terceros ni herramientas de analítica invasiva. Únicamente se emplea almacenamiento técnico indispensable (como la memoria local de sesión) para garantizar el funcionamiento seguro del portal privado de ecografías y el acceso al panel de administración. Por esta razón, conforme a la normativa vigente (LSSI-CE y RGPD), no es necesaria la instalación de un banner de consentimiento de cookies.
+          </p>
+        </div>
+        <div class="mt-4 flex justify-end border-t border-brand-pink-light/30 pt-3">
+          <button @click="isPrivacidadOpen = false" class="btn-pill-small">Entendido y Cerrar</button>
         </div>
       </div>
     </div>
