@@ -9,16 +9,62 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json()
-    const { nombre, email, telefono, semana, servicio, horario, mensaje, turnstileToken } = body
+    const { nombre, email, telefono, semana, servicio, horario, mensaje, _honey, turnstileToken } = body
 
-    if (!nombre || !telefono) {
+    // 1. Honeypot check: Si un bot rellena el campo trampa oculto, responder éxito simulado sin procesar
+    if (_honey) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // 2. Validación de nombre
+    if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 2) {
       return new Response(
-        JSON.stringify({ error: 'Faltan campos obligatorios (nombre o teléfono)' }),
+        JSON.stringify({ error: 'Por favor, indica un nombre válido (mínimo 2 caracteres).' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
+    }
+
+    // 3. Validación de teléfono
+    if (!telefono || typeof telefono !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Por favor, indica un teléfono de contacto.' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    const cleanPhoneDigits = telefono.replace(/[\s\-\(\)]/g, '')
+    const phoneRegex = /^(\+?\d{1,4})?\d{9,12}$/
+    if (!phoneRegex.test(cleanPhoneDigits)) {
+      return new Response(
+        JSON.stringify({ error: 'El número de teléfono no parece válido (ej: 644189856).' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // 4. Validación de correo electrónico (si se proporciona)
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email.trim())) {
+        return new Response(
+          JSON.stringify({ error: 'El correo electrónico introducido no tiene un formato válido.' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
     }
 
     if (env.TURNSTILE_SECRET_KEY && turnstileToken) {
@@ -54,13 +100,14 @@ export async function onRequestPost(context) {
         .replace(/'/g, '&#039;')
     }
 
-    const cleanNombre = escapeHtml(nombre)
-    const cleanEmail = escapeHtml(email || 'No proporcionado')
-    const cleanTelefono = escapeHtml(telefono)
-    const cleanSemana = escapeHtml(semana || 'No especificada')
-    const cleanServicio = escapeHtml(servicio || 'Eco 4D / 5D')
-    const cleanHorario = escapeHtml(horario || 'Flexible')
-    const cleanMensaje = escapeHtml(mensaje || 'Sin notas adicionales')
+    // Limpieza, truncado contra desbordamientos y prevención de inyección CRLF
+    const cleanNombre = escapeHtml(nombre.trim().slice(0, 100)).replace(/[\r\n]/g, ' ')
+    const cleanEmail = email ? escapeHtml(email.trim().slice(0, 150)).replace(/[\r\n]/g, '') : 'No proporcionado'
+    const cleanTelefono = escapeHtml(telefono.trim().slice(0, 25)).replace(/[\r\n]/g, '')
+    const cleanSemana = escapeHtml((semana || 'No especificada').slice(0, 100))
+    const cleanServicio = escapeHtml((servicio || 'Eco 4D / 5D').slice(0, 100)).replace(/[\r\n]/g, ' ')
+    const cleanHorario = escapeHtml((horario || 'Flexible').slice(0, 100))
+    const cleanMensaje = escapeHtml((mensaje || 'Sin notas adicionales').slice(0, 1500))
 
     if (!env.RESEND_API_KEY) {
       return new Response(

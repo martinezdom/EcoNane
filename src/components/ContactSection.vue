@@ -23,9 +23,49 @@ const phone = ref('')
 const selectedGestation = ref('')
 const selectedService = ref('')
 const message = ref('')
+const honey = ref('') // Anti-spam Honeypot invisible a usuarios
+
+const errors = ref({
+  name: '',
+  phone: '',
+  email: ''
+})
 
 const emailStatus = ref<'idle' | 'loading' | 'success' | 'error'>('idle')
 const emailErrorMessage = ref('')
+
+const validateForm = (requireEmail = false): boolean => {
+  errors.value = { name: '', phone: '', email: '' }
+  let isValid = true
+
+  // 1. Nombre
+  if (!name.value || name.value.trim().length < 2) {
+    errors.value.name = 'Por favor, indica tu nombre completo (mínimo 2 caracteres).'
+    isValid = false
+  }
+
+  // 2. Teléfono
+  const cleanPhone = phone.value.replace(/[\s\-\(\)]/g, '')
+  const phonePattern = /^(\+?\d{1,4})?\d{9,12}$/
+  if (!cleanPhone || !phonePattern.test(cleanPhone)) {
+    errors.value.phone = 'Introduce un número de teléfono válido (ej: 644189856).'
+    isValid = false
+  }
+
+  // 3. Email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (requireEmail) {
+    if (!email.value || !emailPattern.test(email.value.trim())) {
+      errors.value.email = 'Introduce un correo electrónico válido para poder enviarte respuesta.'
+      isValid = false
+    }
+  } else if (email.value && !emailPattern.test(email.value.trim())) {
+    errors.value.email = 'El formato del correo electrónico no parece correcto.'
+    isValid = false
+  }
+
+  return isValid
+}
 
 const gestationOptions = [
   { label: 'Semana 12 - 16', hint: 'Ideal para conocer el sexo' },
@@ -58,16 +98,15 @@ if (allServices.value.length > 0 && !selectedService.value) {
 }
 
 const sendWhatsApp = () => {
-  if (!name.value || !phone.value) {
-    alert('Por favor, indica al menos tu nombre y tu teléfono.')
+  if (!validateForm(false)) {
     return
   }
 
   const text = `¡Hola Mireia! ❤️ Me gustaría reservar una cita en EcoNane:
 
-🤰 *Mamá / Familia:* ${name.value}
-📱 *Teléfono:* ${phone.value}${email.value ? `\n✉️ *Email:* ${email.value}` : ''}${selectedGestation.value ? `\n🗓️ *Semana de gestación:* ${selectedGestation.value}` : ''}
-✨ *Servicio deseado:* ${selectedService.value || allServices.value[0]}${message.value ? `\n💬 *Comentario:* ${message.value}` : ''}
+🤰 *Mamá / Familia:* ${name.value.trim()}
+📱 *Teléfono:* ${phone.value.trim()}${email.value ? `\n✉️ *Email:* ${email.value.trim()}` : ''}${selectedGestation.value ? `\n🗓️ *Semana de gestación:* ${selectedGestation.value}` : ''}
+✨ *Servicio deseado:* ${selectedService.value || allServices.value[0]}${message.value ? `\n💬 *Comentario:* ${message.value.trim()}` : ''}
 
 ¿Qué disponibilidad tenéis para concertar la cita? ¡Muchas gracias!`
 
@@ -77,14 +116,9 @@ const sendWhatsApp = () => {
 }
 
 const sendByEmail = async () => {
-  if (!name.value || !phone.value) {
+  if (!validateForm(true)) {
     emailStatus.value = 'error'
-    emailErrorMessage.value = 'Por favor, rellena tu nombre y teléfono.'
-    return
-  }
-  if (!email.value || !email.value.includes('@')) {
-    emailStatus.value = 'error'
-    emailErrorMessage.value = 'Por favor, introduce un correo electrónico válido.'
+    emailErrorMessage.value = 'Por favor, revisa los campos señalados en rojo en el formulario.'
     return
   }
 
@@ -96,12 +130,13 @@ const sendByEmail = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre: name.value,
-        email: email.value,
-        telefono: phone.value,
+        nombre: name.value.trim(),
+        email: email.value.trim(),
+        telefono: phone.value.trim(),
         semana: selectedGestation.value || 'No especificada',
         servicio: selectedService.value || allServices.value[0],
-        mensaje: message.value
+        mensaje: message.value.trim(),
+        _honey: honey.value // Trampa para bots
       })
     })
 
@@ -114,6 +149,7 @@ const sendByEmail = async () => {
       phone.value = ''
       selectedGestation.value = ''
       message.value = ''
+      errors.value = { name: '', phone: '', email: '' }
     } else {
       emailStatus.value = 'error'
       emailErrorMessage.value = result.error || 'No se pudo enviar el correo en este momento.'
@@ -214,7 +250,19 @@ const sendByEmail = async () => {
             Personaliza tu cita
           </h3>
 
-          <form @submit.prevent="sendWhatsApp" class="space-y-6">
+          <form @submit.prevent="sendWhatsApp" class="space-y-6" novalidate>
+            <!-- Campo Honeypot anti-spam (invisible para humanos, solo visible para bots) -->
+            <div class="hidden" aria-hidden="true">
+              <label for="form_website_hp">No rellenes este campo</label>
+              <input
+                id="form_website_hp"
+                v-model="honey"
+                type="text"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
             <!-- 1. Gestation Week Interactive Selector (No selection by default) -->
             <div>
               <label class="text-brand-brown-dark mb-2 block text-xs font-bold uppercase tracking-wider">
@@ -268,10 +316,14 @@ const sendByEmail = async () => {
                   id="name"
                   v-model="name"
                   type="text"
-                  required
                   placeholder="Ej: Laura Domínguez"
-                  class="form-input"
+                  :class="[
+                    'form-input transition-colors',
+                    errors.name ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                  ]"
+                  @input="errors.name = ''"
                 />
+                <span v-if="errors.name" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.name }}</span>
               </div>
 
               <div class="flex flex-col">
@@ -282,10 +334,14 @@ const sendByEmail = async () => {
                   id="phone"
                   v-model="phone"
                   type="tel"
-                  required
                   placeholder="Ej: 644189856"
-                  class="form-input"
+                  :class="[
+                    'form-input transition-colors',
+                    errors.phone ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                  ]"
+                  @input="errors.phone = ''"
                 />
+                <span v-if="errors.phone" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.phone }}</span>
               </div>
             </div>
 
@@ -298,8 +354,13 @@ const sendByEmail = async () => {
                 v-model="email"
                 type="email"
                 placeholder="Ej: tu-email@ejemplo.com"
-                class="form-input"
+                :class="[
+                  'form-input transition-colors',
+                  errors.email ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                ]"
+                @input="errors.email = ''"
               />
+              <span v-if="errors.email" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.email }}</span>
             </div>
 
             <!-- 4. Optional Note -->
