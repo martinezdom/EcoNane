@@ -174,7 +174,9 @@ const sendByEmail = async () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Correo Electrónico</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">naneecografias@gmail.com</p>
+                <p class="text-brand-brown/80 mt-1 text-sm">
+                  <a href="mailto:info@econane.es" class="hover:text-brand-pink transition-colors">info@econane.es</a>
+                </p>
               </div>
             </div>
 

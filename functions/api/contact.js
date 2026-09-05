@@ -73,20 +73,14 @@ export async function onRequestPost(context) {
     }
 
     const destinationEmail = env.DESTINATION_EMAIL || 'naneecografias@gmail.com'
-    const fromEmail = env.FROM_EMAIL || 'EcoNane Web <web@econane.es>'
+    const fromEmail = env.FROM_EMAIL || 'EcoNane Web <web@send.econane.es>'
 
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'EcoNane-Web/1.0'
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: destinationEmail,
-        subject: `👶 Nueva solicitud de cita [${cleanServicio}] - ${cleanNombre}`,
-        html: `
+    const emailPayload = {
+      from: fromEmail,
+      to: destinationEmail,
+      subject: `👶 Nueva solicitud de cita [${cleanServicio}] - ${cleanNombre}`,
+      reply_to: cleanEmail !== 'No proporcionado' ? cleanEmail : undefined,
+      html: `
           <div style="margin: 0; padding: 0; background-color: #fdfbf7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%;">
             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fdfbf7; padding: 20px 10px;">
               <tr>
@@ -138,7 +132,16 @@ export async function onRequestPost(context) {
             </table>
           </div>
         `
-      })
+    }
+
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'EcoNane-Web/1.0'
+      },
+      body: JSON.stringify(emailPayload)
     })
 
     const resendData = await resendResponse.json()
