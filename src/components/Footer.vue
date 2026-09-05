@@ -217,7 +217,7 @@ const benefits: Benefit[] = [
           <h4 class="font-bold text-brand-brown-dark text-sm">1. Responsable del Tratamiento</h4>
           <p>
             <strong>EcoNane</strong> (Centro de Ecografía Emocional)<br />
-            Ubicación: Villajoyosa, Alicante · Correo: <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> · Teléfono: +34 644 18 98 56.
+            Ubicación: Villajoyosa, Alicante · Correo: <a href="mailto:naneecografias@gmail.com" class="text-brand-pink underline">naneecografias@gmail.com</a> · Teléfono: +34 644 18 98 56.
           </p>
 
           <h4 class="font-bold text-brand-brown-dark text-sm">2. Datos Personales Recopilados</h4>
@@ -249,7 +249,7 @@ const benefits: Benefit[] = [
 
           <h4 class="font-bold text-brand-brown-dark text-sm">5. Ejercicio de Derechos (ARCO)</h4>
           <p>
-            Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, supresión (derecho al olvido) y limitación del tratamiento enviando un correo a <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> indicando tu solicitud.
+            Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, supresión (derecho al olvido) y limitación del tratamiento enviando un correo a <a href="mailto:naneecografias@gmail.com" class="text-brand-pink underline">naneecografias@gmail.com</a> indicando tu solicitud.
           </p>
 
           <h4 class="font-bold text-brand-brown-dark text-sm">6. Uso de Cookies</h4>
