@@ -174,7 +174,7 @@ const sendByEmail = async () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Correo Electrónico</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">info@econane.es</p>
+                <p class="text-brand-brown/80 mt-1 text-sm">naneecografias@gmail.com</p>
               </div>
             </div>
 
