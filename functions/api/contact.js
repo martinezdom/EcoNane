@@ -73,7 +73,7 @@ export async function onRequestPost(context) {
     }
 
     const destinationEmail = env.DESTINATION_EMAIL || 'naneecografias@gmail.com'
-    const fromEmail = env.FROM_EMAIL || 'EcoNane Web <web@send.econane.es>'
+    const fromEmail = env.FROM_EMAIL || 'EcoNane Web <info@econane.es>'
 
     const emailPayload = {
       from: fromEmail,
