@@ -11,7 +11,9 @@ import {
   Heart,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Navigation
 } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
 
@@ -190,7 +192,17 @@ const sendByEmail = async () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Ubicación</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">Villajoyosa, Alicante</p>
+                <p class="text-brand-brown/90 mt-1 text-sm font-medium">Carrer Colón, 114</p>
+                <p class="text-brand-brown/75 text-xs">03570 La Vila Joiosa, Alicante</p>
+                <a
+                  href="https://share.google/BXdcvYZWLOvxcCEIX"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-brand-pink hover:text-brand-brown-dark mt-1 inline-flex items-center gap-1 text-xs font-semibold underline transition-colors"
+                >
+                  <span>Ver perfil en Google</span>
+                  <ExternalLink class="h-3 w-3" />
+                </a>
               </div>
             </div>
 
@@ -235,6 +247,50 @@ const sendByEmail = async () => {
               <p class="mt-1.5 text-xs leading-relaxed text-brand-brown/80">
                 Si tu bebé no se deja ver el día de la ecografía, ¡repetimos la sesión sin ningún coste adicional para ti!
               </p>
+            </div>
+          </div>
+
+          <!-- Interactive Google Maps Card -->
+          <div class="card-container overflow-hidden p-0 border border-brand-pink-light/40 shadow-sm rounded-3xl">
+            <div class="p-4 pb-3 flex items-center justify-between border-b border-brand-pink-light/30 bg-brand-cream/40">
+              <div class="flex items-center gap-2">
+                <MapPin class="h-4 w-4 text-brand-pink" />
+                <span class="text-xs font-bold text-brand-brown-dark uppercase tracking-wider">Cómo llegar a la clínica</span>
+              </div>
+              <a
+                href="https://share.google/BXdcvYZWLOvxcCEIX"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 text-[11px] font-bold text-brand-pink hover:text-brand-brown transition-colors"
+              >
+                <span>Ficha de Google</span>
+                <ExternalLink class="h-3 w-3" />
+              </a>
+            </div>
+            <div class="relative w-full h-56 bg-brand-cream/20">
+              <iframe
+                title="Ubicación de EcoNane en Google Maps"
+                src="https://maps.google.com/maps?q=ECONANE,+Carrer+Col%C3%B3n+114,+03570+La+Vila+Joiosa,+Alicante&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                width="100%"
+                height="100%"
+                style="border:0;"
+                :allowfullscreen="true"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                class="w-full h-full"
+              ></iframe>
+            </div>
+            <div class="p-3 bg-white flex items-center justify-between gap-3 text-xs">
+              <span class="text-brand-brown/80 text-[11px]">Carrer Colón, 114, La Vila Joiosa</span>
+              <a
+                href="https://www.google.com/maps/place/ECONANE/@38.5102323,-0.2268089,17z/data=!3m1!4b1!4m6!3m5!1s0xd621b578ea90491:0xba7351bf176951af!8m2!3d38.5102323!4d-0.224234!16s%2Fg%2F11zymgmt2g?entry=ttu"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-brand-brown px-3.5 py-1.5 text-[11px] font-bold text-white hover:bg-brand-brown-dark transition-all shadow-xs"
+              >
+                <Navigation class="h-3.5 w-3.5" />
+                <span>Abrir en Maps</span>
+              </a>
             </div>
           </div>
         </div>

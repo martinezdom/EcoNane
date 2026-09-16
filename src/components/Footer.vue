@@ -166,7 +166,7 @@ const benefits: Benefit[] = [
         <div class="space-y-4 text-sm leading-relaxed">
           <p>
             En cumplimiento del deber de información, se hace constar que este sitio web es una
-            presentación informativa y comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Villajoyosa (Alicante).
+            presentación informativa y comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Carrer Colón, 114, 03570 La Vila Joiosa (Alicante).
           </p>
           <p class="rounded-xl border border-brand-pink-light/60 bg-brand-cream/60 p-3 text-xs italic text-brand-brown-dark">
             <strong>Aviso de carácter no diagnóstico:</strong> Las sesiones de ecografía emocional 4D y 5D realizadas en EcoNane tienen una finalidad exclusivamente afectiva, lúdica y de recuerdo familiar. En ningún caso sustituyen las ecografías médicas diagnósticas ni el seguimiento ginecológico y obstétrico oficial de la salud del embarazo.
@@ -217,7 +217,7 @@ const benefits: Benefit[] = [
           <h4 class="font-bold text-brand-brown-dark text-sm">1. Responsable del Tratamiento</h4>
           <p>
             <strong>EcoNane</strong> (Centro de Ecografía Emocional)<br />
-            Ubicación: Villajoyosa, Alicante · Correo: <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> · Teléfono: +34 644 18 98 56.
+            Ubicación: Carrer Colón, 114, 03570 La Vila Joiosa (Alicante) · Correo: <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> · Teléfono: +34 644 18 98 56.
           </p>
 
           <h4 class="font-bold text-brand-brown-dark text-sm">2. Datos Personales Recopilados</h4>
