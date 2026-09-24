@@ -89,7 +89,9 @@ function toggleGestation(g: { label: string; hint: string }) {
 // All available services
 const allServices = computed(() => {
   const list: string[] = []
-  experiences.value.forEach((exp) => list.push(`${exp.title} (${exp.price})`))
+  experiences.value
+    .filter((exp) => exp.active !== false)
+    .forEach((exp) => list.push(`${exp.title} (${exp.price})`))
   packs.value.forEach((p) => list.push(`${p.title} (${p.price})`))
   return list
 })

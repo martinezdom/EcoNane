@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Check, Clock, Heart, Sparkles, Gift } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
 
@@ -11,6 +12,37 @@ const generalIncludes = [
   'Recuerdo del latido',
   'Atención personalizada'
 ]
+
+// Filtrar solo las experiencias activas
+const activeExperiences = computed(() => {
+  return experiences.value.filter((exp) => exp.active !== false)
+})
+
+// Layout adaptativo según la cantidad de experiencias activas
+const gridClasses = computed(() => {
+  const count = activeExperiences.value.length
+  if (count <= 1) return 'grid grid-cols-1 max-w-md mx-auto gap-8 items-stretch'
+  if (count === 2) return 'grid grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto gap-8 items-stretch'
+  if (count === 3) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto gap-8 items-stretch'
+  if (count === 4) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch'
+  if (count === 5) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 items-stretch'
+  // 6 o más
+  return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch'
+})
+
+// Columna adaptativa (en caso de 5: 3 arriba y 2 centradas abajo)
+function getCardColClass(index: number, total: number) {
+  if (total === 5) {
+    if (index === 3) {
+      return 'lg:col-span-2 lg:col-start-2'
+    }
+    if (index === 4) {
+      return 'lg:col-span-2 md:col-span-2 md:max-w-md md:mx-auto lg:max-w-none w-full'
+    }
+    return 'lg:col-span-2'
+  }
+  return ''
+}
 </script>
 
 <template>
@@ -32,11 +64,14 @@ const generalIncludes = [
       </div>
 
       <!-- Experiences Grid -->
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 items-stretch">
+      <div :class="gridClasses">
         <div
-          v-for="exp in experiences"
-          :key="exp.title"
-          class="bg-brand-cream/40 border-brand-pink-light/30 group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-brand-pink/50"
+          v-for="(exp, idx) in activeExperiences"
+          :key="exp.title + idx"
+          :class="[
+            'bg-brand-cream/40 border-brand-pink-light/30 group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-brand-pink/50',
+            getCardColClass(idx, activeExperiences.length)
+          ]"
         >
           <div
             v-if="exp.badge"

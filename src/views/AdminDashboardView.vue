@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteData } from '@/composables/useSiteData'
 import type { Promotion, Experience, Pack } from '@/types'
@@ -21,11 +21,14 @@ import {
   User,
   Lock,
   Eye,
+  EyeOff,
   CheckCircle2,
   Clock,
   Send,
   UploadCloud,
   Image as ImageIcon,
+  ChevronUp,
+  ChevronDown,
   X
 } from '@lucide/vue'
 
@@ -82,6 +85,71 @@ function handleResetPromo() {
 const experiencesForm = ref<Experience[]>(JSON.parse(JSON.stringify(experiences.value)))
 const packsForm = ref<Pack[]>(JSON.parse(JSON.stringify(packs.value)))
 
+watch(
+  experiences,
+  (newVal) => {
+    if (newVal && newVal.length > 0 && experiencesForm.value.length === 0) {
+      experiencesForm.value = JSON.parse(JSON.stringify(newVal))
+    }
+  },
+  { deep: true }
+)
+
+function addExperience() {
+  const phone = '34644189856'
+  const defaultTitle = 'Nueva Sesión'
+  const defaultPrice = '50€'
+  const newExp: Experience = {
+    title: defaultTitle,
+    duration: 'Sesión de 30-45 min',
+    price: defaultPrice,
+    badge: '',
+    description: 'Describe aquí la nueva experiencia o ecografía.',
+    features: [
+      'Visualización 4D/5D',
+      'Fotos y vídeos digitales',
+      'Latido del corazón',
+      'Acompañantes incluidos'
+    ],
+    link: `https://wa.me/${phone}?text=${encodeURIComponent(`Hola, quiero pedir cita para la ${defaultTitle} (${defaultPrice}).`)}`,
+    active: true
+  }
+  experiencesForm.value.push(newExp)
+  showSuccess('Nuevo servicio añadido. Recuerda pulsar "Guardar Todos los Precios" para publicarlo en la web.')
+}
+
+function removeExperience(index: number) {
+  const exp = experiencesForm.value[index]
+  if (!exp) return
+  if (
+    confirm(
+      `¿Seguro que deseas eliminar definitivamente el servicio "${exp.title}"?\n\nTip: Si solo deseas ocultarlo temporalmente de la web sin perder sus datos, te recomendamos desactivar el interruptor verde "Visible en la web".`
+    )
+  ) {
+    experiencesForm.value.splice(index, 1)
+    showSuccess(`Servicio eliminado. Pulsa "Guardar Todos los Precios" para aplicar los cambios.`)
+  }
+}
+
+function moveExperience(index: number, direction: 'up' | 'down') {
+  const targetIndex = direction === 'up' ? index - 1 : index + 1
+  if (targetIndex < 0 || targetIndex >= experiencesForm.value.length) return
+  const item = experiencesForm.value.splice(index, 1)[0]
+  if (item) {
+    experiencesForm.value.splice(targetIndex, 0, item)
+  }
+}
+
+function autoGenerateWhatsAppLink(expIndex: number) {
+  const exp = experiencesForm.value[expIndex]
+  if (!exp) return
+  const phone = '34644189856'
+  const cleanPrice = exp.price ? ` (${exp.price})` : ''
+  const text = encodeURIComponent(`Hola, quiero pedir cita para la ${exp.title}${cleanPrice}.`)
+  exp.link = `https://wa.me/${phone}?text=${text}`
+  showSuccess(`Enlace de WhatsApp actualizado para "${exp.title}".`)
+}
+
 function addFeature(expIndex: number) {
   const exp = experiencesForm.value[expIndex]
   if (exp) {
@@ -99,7 +167,7 @@ function removeFeature(expIndex: number, featIndex: number) {
 function savePrices() {
   updateExperiences(experiencesForm.value)
   updatePacks(packsForm.value)
-  showSuccess('¡Precios de sesiones y packs actualizados en la web!')
+  showSuccess('¡Precios y servicios actualizados en la web!')
 }
 
 function handleResetPrices() {
@@ -544,105 +612,234 @@ function handleLogout() {
           </div>
         </div>
 
-        <!-- 4 Experiences Grid -->
-        <div>
-          <h3 class="mb-4 text-xs font-bold tracking-wider text-brand-brown-dark/70 uppercase">
-            Sesiones Individuales (4)
-          </h3>
+        <!-- Experiences Grid -->
+        <div class="space-y-6">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 class="text-xs font-bold tracking-wider text-brand-brown-dark/70 uppercase">
+                Sesiones y Ecografías ({{ experiencesForm.length }})
+              </h3>
+              <p class="text-xs text-brand-brown/70 mt-0.5">
+                <span class="font-semibold text-emerald-700">
+                  {{ experiencesForm.filter((e) => e.active !== false).length }} activas en la web
+                </span>
+                <span v-if="experiencesForm.filter((e) => e.active === false).length > 0" class="text-stone-500">
+                  · {{ experiencesForm.filter((e) => e.active === false).length }} ocultas
+                </span>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              @click="addExperience"
+              class="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-pink px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-pink-dark active:scale-95 sm:w-auto"
+            >
+              <Plus class="h-4 w-4" />
+              <span>Añadir Nuevo Servicio o Sesión</span>
+            </button>
+          </div>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div
               v-for="(exp, expIdx) in experiencesForm"
               :key="expIdx"
-              class="rounded-3xl border border-brand-pink-light/40 bg-white p-6 shadow-sm"
+              :class="[
+                'relative flex flex-col justify-between rounded-3xl border p-6 shadow-sm transition-all duration-200',
+                exp.active !== false
+                  ? 'border-brand-pink-light/40 bg-white'
+                  : 'border-dashed border-stone-300 bg-stone-50/80 opacity-90'
+              ]"
             >
-              <div class="flex items-start justify-between gap-4">
-                <div class="flex-1">
-                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Título</label>
-                  <input
-                    v-model="exp.title"
-                    type="text"
-                    class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-sm font-bold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                  />
-                </div>
+              <div>
+                <!-- Top Toolbar: Active Switch & Actions -->
+                <div class="mb-4 flex items-center justify-between border-b border-brand-pink-light/30 pb-3">
+                  <!-- Active / Inactive Switch -->
+                  <div class="flex items-center gap-2.5">
+                    <label class="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        :checked="exp.active !== false"
+                        @change="exp.active = ($event.target as HTMLInputElement).checked"
+                        class="peer sr-only"
+                      />
+                      <div
+                        class="peer h-6 w-11 rounded-full bg-stone-300 transition-colors after:absolute after:top-0.5 after:left-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-md after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full peer-checked:after:border-white"
+                      ></div>
+                    </label>
+                    <span
+                      :class="[
+                        'text-xs font-bold tracking-wider uppercase',
+                        exp.active !== false ? 'text-emerald-700' : 'text-stone-400'
+                      ]"
+                    >
+                      {{ exp.active !== false ? 'Visible en web' : 'Oculto en web' }}
+                    </span>
+                  </div>
 
-                <div class="w-28">
-                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Precio</label>
-                  <input
-                    v-model="exp.price"
-                    type="text"
-                    class="mt-1 w-full rounded-xl border border-brand-pink/40 bg-brand-pink/15 px-3 py-2 text-center text-sm font-extrabold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div class="mt-4 grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Duración</label>
-                  <input
-                    v-model="exp.duration"
-                    type="text"
-                    class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Etiqueta Destacada</label>
-                  <input
-                    v-model="exp.badge"
-                    type="text"
-                    placeholder="Opcional (ej: MÁS POPULAR)"
-                    class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Descripción</label>
-                <textarea
-                  v-model="exp.description"
-                  rows="2"
-                  class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                ></textarea>
-              </div>
-
-              <!-- Features list -->
-              <div class="mt-4">
-                <div class="flex items-center justify-between">
-                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Incluye</label>
-                  <button
-                    type="button"
-                    @click="addFeature(expIdx)"
-                    class="flex cursor-pointer items-center gap-1 text-xs font-bold text-brand-brown hover:text-brand-brown-dark"
-                  >
-                    <Plus class="h-3.5 w-3.5" />
-                    Añadir ventaja
-                  </button>
-                </div>
-
-                <div class="mt-2 space-y-2">
-                  <div
-                    v-for="(_, featIdx) in exp.features"
-                    :key="featIdx"
-                    class="flex items-center gap-2"
-                  >
-                    <input
-                      v-model="exp.features[featIdx]"
-                      type="text"
-                      class="flex-1 rounded-lg border border-brand-pink-light/50 bg-brand-cream/20 px-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-                    />
+                  <!-- Reorder & Delete -->
+                  <div class="flex items-center gap-1">
                     <button
                       type="button"
-                      @click="removeFeature(expIdx, featIdx)"
-                      class="cursor-pointer rounded-lg p-1.5 text-stone-400 hover:bg-rose-50 hover:text-rose-600"
+                      @click="moveExperience(expIdx, 'up')"
+                      :disabled="expIdx === 0"
+                      title="Subir posición"
+                      class="cursor-pointer rounded-lg p-1.5 text-stone-400 hover:bg-brand-beige hover:text-brand-brown-dark disabled:cursor-not-allowed disabled:opacity-20"
                     >
-                      <Trash2 class="h-3.5 w-3.5" />
+                      <ChevronUp class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="moveExperience(expIdx, 'down')"
+                      :disabled="expIdx === experiencesForm.length - 1"
+                      title="Bajar posición"
+                      class="cursor-pointer rounded-lg p-1.5 text-stone-400 hover:bg-brand-beige hover:text-brand-brown-dark disabled:cursor-not-allowed disabled:opacity-20"
+                    >
+                      <ChevronDown class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      @click="removeExperience(expIdx)"
+                      title="Eliminar este servicio"
+                      class="cursor-pointer rounded-lg p-1.5 text-stone-400 hover:bg-rose-50 hover:text-rose-600 ml-1"
+                    >
+                      <Trash2 class="h-4 w-4" />
                     </button>
                   </div>
+                </div>
+
+                <!-- Inactive Warning Notice -->
+                <div
+                  v-if="exp.active === false"
+                  class="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-medium text-amber-800"
+                >
+                  <EyeOff class="h-4 w-4 shrink-0 text-amber-600" />
+                  <span>Este servicio está desactivado. No aparecerá en la web pública.</span>
+                </div>
+
+                <!-- Title & Price -->
+                <div class="flex items-start justify-between gap-4">
+                  <div class="flex-1">
+                    <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Título</label>
+                    <input
+                      v-model="exp.title"
+                      type="text"
+                      class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-sm font-bold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div class="w-28">
+                    <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Precio</label>
+                    <input
+                      v-model="exp.price"
+                      type="text"
+                      class="mt-1 w-full rounded-xl border border-brand-pink/40 bg-brand-pink/15 px-3 py-2 text-center text-sm font-extrabold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Duración</label>
+                    <input
+                      v-model="exp.duration"
+                      type="text"
+                      placeholder="Ej: Sesión de 30-45 min"
+                      class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Etiqueta Destacada</label>
+                    <input
+                      v-model="exp.badge"
+                      type="text"
+                      placeholder="Opcional (ej: MÁS POPULAR)"
+                      class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Descripción</label>
+                  <textarea
+                    v-model="exp.description"
+                    rows="2"
+                    placeholder="Descripción que verán las mamás..."
+                    class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                  ></textarea>
+                </div>
+
+                <!-- Features list -->
+                <div class="mt-4">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-brand-brown-dark/70 uppercase">Incluye</label>
+                    <button
+                      type="button"
+                      @click="addFeature(expIdx)"
+                      class="flex cursor-pointer items-center gap-1 text-xs font-bold text-brand-brown hover:text-brand-brown-dark"
+                    >
+                      <Plus class="h-3.5 w-3.5" />
+                      Añadir ventaja
+                    </button>
+                  </div>
+
+                  <div class="mt-2 space-y-2">
+                    <div
+                      v-for="(_, featIdx) in exp.features"
+                      :key="featIdx"
+                      class="flex items-center gap-2"
+                    >
+                      <input
+                        v-model="exp.features[featIdx]"
+                        type="text"
+                        class="flex-1 rounded-lg border border-brand-pink-light/50 bg-brand-cream/20 px-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        @click="removeFeature(expIdx, featIdx)"
+                        class="cursor-pointer rounded-lg p-1.5 text-stone-400 hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <Trash2 class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WhatsApp Link & Auto-generate button -->
+                <div class="mt-4 border-t border-brand-pink-light/20 pt-3">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-bold text-brand-brown-dark/70 uppercase">
+                      Enlace de Cita (WhatsApp)
+                    </label>
+                    <button
+                      type="button"
+                      @click="autoGenerateWhatsAppLink(expIdx)"
+                      title="Generar enlace de WhatsApp con el título y precio actuales"
+                      class="cursor-pointer text-[11px] font-bold text-brand-brown underline hover:text-brand-brown-dark"
+                    >
+                      Autocompletar mensaje
+                    </button>
+                  </div>
+                  <input
+                    v-model="exp.link"
+                    type="text"
+                    placeholder="https://wa.me/34644189856?text=..."
+                    class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                  />
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Bottom Add Experience Button -->
+          <button
+            type="button"
+            @click="addExperience"
+            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-brand-pink-light/60 bg-white/50 p-5 text-xs font-bold text-brand-brown transition-all hover:border-brand-pink hover:bg-brand-pink-light/20 hover:text-brand-brown-dark active:scale-98"
+          >
+            <Plus class="h-4 w-4" />
+            <span>Añadir otra sesión o servicio</span>
+          </button>
         </div>
 
         <!-- 2 Packs Grid -->
@@ -788,11 +985,21 @@ function handleLogout() {
                   v-model="newSession.serviceType"
                   class="mt-1 w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
                 >
-                  <option value="Eco Básica 4D / 5D">Eco Básica 4D / 5D</option>
-                  <option value="Eco para Conocer el Sexo">Eco para Conocer el Sexo</option>
-                  <option value="Eco + Revelación de Sexo">Eco + Revelación de Sexo</option>
-                  <option value="Gafas Realidad Virtual + Eco 5D">Gafas Realidad Virtual + Eco 5D</option>
-                  <option value="Pack Seguimiento de Embarazo">Pack Seguimiento de Embarazo</option>
+                  <option
+                    v-for="exp in experiences"
+                    :key="exp.title"
+                    :value="exp.title"
+                  >
+                    {{ exp.title }}
+                  </option>
+                  <option
+                    v-for="pack in packs"
+                    :key="pack.title"
+                    :value="pack.title"
+                  >
+                    {{ pack.title }}
+                  </option>
+                  <option value="Otra sesión personalizada">Otra sesión personalizada</option>
                 </select>
               </div>
 

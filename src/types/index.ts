@@ -14,6 +14,7 @@ export type Feature = {
 }
 
 export type Experience = {
+  id?: string
   title: string
   duration?: string
   description: string
@@ -21,6 +22,7 @@ export type Experience = {
   features: string[]
   badge?: string
   link: string
+  active?: boolean
 }
 
 export type Pack = {

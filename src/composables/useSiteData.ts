@@ -40,7 +40,8 @@ const defaultExperiences: Experience[] = [
       'Latido del corazón',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20Básica%204D/5D%20(45€).'
+    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20Básica%204D/5D%20(45€).',
+    active: true
   },
   {
     title: 'Eco para Conocer el Sexo',
@@ -53,7 +54,8 @@ const defaultExperiences: Experience[] = [
       'Latido del corazón',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20para%20Conocer%20el%20Sexo%20(30€).'
+    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20para%20Conocer%20el%20Sexo%20(30€).',
+    active: true
   },
   {
     title: 'Eco + Revelación de Sexo',
@@ -66,7 +68,8 @@ const defaultExperiences: Experience[] = [
       'Pequeño regalo',
       'Fotos y vídeos digitales'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20+%20Revelación%20de%20Sexo%20(70€).'
+    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20+%20Revelación%20de%20Sexo%20(70€).',
+    active: true
   },
   {
     title: 'Experiencia Gafas Virtuales + Eco 4D/5D',
@@ -81,7 +84,8 @@ const defaultExperiences: Experience[] = [
       'Fotos y vídeos digitales',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Experiencia%20Gafas%20Virtuales%20+%20Eco%204D/5D%20(75€).'
+    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Experiencia%20Gafas%20Virtuales%20+%20Eco%204D/5D%20(75€).',
+    active: true
   }
 ]
 
