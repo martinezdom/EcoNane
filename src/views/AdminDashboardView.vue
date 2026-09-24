@@ -48,7 +48,8 @@ const {
   createSession,
   deleteSession,
   logoutAdmin,
-  setAdminPin
+  setAdminPin,
+  formatExperienceWhatsAppLink
 } = useSiteData()
 
 if (!isAdminLoggedIn.value) {
@@ -96,7 +97,6 @@ watch(
 )
 
 function addExperience() {
-  const phone = '34644189856'
   const defaultTitle = 'Nueva Sesión'
   const defaultPrice = '50€'
   const newExp: Experience = {
@@ -111,7 +111,7 @@ function addExperience() {
       'Latido del corazón',
       'Acompañantes incluidos'
     ],
-    link: `https://wa.me/${phone}?text=${encodeURIComponent(`Hola, quiero pedir cita para la ${defaultTitle} (${defaultPrice}).`)}`,
+    link: formatExperienceWhatsAppLink(defaultTitle),
     active: true
   }
   experiencesForm.value.push(newExp)
@@ -143,10 +143,7 @@ function moveExperience(index: number, direction: 'up' | 'down') {
 function autoGenerateWhatsAppLink(expIndex: number) {
   const exp = experiencesForm.value[expIndex]
   if (!exp) return
-  const phone = '34644189856'
-  const cleanPrice = exp.price ? ` (${exp.price})` : ''
-  const text = encodeURIComponent(`Hola, quiero pedir cita para la ${exp.title}${cleanPrice}.`)
-  exp.link = `https://wa.me/${phone}?text=${text}`
+  exp.link = formatExperienceWhatsAppLink(exp.title)
   showSuccess(`Enlace de WhatsApp actualizado para "${exp.title}".`)
 }
 

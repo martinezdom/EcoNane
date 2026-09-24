@@ -28,6 +28,46 @@ const defaultPromotion: Promotion = {
     'Hola, me gustaría reservar mi ecografía con el 20% de descuento de apertura.'
 }
 
+export function formatExperienceWhatsAppLink(title: string): string {
+  const phone = '34644189856'
+  const text = encodeURIComponent(
+    `¡Hola!\nQuiero pedir cita para la sesión ${title}, ¿podrías darme más información?`
+  )
+  return `https://wa.me/${phone}?text=${text}`
+}
+
+export function formatPackWhatsAppLink(title: string): string {
+  const phone = '34644189856'
+  const text = encodeURIComponent(
+    `¡Hola!\nQuiero pedir información sobre el ${title}, ¿podrías darme más detalles?`
+  )
+  return `https://wa.me/${phone}?text=${text}`
+}
+
+function sanitizeExperienceLinks(list: Experience[]): Experience[] {
+  return list.map((exp) => {
+    if (exp.link && (exp.link.includes('%E2%82%AC') || exp.link.includes('€') || !exp.link.includes('informaci'))) {
+      return {
+        ...exp,
+        link: formatExperienceWhatsAppLink(exp.title)
+      }
+    }
+    return exp
+  })
+}
+
+function sanitizePackLinks(list: Pack[]): Pack[] {
+  return list.map((pack) => {
+    if (pack.link && (pack.link.includes('%E2%82%AC') || pack.link.includes('€') || !pack.link.includes('detalles'))) {
+      return {
+        ...pack,
+        link: formatPackWhatsAppLink(pack.title)
+      }
+    }
+    return pack
+  })
+}
+
 const defaultExperiences: Experience[] = [
   {
     title: 'Eco Básica 4D/5D',
@@ -40,7 +80,7 @@ const defaultExperiences: Experience[] = [
       'Latido del corazón',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20Básica%204D/5D%20(45€).',
+    link: formatExperienceWhatsAppLink('Eco Básica 4D/5D'),
     active: true
   },
   {
@@ -54,7 +94,7 @@ const defaultExperiences: Experience[] = [
       'Latido del corazón',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20para%20Conocer%20el%20Sexo%20(30€).',
+    link: formatExperienceWhatsAppLink('Eco para Conocer el Sexo'),
     active: true
   },
   {
@@ -68,7 +108,7 @@ const defaultExperiences: Experience[] = [
       'Pequeño regalo',
       'Fotos y vídeos digitales'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Eco%20+%20Revelación%20de%20Sexo%20(70€).',
+    link: formatExperienceWhatsAppLink('Eco + Revelación de Sexo'),
     active: true
   },
   {
@@ -84,7 +124,7 @@ const defaultExperiences: Experience[] = [
       'Fotos y vídeos digitales',
       'Acompañantes incluidos'
     ],
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20pedir%20cita%20para%20la%20Experiencia%20Gafas%20Virtuales%20+%20Eco%204D/5D%20(75€).',
+    link: formatExperienceWhatsAppLink('Experiencia Gafas Virtuales + Eco 4D/5D'),
     active: true
   }
 ]
@@ -95,14 +135,14 @@ const defaultPacks: Pack[] = [
     price: '80€',
     save: 'Ahorra 10€',
     description: '2 sesiones para seguir cada etapa de tu embarazo y revivir la emoción.',
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20reservar%20el%20Pack%202%20Ecos%20(80€).'
+    link: formatPackWhatsAppLink('Pack 2 Ecos')
   },
   {
     title: 'Pack 3 Ecos',
     price: '115€',
     save: 'Ahorra 20€',
     description: '3 momentos únicos para recordar la evolución completa para siempre.',
-    link: 'https://wa.me/34644189856?text=Hola,%20quiero%20reservar%20el%20Pack%203%20Ecos%20(115€).'
+    link: formatPackWhatsAppLink('Pack 3 Ecos')
   }
 ]
 
@@ -126,8 +166,12 @@ const DEFAULT_HASH = '1f81014e3650630fc655c6e83efec4aa3ee734c54cb43a413d964cb70a
 
 // Global Reactive Singletons
 const promotion = ref<Promotion>(loadFromStorage(STORAGE_KEY_PROMO, defaultPromotion))
-const experiences = ref<Experience[]>(loadFromStorage(STORAGE_KEY_EXPERIENCES, defaultExperiences))
-const packs = ref<Pack[]>(loadFromStorage(STORAGE_KEY_PACKS, defaultPacks))
+const experiences = ref<Experience[]>(
+  sanitizeExperienceLinks(loadFromStorage(STORAGE_KEY_EXPERIENCES, defaultExperiences))
+)
+const packs = ref<Pack[]>(
+  sanitizePackLinks(loadFromStorage(STORAGE_KEY_PACKS, defaultPacks))
+)
 const sessions = ref<ClientSession[]>(loadFromStorage(STORAGE_KEY_SESSIONS, defaultDemoSessions))
 const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
 const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
@@ -162,8 +206,8 @@ async function syncFromSupabase() {
 
     if (settingsData) {
       if (settingsData.promotion) promotion.value = settingsData.promotion
-      if (settingsData.experiences) experiences.value = settingsData.experiences
-      if (settingsData.packs) packs.value = settingsData.packs
+      if (settingsData.experiences) experiences.value = sanitizeExperienceLinks(settingsData.experiences)
+      if (settingsData.packs) packs.value = sanitizePackLinks(settingsData.packs)
       if (settingsData.admin_pin) {
         // If it's a 64 char hex hash or raw string
         if (settingsData.admin_pin.length === 64) {
@@ -447,6 +491,8 @@ export function useSiteData() {
     loginAdmin,
     logoutAdmin,
     setAdminPin,
-    syncFromSupabase
+    syncFromSupabase,
+    formatExperienceWhatsAppLink,
+    formatPackWhatsAppLink
   }
 }
