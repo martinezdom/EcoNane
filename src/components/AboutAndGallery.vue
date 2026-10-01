@@ -34,14 +34,14 @@ const galleryImages: string[] = [
             <a
               href="https://wa.me/34644189856?text=Hola,%20quiero%20conocer%20más%20sobre%20EcoNane%20y%20vuestras%20instalaciones."
               target="_blank"
-              class="btn-pill-small mb-8"
+              class="btn-pill-small mb-6"
             >
               Conócenos
             </a>
           </div>
 
           <div
-            class="border-brand-pink-light/10 aspect-16/10 overflow-hidden rounded-2xl border shadow-inner"
+            class="border-brand-pink-light/10 aspect-16/9 overflow-hidden rounded-2xl border shadow-inner"
           >
             <img
               src="/clinic-room.webp"
@@ -59,15 +59,18 @@ const galleryImages: string[] = [
               <Heart class="fill-brand-pink text-brand-pink h-3.5 w-3.5" />
               Galería
             </div>
-            <h2 class="text-brand-brown-dark mb-6 font-serif text-3xl font-bold sm:text-4xl">
+            <h2 class="text-brand-brown-dark mb-4 font-serif text-3xl font-bold sm:text-4xl">
               Momentos que enamoran
             </h2>
+            <p class="text-brand-brown/80 mb-6 text-sm leading-relaxed sm:text-base">
+              Una pequeña muestra de la ternura y nitidez que capturamos en cada sesión para que guardes el mejor recuerdo de tu bebé.
+            </p>
 
-            <div class="mb-8 grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-3.5 sm:gap-4">
               <div
                 v-for="(img, idx) in galleryImages"
                 :key="idx"
-                class="bg-brand-beige aspect-square overflow-hidden rounded-xl border-2 border-white shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md"
+                class="bg-brand-beige aspect-[4/5] overflow-hidden rounded-2xl border-2 border-white shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md"
               >
                 <img :src="img" alt="Galería Ecografía" class="h-full w-full object-cover" />
               </div>
@@ -77,7 +80,7 @@ const galleryImages: string[] = [
           <a
             href="https://wa.me/34644189856?text=Hola,%20me%20gustaría%20ver%20más%20fotos%20de%20ecografías%20reales."
             target="_blank"
-            class="btn-outline w-full py-3 text-sm"
+            class="btn-outline mt-6 w-full py-3.5 text-sm"
           >
             Ver Galería Completa
           </a>

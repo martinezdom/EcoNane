@@ -33,6 +33,15 @@ export type Pack = {
   link: string
 }
 
+export type Product = {
+  id: string
+  title: string
+  price: string
+  category?: string
+  description?: string
+  active?: boolean
+}
+
 export type FAQ = {
   question: string
   answer: string
@@ -57,3 +66,58 @@ export type ClientSession = {
   photos: string[]
   zipUrl?: string
 }
+
+export type PaymentMethod = 'efectivo' | 'tarjeta' | 'bizum' | 'transferencia'
+
+export type TicketItem = {
+  id: string
+  title: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  ivaPercent: number
+}
+
+export type SaleTicket = {
+  id: string
+  ticketNumber: string
+  sequence: number
+  year: number
+  date: string
+  time: string
+  createdAt: string
+  clientName: string
+  clientEmail?: string
+  clientPhone?: string
+  clientNif?: string
+  clientAddress?: string
+  isNominative?: boolean
+  items: TicketItem[]
+  subtotal: number
+  ivaRate: number
+  ivaAmount: number
+  discountAmount?: number
+  discountNote?: string
+  total: number
+  paymentMethod: PaymentMethod
+  status: 'valido' | 'anulado'
+  cancelledReason?: string
+  cancelledAt?: string
+  notes?: string
+  emailSent?: boolean
+  viewToken: string
+}
+
+export type BusinessInfo = {
+  name: string
+  legalName: string
+  nif: string
+  address: string
+  city: string
+  postalCode: string
+  phone: string
+  email: string
+  ticketSeries: string
+  defaultIva: number
+}
+

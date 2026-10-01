@@ -31,11 +31,32 @@ const router = createRouter({
       path: '/descarga/:code',
       name: 'client-download',
       component: ClientSessionView
+    },
+    {
+      path: '/ticket/:ticketNumber',
+      name: 'client-ticket',
+      component: () => import('@/views/TicketPublicView.vue')
     }
   ],
   scrollBehavior() {
     return { top: 0 }
   }
+})
+
+router.beforeEach((to, _from, next) => {
+  if (to.path === '/admin') {
+    const isAuth = sessionStorage.getItem('econane_admin_auth') === 'true'
+    if (!isAuth) {
+      return next('/admin/login')
+    }
+  }
+  if (to.path === '/admin/login') {
+    const isAuth = sessionStorage.getItem('econane_admin_auth') === 'true'
+    if (isAuth) {
+      return next('/admin')
+    }
+  }
+  next()
 })
 
 export default router
