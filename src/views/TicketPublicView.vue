@@ -38,19 +38,19 @@ function handleGoHome() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-sand-50/60 py-8 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-stone-800">
+  <div class="min-h-screen bg-brand-cream/40 py-8 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-stone-800">
     <!-- IDOR / Unauthorized View -->
-    <div v-if="!ticket" class="max-w-md mx-auto my-16 bg-white rounded-3xl p-8 shadow-sm border border-stone-200 text-center">
+    <div v-if="!ticket" class="max-w-md mx-auto my-16 bg-white rounded-3xl p-8 shadow-sm border border-brand-pink-light/40 text-center">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
         <Lock class="w-8 h-8" />
       </div>
-      <h1 class="text-xl font-bold font-serif text-stone-900 mb-2">Comprobante no accesible</h1>
+      <h1 class="text-xl font-bold font-serif text-brand-brown-dark mb-2">Comprobante no accesible</h1>
       <p class="text-sm text-stone-600 mb-6 leading-relaxed">
         El enlace es incorrecto, ha caducado o no dispone del token de seguridad para visualizar esta factura. Por motivos de privacidad y protección de datos (RGPD), el acceso directo sin acreditación criptográfica está protegido.
       </p>
       <button
         @click="handleGoHome"
-        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-sand-500 text-white hover:bg-sand-600 font-medium text-sm transition-colors shadow-sm"
+        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-brand-brown text-white hover:bg-brand-brown-dark font-medium text-sm transition-colors shadow-sm cursor-pointer"
       >
         <ArrowLeft class="w-4 h-4" />
         Volver a la página principal
@@ -63,19 +63,19 @@ function handleGoHome() {
       <div class="flex items-center justify-between gap-4 mb-6 print:hidden">
         <button
           @click="handleGoHome"
-          class="inline-flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors font-medium"
+          class="inline-flex items-center gap-2 text-sm text-brand-brown/80 hover:text-brand-brown-dark transition-colors font-semibold cursor-pointer"
         >
           <ArrowLeft class="w-4 h-4" />
-          Volver a EcoNane
+          <span>Volver a EcoNane</span>
         </button>
 
         <div class="flex items-center gap-3">
           <button
             @click="handlePrint"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sand-600 hover:bg-sand-700 text-white text-sm font-semibold shadow-sm transition-all"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-brand-brown hover:bg-brand-brown-dark text-white text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
           >
             <Printer class="w-4 h-4" />
-            Imprimir / Guardar en PDF
+            <span>Imprimir / Guardar en PDF</span>
           </button>
         </div>
       </div>
@@ -94,8 +94,8 @@ function handleGoHome() {
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-8 border-b border-stone-200">
           <div>
             <div class="flex items-center gap-2.5 mb-2">
-              <span class="text-2xl font-bold font-serif tracking-tight text-sand-800">{{ businessInfo.name || 'EcoNane' }}</span>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-sand-100 text-sand-800 font-semibold uppercase tracking-wider">
+              <span class="text-2xl font-bold font-serif tracking-tight text-brand-brown-dark">{{ businessInfo.name || 'EcoNane' }}</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-pink-light/40 text-brand-brown-dark font-semibold uppercase tracking-wider">
                 {{ ticket.isNominative ? 'Factura Nominativa' : 'Factura Simplificada' }}
               </span>
             </div>
@@ -197,7 +197,7 @@ function handleGoHome() {
 
             <div class="flex justify-between text-base font-bold text-stone-900 pt-3 border-t border-stone-200">
               <span>TOTAL FACTURA:</span>
-              <span class="font-mono text-sand-700">{{ ticket.total.toFixed(2) }} €</span>
+              <span class="font-mono font-bold text-brand-brown text-lg">{{ ticket.total.toFixed(2) }} €</span>
             </div>
           </div>
         </div>
