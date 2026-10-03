@@ -1303,15 +1303,15 @@ onUnmounted(() => {
           </div>
 
           <!-- Quick client loader from photo sessions -->
-          <div v-if="sessions.length > 0" class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-brand-brown/80">⚡ Cargar clienta de cita:</span>
+          <div v-if="sessions.length > 0" class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <span class="text-xs font-semibold text-brand-brown/80 shrink-0">⚡ Cargar clienta de cita:</span>
             <select
               @change="(e) => {
                 const s = sessions.find(item => item.id === (e.target as HTMLSelectElement).value)
                 if (s) selectClientFromSession(s)
                 ;(e.target as HTMLSelectElement).value = ''
               }"
-              class="rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark shadow-sm focus:border-brand-pink focus:outline-none cursor-pointer"
+              class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark shadow-sm focus:border-brand-pink focus:outline-none cursor-pointer"
             >
               <option value="" disabled selected>Seleccionar cita reciente...</option>
               <option v-for="s in sessions" :key="s.id" :value="s.id">
@@ -1969,10 +1969,10 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <button
               @click="handlePrintDailyClose"
-              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-brown/20 bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-brand-brown-dark active:scale-95"
+              class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-brand-brown/20 bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-brand-brown-dark active:scale-95"
               title="Imprimir resumen de cierre de caja (arqueo) del día para cuadrar efectivo, datáfono y Bizum"
             >
               <Printer class="h-3.5 w-3.5" />
@@ -1981,7 +1981,7 @@ onUnmounted(() => {
 
             <button
               @click="handleResetTestTickets"
-              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-100 active:scale-95"
+              class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-100 active:scale-95"
               title="Borrar las ventas de prueba para dejar la caja limpia y empezar en FS-2026-0001"
             >
               <RotateCcw class="h-3.5 w-3.5" />
@@ -1990,7 +1990,7 @@ onUnmounted(() => {
 
             <button
               @click="handleExportCSV"
-              class="flex cursor-pointer items-center gap-2 rounded-2xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-800 active:scale-95"
+              class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-800 active:scale-95"
             >
               <Download class="h-4 w-4" />
               <span>Descargar Excel / CSV para el Asesor</span>
@@ -2316,7 +2316,7 @@ onUnmounted(() => {
         @click.self="lastCompletedTicket = null"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in"
       >
-        <div class="relative w-full max-w-md rounded-3xl border border-brand-pink-light/40 bg-white p-6 shadow-2xl text-center space-y-4">
+        <div class="relative w-full max-w-md rounded-3xl border border-brand-pink-light/40 bg-white p-5 sm:p-6 shadow-2xl text-center space-y-4 max-h-[92vh] overflow-y-auto">
           <!-- Close (X) button at top-right -->
           <button
             type="button"
@@ -2432,7 +2432,7 @@ onUnmounted(() => {
         @click.self="showCustomItemForm = false"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in"
       >
-        <div class="w-full max-w-sm rounded-3xl border border-brand-pink-light/40 bg-white p-6 shadow-2xl space-y-4">
+        <div class="w-full max-w-sm rounded-3xl border border-brand-pink-light/40 bg-white p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
           <div class="flex items-center justify-between border-b border-brand-pink-light/20 pb-3">
             <h3 class="font-serif text-lg font-bold text-brand-brown-dark">Concepto Personalizado</h3>
             <button @click="showCustomItemForm = false" class="text-brand-brown/60 hover:text-brand-brown cursor-pointer">
@@ -2494,7 +2494,7 @@ onUnmounted(() => {
         @click.self="ticketToCancel = null"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in"
       >
-        <div class="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-2xl space-y-4">
+        <div class="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
           <div class="flex items-center gap-3 text-rose-600">
             <AlertTriangle class="h-6 w-6" />
             <h3 class="font-serif text-lg font-bold text-brand-brown-dark">
@@ -2546,7 +2546,7 @@ onUnmounted(() => {
         @click.self="showNewProductModal = false"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in"
       >
-        <div class="w-full max-w-sm rounded-3xl border border-brand-pink-light/40 bg-white p-6 shadow-2xl space-y-4">
+        <div class="w-full max-w-sm rounded-3xl border border-brand-pink-light/40 bg-white p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
           <div class="flex items-center justify-between border-b border-brand-pink-light/20 pb-3">
             <div class="flex items-center gap-2">
               <ShoppingBag class="h-5 w-5 text-brand-pink" />

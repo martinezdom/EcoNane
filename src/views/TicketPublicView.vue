@@ -60,28 +60,28 @@ function handleGoHome() {
     <!-- Authorized Ticket Content -->
     <div v-else class="max-w-3xl mx-auto">
       <!-- Top Action Bar (hidden on print) -->
-      <div class="flex items-center justify-between gap-4 mb-6 print:hidden">
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mb-6 print:hidden">
         <button
           @click="handleGoHome"
-          class="inline-flex items-center gap-2 text-sm text-brand-brown/80 hover:text-brand-brown-dark transition-colors font-semibold cursor-pointer"
+          class="inline-flex items-center justify-center sm:justify-start gap-2 text-sm text-brand-brown/80 hover:text-brand-brown-dark transition-colors font-semibold cursor-pointer py-1"
         >
-          <ArrowLeft class="w-4 h-4" />
+          <ArrowLeft class="w-4 h-4 shrink-0" />
           <span>Volver a EcoNane</span>
         </button>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
           <button
             @click="handlePrint"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-brand-brown hover:bg-brand-brown-dark text-white text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-brand-brown hover:bg-brand-brown-dark text-white text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
           >
-            <Printer class="w-4 h-4" />
+            <Printer class="w-4 h-4 shrink-0" />
             <span>Imprimir / Guardar en PDF</span>
           </button>
         </div>
       </div>
 
       <!-- Main Invoice Document -->
-      <div class="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border border-stone-200 print:border-none print:shadow-none print:p-0">
+      <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 shadow-sm border border-stone-200 print:border-none print:shadow-none print:p-0">
         <!-- Status Banner if Cancelled -->
         <div v-if="ticket.status === 'anulado'" class="mb-8 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 text-sm">
           <AlertTriangle class="w-5 h-5 shrink-0" />
@@ -91,9 +91,9 @@ function handleGoHome() {
         </div>
 
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-8 border-b border-stone-200">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-6 sm:pb-8 border-b border-stone-200">
           <div>
-            <div class="flex items-center gap-2.5 mb-2">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
               <span class="text-2xl font-bold font-serif tracking-tight text-brand-brown-dark">{{ businessInfo.name || 'EcoNane' }}</span>
               <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-pink-light/40 text-brand-brown-dark font-semibold uppercase tracking-wider">
                 {{ ticket.isNominative ? 'Factura Nominativa' : 'Factura Simplificada' }}
@@ -148,14 +148,14 @@ function handleGoHome() {
         </div>
 
         <!-- Items Table -->
-        <div class="py-6">
-          <table class="w-full text-left text-xs">
+        <div class="py-6 overflow-x-auto">
+          <table class="w-full text-left text-xs min-w-[290px]">
             <thead>
               <tr class="border-b border-stone-200 text-stone-400 text-[11px] uppercase tracking-wider">
                 <th class="pb-3 font-semibold">Concepto / Servicio</th>
-                <th class="pb-3 text-center font-semibold w-16">Cant.</th>
-                <th class="pb-3 text-right font-semibold w-24">Precio Unit.</th>
-                <th class="pb-3 text-right font-semibold w-24">Total</th>
+                <th class="pb-3 text-center font-semibold w-12 sm:w-16">Cant.</th>
+                <th class="pb-3 text-right font-semibold w-16 sm:w-24">Precio</th>
+                <th class="pb-3 text-right font-semibold w-18 sm:w-24">Total</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-stone-100">
@@ -163,13 +163,13 @@ function handleGoHome() {
                 <td class="py-3.5 pr-2 font-medium text-stone-900">
                   {{ item.title }}
                 </td>
-                <td class="py-3.5 text-center text-stone-500">
+                <td class="py-3.5 text-center text-stone-500 whitespace-nowrap">
                   {{ item.quantity }}
                 </td>
-                <td class="py-3.5 text-right text-stone-500">
+                <td class="py-3.5 text-right text-stone-500 whitespace-nowrap">
                   {{ item.unitPrice.toFixed(2) }} €
                 </td>
-                <td class="py-3.5 text-right font-semibold text-stone-900">
+                <td class="py-3.5 text-right font-semibold text-stone-900 whitespace-nowrap">
                   {{ item.totalPrice.toFixed(2) }} €
                 </td>
               </tr>
@@ -179,7 +179,7 @@ function handleGoHome() {
 
         <!-- Totals & Taxes Breakdown -->
         <div class="pt-4 border-t border-stone-200">
-          <div class="sm:w-72 ml-auto space-y-2 text-xs">
+          <div class="w-full sm:w-72 sm:ml-auto space-y-2 text-xs">
             <div v-if="ticket.discountAmount && ticket.discountAmount > 0" class="flex justify-between text-emerald-600 font-medium">
               <span>Descuento aplicado {{ ticket.discountNote ? `(${ticket.discountNote})` : '' }}:</span>
               <span>-{{ ticket.discountAmount.toFixed(2) }} €</span>

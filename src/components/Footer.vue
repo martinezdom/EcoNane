@@ -116,19 +116,13 @@ const benefits: Benefit[] = [
         class="text-brand-pink-light/50 flex flex-col items-center justify-between gap-4 pt-8 text-xs sm:flex-row"
       >
         <p>
-          © 2026 EcoNane. Todos los derechos reservados. Desarrollado por
-          <a
-            href="https://confitic.es"
-            target="_blank"
-            class="hover:text-brand-cream decoration-brand-pink-light/30 underline transition-colors"
-            >ConfiTIC</a
-          >
-          <span class="mx-1 opacity-60">|</span>
+          © 2026 EcoNane. Todos los derechos reservados. Creado por
           <a
             href="https://martinezdom.github.io/"
             target="_blank"
+            rel="noopener noreferrer"
             class="hover:text-brand-cream decoration-brand-pink-light/30 underline transition-colors"
-            >@martinezdom</a
+            >martinezdom</a
           >.
         </p>
         <div class="flex gap-4">
@@ -153,8 +147,8 @@ const benefits: Benefit[] = [
 
     <!-- Modal: Aviso Legal -->
     <div v-if="isAvisoOpen" class="modal-overlay" @click.self="isAvisoOpen = false">
-      <div class="modal-card text-brand-brown-dark flex flex-col gap-4">
-        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
+      <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-brand-cream z-10">
           <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Aviso Legal</h3>
           <button
             @click="isAvisoOpen = false"
@@ -163,7 +157,7 @@ const benefits: Benefit[] = [
             ✕
           </button>
         </div>
-        <div class="space-y-4 text-sm leading-relaxed">
+        <div class="space-y-4 text-xs sm:text-sm leading-relaxed">
           <p>
             En cumplimiento del deber de información, se hace constar que este sitio web es una
             presentación informativa y comercial para el centro de ecografías emocionales <strong>EcoNane</strong>, ubicado en Carrer Colón, 114, 03570 La Vila Joiosa (Alicante).
@@ -172,18 +166,13 @@ const benefits: Benefit[] = [
             <strong>Aviso de carácter no diagnóstico:</strong> Las sesiones de ecografía emocional 4D y 5D realizadas en EcoNane tienen una finalidad exclusivamente afectiva, lúdica y de recuerdo familiar. En ningún caso sustituyen las ecografías médicas diagnósticas ni el seguimiento ginecológico y obstétrico oficial de la salud del embarazo.
           </p>
           <p>
-            El desarrollo técnico y diseño web ha sido realizado por
+            El desarrollo técnico y diseño web ha sido creado por
             <a
               href="https://martinezdom.github.io/"
               target="_blank"
+              rel="noopener noreferrer"
               class="text-brand-pink font-semibold hover:underline"
-              >Miguel Ángel Martínez Domínguez (@martinezdom)</a
-            > ·
-            <a
-              href="https://confitic.es"
-              target="_blank"
-              class="text-brand-pink font-semibold hover:underline"
-              >ConfiTIC</a
+              >martinezdom</a
             >.
           </p>
           <p>
