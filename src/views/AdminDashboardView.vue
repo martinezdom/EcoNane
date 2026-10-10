@@ -510,13 +510,16 @@ async function handleDeleteProduct(id: string, title: string) {
 }
 
 async function handleResetTestTickets() {
-  const confirmed = confirm(
-    '¿Estás seguro de que deseas vaciar todas las facturas y tickets de prueba?\n\n' +
-    'Esta acción borrará el historial de pruebas para que la tienda quede completamente a cero y el próximo ticket sea el FS-2026-0001.'
+  const userInput = prompt(
+    '⚠️ ATENCIÓN: Esta acción borrará todas las facturas y tickets emitidos para que el próximo ticket sea el FS-2026-0001.\n\n' +
+    'Solo debe utilizarse para limpiar ventas de prueba ficticias antes de abrir al público.\n\n' +
+    'Para confirmar, escribe exactamente la palabra REINICIAR:'
   )
-  if (confirmed) {
+  if (userInput && userInput.trim().toUpperCase() === 'REINICIAR') {
     await resetSalesTickets()
-    showSuccess('¡Historial de prueba borrado! El contador se ha reiniciado a FS-2026-0001.')
+    showSuccess('¡Historial reiniciado! El contador volverá a empezar en FS-2026-0001.')
+  } else if (userInput !== null) {
+    alert('Acción cancelada. No se ha modificado ningún dato porque no se escribió "REINICIAR".')
   }
 }
 
@@ -1977,15 +1980,6 @@ onUnmounted(() => {
             >
               <Printer class="h-3.5 w-3.5" />
               <span>Imprimir Cierre Diario (Arqueo)</span>
-            </button>
-
-            <button
-              @click="handleResetTestTickets"
-              class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-100 active:scale-95"
-              title="Borrar las ventas de prueba para dejar la caja limpia y empezar en FS-2026-0001"
-            >
-              <RotateCcw class="h-3.5 w-3.5" />
-              <span>Reiniciar a Ticket 0001</span>
             </button>
 
             <button
@@ -3626,6 +3620,37 @@ onUnmounted(() => {
               Guardar Nueva Clave
             </button>
           </form>
+        </div>
+
+        <!-- 3. MANTENIMIENTO Y ZONA DE SEGURIDAD -->
+        <div class="rounded-3xl border border-rose-200 bg-rose-50/40 p-6 shadow-sm sm:p-8 space-y-4">
+          <div class="border-b border-rose-200/70 pb-3">
+            <div class="flex items-center gap-2 text-rose-800 font-bold">
+              <AlertTriangle class="h-5 w-5 text-rose-600" />
+              <h3 class="font-serif text-lg">Zona de Mantenimiento y Puesta a Cero</h3>
+            </div>
+            <p class="mt-1 text-xs text-rose-700/80">
+              Opciones protegidas para administradores. Requiere confirmación escrita manual para evitar cualquier borrado accidental.
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-rose-950">Reiniciar Contador de Ventas a 0001</h4>
+              <p class="text-xs text-stone-600 mt-0.5 max-w-lg">
+                Borra el registro actual de facturas y sitúa la próxima venta en el número <strong>FS-2026-0001</strong>. Solo debe utilizarse para limpiar pruebas ficticias antes de la apertura oficial.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="handleResetTestTickets"
+              class="flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-rose-300 bg-white px-4 py-2.5 text-xs font-bold text-rose-700 shadow-xs transition-all hover:bg-rose-100 active:scale-95 shrink-0"
+              title="Borrar las ventas de prueba para dejar la caja limpia y empezar en FS-2026-0001"
+            >
+              <RotateCcw class="h-3.5 w-3.5" />
+              <span>Reiniciar a Ticket 0001</span>
+            </button>
+          </div>
         </div>
       </div>
     </main>
