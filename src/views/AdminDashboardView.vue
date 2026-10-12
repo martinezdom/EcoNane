@@ -32,6 +32,7 @@ import {
   Sparkles,
   Calendar,
   CalendarPlus,
+  Pencil,
   Phone,
   User,
   Lock,
@@ -1365,6 +1366,67 @@ async function handleCreateManualAppointment() {
   }
 }
 
+// Modal: Editar Cita Existente
+const showEditAppointmentModal = ref(false)
+const editingAppointmentId = ref('')
+const editAppointmentForm = ref({
+  clientName: '',
+  clientPhone: '',
+  clientEmail: '',
+  gestationWeek: '',
+  serviceTitle: '',
+  servicePrice: '',
+  serviceDuration: 45,
+  date: '',
+  time: '',
+  notes: '',
+  status: 'confirmed' as AppointmentStatus
+})
+
+function openEditAppointment(appt: Appointment) {
+  editingAppointmentId.value = appt.id
+  editAppointmentForm.value = {
+    clientName: appt.clientName || '',
+    clientPhone: appt.clientPhone || '',
+    clientEmail: appt.clientEmail || '',
+    gestationWeek: appt.gestationWeek || '',
+    serviceTitle: appt.serviceTitle,
+    servicePrice: appt.servicePrice,
+    serviceDuration: appt.serviceDuration || 45,
+    date: appt.date,
+    time: appt.time,
+    notes: appt.notes || '',
+    status: appt.status
+  }
+  showEditAppointmentModal.value = true
+}
+
+async function handleSaveEditAppointment() {
+  if (!editAppointmentForm.value.clientName.trim() || !editAppointmentForm.value.clientPhone.trim()) {
+    alert('Por favor indica al menos el nombre y teléfono.')
+    return
+  }
+  try {
+    await updateAppointment(editingAppointmentId.value, {
+      clientName: editAppointmentForm.value.clientName.trim(),
+      clientPhone: editAppointmentForm.value.clientPhone.trim(),
+      clientEmail: editAppointmentForm.value.clientEmail.trim(),
+      gestationWeek: editAppointmentForm.value.gestationWeek.trim(),
+      serviceTitle: editAppointmentForm.value.serviceTitle,
+      servicePrice: editAppointmentForm.value.servicePrice,
+      serviceDuration: editAppointmentForm.value.serviceDuration,
+      date: editAppointmentForm.value.date,
+      time: editAppointmentForm.value.time,
+      notes: editAppointmentForm.value.notes.trim(),
+      status: editAppointmentForm.value.status
+    })
+    showEditAppointmentModal.value = false
+    showSuccess('¡Datos de la cita actualizados con éxito!')
+  } catch (err: any) {
+    alert('Error al actualizar la cita: ' + (err?.message || err))
+  }
+}
+
 // Modal: Configurar Horarios y Festivos
 const showBookingSettingsModal = ref(false)
 const settingsForm = ref<BookingSettings>(JSON.parse(JSON.stringify(bookingSettings.value)))
@@ -1451,6 +1513,8 @@ function handleKeydown(e: KeyboardEvent) {
       showNewProductModal.value = false
     } else if (showManualAppointmentModal.value) {
       showManualAppointmentModal.value = false
+    } else if (showEditAppointmentModal.value) {
+      showEditAppointmentModal.value = false
     } else if (showBookingSettingsModal.value) {
       showBookingSettingsModal.value = false
     } else if (ticketToCancel.value) {
@@ -1967,6 +2031,16 @@ onUnmounted(() => {
                   title="Descargar archivo .ics para Outlook/Apple"
                 >
                   <Download class="h-3.5 w-3.5" />
+                </button>
+
+                <!-- Editar Cita -->
+                <button
+                  type="button"
+                  @click="openEditAppointment(appt)"
+                  class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-700 hover:text-brand-brown-dark hover:bg-brand-cream/50 transition-colors"
+                  title="Editar datos de la cita (nombre de la clienta, notas, fecha u hora)"
+                >
+                  <Pencil class="h-3.5 w-3.5" />
                 </button>
 
                 <!-- Delete -->
@@ -4555,6 +4629,187 @@ onUnmounted(() => {
               >
                 <Plus class="h-4 w-4" />
                 <span>Guardar Cita</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- MODAL: EDITAR CITA                             -->
+      <!-- ============================================== -->
+      <div
+        v-if="showEditAppointmentModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+      >
+        <div class="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-brand-pink-light/40">
+          <button
+            type="button"
+            @click="showEditAppointmentModal = false"
+            class="absolute right-5 top-5 rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+          >
+            <X class="h-5 w-5" />
+          </button>
+
+          <div class="flex items-center gap-2 mb-1">
+            <Pencil class="h-5 w-5 text-brand-pink" />
+            <h3 class="font-serif text-xl font-bold text-brand-brown-dark">Editar Datos de la Cita</h3>
+          </div>
+          <p class="text-xs text-brand-brown/70 mb-6">
+            Modifica el nombre de la clienta, teléfono, servicio o notas de la reserva.
+          </p>
+
+          <form @submit.prevent="handleSaveEditAppointment" class="space-y-4">
+            <!-- Client Name & Phone -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Nombre de la Mamá / Familia *</label>
+                <input
+                  v-model="editAppointmentForm.clientName"
+                  type="text"
+                  required
+                  placeholder="Ej: Laura Domínguez"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Teléfono Móvil *</label>
+                <input
+                  v-model="editAppointmentForm.clientPhone"
+                  type="tel"
+                  required
+                  placeholder="Ej: 644189856"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Email & Gestation Week -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Email</label>
+                <input
+                  v-model="editAppointmentForm.clientEmail"
+                  type="email"
+                  placeholder="cliente@ejemplo.com"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Semanas de Gestación</label>
+                <input
+                  v-model="editAppointmentForm.gestationWeek"
+                  type="text"
+                  placeholder="Ej: Semana 24"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Service Selection -->
+            <div>
+              <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Servicio / Experiencia *</label>
+              <select
+                v-model="editAppointmentForm.serviceTitle"
+                @change="(e) => {
+                  const val = (e.target as HTMLSelectElement).value
+                  const exp = experiences.find(x => x.title === val)
+                  if (exp) {
+                    editAppointmentForm.servicePrice = exp.price
+                    let dur = 45
+                    if (exp.duration) {
+                      const m = exp.duration.match(/\d+/)
+                      if (m) dur = parseInt(m[0], 10)
+                    }
+                    editAppointmentForm.serviceDuration = dur
+                    return
+                  }
+                  const pack = packs.find(x => x.title === val)
+                  if (pack) {
+                    editAppointmentForm.servicePrice = pack.price
+                    editAppointmentForm.serviceDuration = 55
+                  }
+                }"
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none cursor-pointer"
+              >
+                <optgroup label="Ecografías y Experiencias">
+                  <option v-for="exp in experiences" :key="exp.title" :value="exp.title">
+                    {{ exp.title }} ({{ exp.price }})
+                  </option>
+                </optgroup>
+                <optgroup label="Packs de Sesiones">
+                  <option v-for="pack in packs" :key="pack.title" :value="pack.title">
+                    {{ pack.title }} ({{ pack.price }})
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Fecha de la Cita *</label>
+                <input
+                  v-model="editAppointmentForm.date"
+                  type="date"
+                  required
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Hora *</label>
+                <input
+                  v-model="editAppointmentForm.time"
+                  type="text"
+                  required
+                  placeholder="11:30"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Estado de la Cita</label>
+              <select
+                v-model="editAppointmentForm.status"
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none cursor-pointer"
+              >
+                <option value="confirmed">Confirmada</option>
+                <option value="completed">Realizada</option>
+                <option value="cancelled">Cancelada</option>
+                <option value="no_show">No Presentada</option>
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Observaciones / Notas</label>
+              <textarea
+                v-model="editAppointmentForm.notes"
+                rows="2"
+                placeholder="Detalles adicionales, acompañantes..."
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-brand-pink-light/20">
+              <button
+                type="button"
+                @click="showEditAppointmentModal = false"
+                class="rounded-xl px-4 py-2.5 text-xs font-semibold text-brand-brown hover:bg-brand-cream transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand-brown px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-brown-dark active:scale-95 transition-all"
+              >
+                <Check class="h-4 w-4" />
+                <span>Guardar Cambios</span>
               </button>
             </div>
           </form>

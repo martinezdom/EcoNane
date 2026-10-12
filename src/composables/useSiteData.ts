@@ -229,6 +229,150 @@ const defaultBookingSettings: BookingSettings = {
   blockedDates: []
 }
 
+const defaultAppointments: Appointment[] = [
+  {
+    id: 'appt-tata-1',
+    bookingCode: 'ECO-1318',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-13',
+    time: '18:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-2',
+    bookingCode: 'ECO-1411',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco para Conocer el Sexo',
+    serviceDuration: 30,
+    servicePrice: '30€',
+    date: '2026-10-14',
+    time: '11:00',
+    notes: 'Anotada por Tata (Latidos)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-3',
+    bookingCode: 'ECO-1417',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-14',
+    time: '17:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-4',
+    bookingCode: 'ECO-1619',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-16',
+    time: '19:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-5',
+    bookingCode: 'ECO-1711',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-17',
+    time: '11:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-6',
+    bookingCode: 'ECO-2417',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-24',
+    time: '17:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:42:00.000Z'
+  },
+  {
+    id: 'appt-tata-7',
+    bookingCode: 'ECO-2718',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Eco Básica 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '45€',
+    date: '2026-10-27',
+    time: '18:00',
+    notes: 'Anotada por Tata (5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  },
+  {
+    id: 'appt-tata-8',
+    bookingCode: 'ECO-0210',
+    clientName: 'Reserva WhatsApp (Tata)',
+    clientPhone: '644189856',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: 'Experiencia Gafas Virtuales + Eco 4D/5D',
+    serviceDuration: 45,
+    servicePrice: '75€',
+    date: '2026-11-02',
+    time: '10:00',
+    notes: 'Anotada por Tata (Gafas VR + Eco 5D)',
+    status: 'confirmed',
+    createdAt: '2026-10-12T18:40:00.000Z'
+  }
+]
+
+function getInitialAppointments(): Appointment[] {
+  const stored = loadFromStorage<Appointment[]>(STORAGE_KEY_APPOINTMENTS, [])
+  if (!stored || stored.length === 0) {
+    return defaultAppointments
+  }
+  const existingIds = new Set(stored.map(a => a.id))
+  const missing = defaultAppointments.filter(d => !existingIds.has(d.id))
+  if (missing.length > 0) {
+    return [...stored, ...missing]
+  }
+  return stored
+}
+
 // Global Reactive Singletons
 const promotion = ref<Promotion>(loadFromStorage(STORAGE_KEY_PROMO, defaultPromotion))
 const experiences = ref<Experience[]>(
@@ -241,7 +385,7 @@ const products = ref<Product[]>(loadFromStorage(STORAGE_KEY_PRODUCTS, defaultPro
 const sessions = ref<ClientSession[]>(loadFromStorage(STORAGE_KEY_SESSIONS, defaultDemoSessions))
 const businessInfo = ref<BusinessInfo>(loadFromStorage(STORAGE_KEY_BIZ, defaultBusinessInfo))
 const salesTickets = ref<SaleTicket[]>(loadFromStorage(STORAGE_KEY_TICKETS, defaultDemoTickets))
-const appointments = ref<Appointment[]>(loadFromStorage(STORAGE_KEY_APPOINTMENTS, []))
+const appointments = ref<Appointment[]>(getInitialAppointments())
 const bookingSettings = ref<BookingSettings>(loadFromStorage(STORAGE_KEY_BOOKING_SETTINGS, defaultBookingSettings))
 const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
 const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
