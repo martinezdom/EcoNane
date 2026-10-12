@@ -102,27 +102,35 @@ ALTER TABLE public.sales_tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
 -- 6. Políticas de Lectura y Escritura Públicas para la Web y Panel
+DROP POLICY IF EXISTS "Permitir lectura publica en site_settings" ON public.site_settings;
 CREATE POLICY "Permitir lectura publica en site_settings" ON public.site_settings
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Permitir actualizacion publica en site_settings" ON public.site_settings;
 CREATE POLICY "Permitir actualizacion publica en site_settings" ON public.site_settings
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura publica en client_sessions" ON public.client_sessions;
 CREATE POLICY "Permitir lectura publica en client_sessions" ON public.client_sessions
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Permitir insercion y gestion publica en client_sessions" ON public.client_sessions;
 CREATE POLICY "Permitir insercion y gestion publica en client_sessions" ON public.client_sessions
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura publica en sales_tickets" ON public.sales_tickets;
 CREATE POLICY "Permitir lectura publica en sales_tickets" ON public.sales_tickets
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets;
 CREATE POLICY "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets
   FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura publica en appointments" ON public.appointments;
 CREATE POLICY "Permitir lectura publica en appointments" ON public.appointments
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Permitir insercion y gestion publica en appointments" ON public.appointments;
 CREATE POLICY "Permitir insercion y gestion publica en appointments" ON public.appointments
   FOR ALL USING (true);
 
@@ -132,12 +140,15 @@ VALUES ('ultrasound-photos', 'ultrasound-photos', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Políticas de Storage para subir y ver fotos
+DROP POLICY IF EXISTS "Permitir ver fotos publicas" ON storage.objects;
 CREATE POLICY "Permitir ver fotos publicas" ON storage.objects
   FOR SELECT USING (bucket_id = 'ultrasound-photos');
 
+DROP POLICY IF EXISTS "Permitir subir fotos desde panel" ON storage.objects;
 CREATE POLICY "Permitir subir fotos desde panel" ON storage.objects
   FOR INSERT WITH CHECK (bucket_id = 'ultrasound-photos');
 
+DROP POLICY IF EXISTS "Permitir borrar fotos" ON storage.objects;
 CREATE POLICY "Permitir borrar fotos" ON storage.objects
   FOR DELETE USING (bucket_id = 'ultrasound-photos');
 
