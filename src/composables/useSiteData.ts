@@ -554,6 +554,29 @@ async function syncFromSupabase() {
           cancelledReason: row.cancelled_reason || '',
           reminderSent: Boolean(row.reminder_sent)
         }))
+      } else if (!apptError && apptData && apptData.length === 0 && appointments.value.length > 0) {
+        // La tabla se acaba de crear en Supabase y está vacía: subimos las citas iniciales para sincronización multi-dispositivo inmediata
+        try {
+          const rowsToInsert = appointments.value.map(a => ({
+            id: a.id,
+            booking_code: a.bookingCode,
+            date: a.date,
+            time: a.time,
+            duration_minutes: a.serviceDuration || 45,
+            service_title: a.serviceTitle,
+            service_price: a.servicePrice || '',
+            client_name: a.clientName,
+            client_phone: a.clientPhone,
+            client_email: a.clientEmail || '',
+            gestation_week: a.gestationWeek || '',
+            notes: a.notes || '',
+            status: a.status || 'confirmed',
+            reminder_sent: a.reminderSent || false
+          }))
+          await supabase.from('appointments').insert(rowsToInsert)
+        } catch (seedErr) {
+          console.warn('Could not auto-seed appointments into Supabase:', seedErr)
+        }
       }
     } catch (e) {
       // Fallback si la tabla aún no se ha creado

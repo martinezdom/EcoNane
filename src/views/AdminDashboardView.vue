@@ -62,7 +62,9 @@ import {
   ShieldCheck,
   BadgePercent,
   DollarSign,
-  ShoppingBag
+  ShoppingBag,
+  Star,
+  RefreshCw
 } from '@lucide/vue'
 
 const router = useRouter()
@@ -111,7 +113,8 @@ const {
   deleteAppointment,
   saveBookingSettings,
   generateGoogleCalendarUrl,
-  generateWhatsAppBookingUrl
+  generateWhatsAppBookingUrl,
+  syncFromSupabase
 } = useSiteData()
 
 if (!isAdminLoggedIn.value) {
@@ -1152,6 +1155,34 @@ const todayStr = computed(() => {
   return `${year}-${month}-${day}`
 })
 
+const tomorrowStr = computed(() => {
+  const tmr = new Date()
+  tmr.setDate(tmr.getDate() + 1)
+  const year = tmr.getFullYear()
+  const month = (tmr.getMonth() + 1).toString().padStart(2, '0')
+  const day = tmr.getDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
+
+const daysOfWeekEs = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const monthsEs = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+]
+
+function formatApptDateHuman(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length !== 3) return dateStr
+  const y = Number(parts[0])
+  const m = Number(parts[1]) - 1
+  const d = Number(parts[2])
+  const dateObj = new Date(y, m, d)
+  const dayName = daysOfWeekEs[dateObj.getDay()] || ''
+  const monthName = monthsEs[m] || ''
+  return `${dayName}, ${d} de ${monthName}`
+}
+
 const todayAppointmentsCount = computed(() => {
   return appointments.value.filter(a => a.date === todayStr.value && a.status !== 'cancelled').length
 })
@@ -1260,6 +1291,46 @@ function openWhatsAppReminder(appt: Appointment) {
     `Si tienes cualquier duda o necesitas ajustar la hora, estamos aquí para ayudarte. ¡Te esperamos!`
   )
   window.open(`https://wa.me/${fullPhone}?text=${text}`, '_blank')
+}
+
+function sendGoogleReviewRequest(appt: Appointment) {
+  const cleanPhone = appt.clientPhone.replace(/\D/g, '')
+  const fullPhone = cleanPhone.startsWith('34') ? cleanPhone : `34${cleanPhone}`
+  const text = encodeURIComponent(
+    `¡Hola ${appt.clientName}! ❤️ Muchísimas gracias por visitarnos en EcoNane y compartir un momento tan emocionante con nosotros.\n\n` +
+    `¿Qué te ha parecido la experiencia de tu ecografía? Nos ayudarías con tus 5 estrellas dejando una breve reseña en Google (¡solo te llevará 30 segundos!): ⭐\n\n` +
+    `👉 https://share.google/BXdcvYZWLOvxcCEIX\n\n` +
+    `¡Mil gracias y un fuerte abrazo para toda la familia!`
+  )
+  window.open(`https://wa.me/${fullPhone}?text=${text}`, '_blank')
+}
+
+function getWhatsAppReviewShareUrl(ticket?: SaleTicket | null) {
+  const phone = ticket?.clientPhone ? ticket.clientPhone.replace(/\D/g, '') : ''
+  const fullPhone = phone ? (phone.startsWith('34') ? phone : `34${phone}`) : ''
+  const name = ticket?.clientName || 'mamá'
+  const text = encodeURIComponent(
+    `¡Hola ${name}! ❤️ Muchísimas gracias por visitarnos en EcoNane y compartir tu experiencia con nosotros.\n\n` +
+    `¿Qué te ha parecido la atención? Nos ayudarías de corazón dejando tu reseña y estrellas en Google (¡solo lleva medio minuto!): ⭐\n\n` +
+    `👉 https://share.google/BXdcvYZWLOvxcCEIX\n\n` +
+    `¡Mil gracias de parte de todo el equipo de EcoNane!`
+  )
+  return fullPhone ? `https://wa.me/${fullPhone}?text=${text}` : `https://wa.me/?text=${text}`
+}
+
+const isSyncing = ref(false)
+async function triggerManualSync() {
+  isSyncing.value = true
+  try {
+    await syncFromSupabase()
+    showSuccess('¡Agenda y datos sincronizados con la nube!')
+  } catch (err: any) {
+    alert('Error al sincronizar: ' + (err?.message || err))
+  } finally {
+    setTimeout(() => {
+      isSyncing.value = false
+    }, 600)
+  }
 }
 
 function downloadIcsForAppt(appt: Appointment) {
@@ -1524,12 +1595,18 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function handleWindowFocus() {
+  syncFromSupabase()
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('focus', handleWindowFocus)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('focus', handleWindowFocus)
 })
 </script>
 
@@ -1568,11 +1645,11 @@ onUnmounted(() => {
 
       <!-- Navigation Tabs -->
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex gap-2 overflow-x-auto border-t border-brand-pink-light/20 pt-2 pb-1.5 scrollbar-none">
+        <div class="flex gap-1.5 sm:gap-2 overflow-x-auto border-t border-brand-pink-light/20 pt-2 pb-1.5 scrollbar-none">
           <button
             @click="activeTab = 'agenda'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'agenda'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1582,7 +1659,7 @@ onUnmounted(() => {
             <span>Agenda y Citas</span>
             <span
               v-if="todayAppointmentsCount > 0"
-              class="ml-1 rounded-full bg-brand-pink px-2 py-0.5 text-xs font-bold text-white shadow-xs"
+              class="ml-1 rounded-full bg-brand-pink px-1.5 py-0.5 text-[11px] font-bold text-white shadow-xs"
             >
               {{ todayAppointmentsCount }} hoy
             </span>
@@ -1591,7 +1668,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'tpv'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'tpv'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1604,7 +1681,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'accounting'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'accounting'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1617,7 +1694,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'sessions'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'sessions'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1627,7 +1704,7 @@ onUnmounted(() => {
             <span>Entrega de Fotos</span>
             <span
               v-if="sessions.length > 0"
-              class="ml-1 rounded-full bg-brand-pink-light/40 px-2 py-0.5 text-xs text-brand-brown-dark"
+              class="ml-1 rounded-full bg-brand-pink-light/40 px-1.5 py-0.5 text-[11px] text-brand-brown-dark"
               :class="{ 'bg-white/25 text-white': activeTab === 'sessions' }"
             >
               {{ sessions.length }}
@@ -1637,7 +1714,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'prices'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'prices'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1650,7 +1727,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'promo'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'promo'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1663,7 +1740,7 @@ onUnmounted(() => {
           <button
             @click="activeTab = 'settings'"
             :class="[
-              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              'flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm font-semibold whitespace-nowrap transition-all duration-200',
               activeTab === 'settings'
                 ? 'bg-brand-brown text-white shadow-md'
                 : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
@@ -1717,6 +1794,17 @@ onUnmounted(() => {
 
             <button
               type="button"
+              @click="triggerManualSync"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-3.5 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
+              :class="{ 'opacity-70 pointer-events-none': isSyncing }"
+              title="Sincronizar citas con la nube para ver cambios en cualquier dispositivo"
+            >
+              <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': isSyncing }" />
+              <span>{{ isSyncing ? 'Sincronizando...' : 'Sincronizar' }}</span>
+            </button>
+
+            <button
+              type="button"
               @click="exportAppointmentsToCSV(filteredAppointments)"
               class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-3.5 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
               title="Descargar lista de citas filtradas a Excel / CSV"
@@ -1746,7 +1834,7 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ todayAppointmentsCount }}</span>
+              <span class="text-3xl font-black text-brand-brown-dark tracking-tight">{{ todayAppointmentsCount }}</span>
               <span class="text-[11px] text-brand-brown/60">programadas</span>
             </div>
           </div>
@@ -1759,7 +1847,7 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ upcomingAppointmentsCount }}</span>
+              <span class="text-3xl font-black text-brand-brown-dark tracking-tight">{{ upcomingAppointmentsCount }}</span>
               <span class="text-[11px] text-brand-brown/60">confirmadas</span>
             </div>
           </div>
@@ -1772,7 +1860,7 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ thisMonthCompletedCount }}</span>
+              <span class="text-3xl font-black text-brand-brown-dark tracking-tight">{{ thisMonthCompletedCount }}</span>
               <span class="text-[11px] text-brand-brown/60">este mes</span>
             </div>
           </div>
@@ -1785,7 +1873,7 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="mt-2 flex items-baseline gap-2">
-              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ appointments.length }}</span>
+              <span class="text-3xl font-black text-brand-brown-dark tracking-tight">{{ appointments.length }}</span>
               <span class="text-[11px] text-brand-brown/60">en sistema</span>
             </div>
           </div>
@@ -1911,7 +1999,7 @@ onUnmounted(() => {
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/20 pb-3">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="rounded-xl bg-brand-cream/80 px-3 py-1 text-xs font-bold text-brand-brown-dark border border-brand-pink-light/40">
-                  📅 {{ appt.date }} · ⏰ {{ appt.time }} h ({{ appt.serviceDuration }} min)
+                  📅 {{ formatApptDateHuman(appt.date) }} · ⏰ {{ appt.time }} h ({{ appt.serviceDuration }} min)
                 </span>
                 <span class="font-mono text-xs font-extrabold text-brand-pink bg-brand-pink-light/30 px-2.5 py-1 rounded-xl">
                   {{ appt.bookingCode }}
@@ -1921,6 +2009,12 @@ onUnmounted(() => {
                   class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider animate-pulse"
                 >
                   Hoy
+                </span>
+                <span
+                  v-else-if="appt.date === tomorrowStr"
+                  class="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider"
+                >
+                  Mañana
                 </span>
               </div>
 
@@ -1947,9 +2041,9 @@ onUnmounted(() => {
 
             <!-- Middle Row: Client & Service Details -->
             <div class="grid grid-cols-1 gap-4 py-3.5 sm:grid-cols-12 sm:items-center">
-              <div class="space-y-1 sm:col-span-5">
+              <div class="space-y-1 sm:col-span-4">
                 <div class="flex items-center gap-2">
-                  <h4 class="font-serif text-base font-bold text-brand-brown-dark">{{ appt.clientName }}</h4>
+                  <h4 class="text-base font-bold text-brand-brown-dark">{{ appt.clientName }}</h4>
                   <span
                     v-if="appt.gestationWeek"
                     class="rounded-full bg-brand-pink-light/30 px-2 py-0.5 text-[10px] font-bold text-brand-brown"
@@ -1962,13 +2056,13 @@ onUnmounted(() => {
                     :href="`tel:${appt.clientPhone}`"
                     class="flex items-center gap-1 font-semibold text-brand-brown hover:text-brand-pink transition-colors"
                   >
-                    <Phone class="h-3.5 w-3.5" />
+                    <Phone class="h-3.5 w-3.5 text-stone-500" />
                     <span>{{ appt.clientPhone }}</span>
                   </a>
                   <a
                     v-if="appt.clientEmail"
                     :href="`mailto:${appt.clientEmail}`"
-                    class="flex items-center gap-1 text-brand-brown/70 hover:text-brand-pink transition-colors"
+                    class="flex items-center gap-1 text-stone-500 hover:text-brand-pink transition-colors"
                   >
                     <Mail class="h-3.5 w-3.5" />
                     <span>{{ appt.clientEmail }}</span>
@@ -1980,16 +2074,19 @@ onUnmounted(() => {
                 <div class="text-xs font-bold text-brand-brown-dark">
                   ✨ {{ appt.serviceTitle }}
                 </div>
-                <div class="text-xs font-semibold text-emerald-700">
-                  Importe: {{ appt.servicePrice }}
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {{ appt.servicePrice }}
+                  </span>
+                  <span class="text-[11px] text-stone-500">({{ appt.serviceDuration }} min)</span>
                 </div>
-                <div v-if="appt.notes" class="text-[11px] text-stone-500 italic">
-                  "{{ appt.notes }}"
+                <div v-if="appt.notes" class="text-[11px] text-stone-600 italic bg-brand-cream/30 rounded-lg px-2 py-1 border border-brand-pink-light/30">
+                  💬 "{{ appt.notes }}"
                 </div>
               </div>
 
               <!-- Quick Action Buttons -->
-              <div class="flex flex-wrap items-center justify-end gap-1.5 sm:col-span-3">
+              <div class="flex flex-wrap items-center justify-end gap-1.5 sm:col-span-4">
                 <!-- Cobrar en TPV -->
                 <button
                   type="button"
@@ -1998,7 +2095,7 @@ onUnmounted(() => {
                   title="Cargar clienta y servicio en el TPV para cobrar"
                 >
                   <Calculator class="h-3.5 w-3.5" />
-                  <span>Cobrar en TPV</span>
+                  <span>Cobrar</span>
                 </button>
 
                 <!-- WhatsApp Reminder -->
@@ -2009,7 +2106,18 @@ onUnmounted(() => {
                   title="Enviar recordatorio de cita por WhatsApp"
                 >
                   <Send class="h-3.5 w-3.5" />
-                  <span class="hidden xl:inline">WhatsApp</span>
+                  <span>Recordatorio</span>
+                </button>
+
+                <!-- ⭐ Pedir Reseña Google -->
+                <button
+                  type="button"
+                  @click="sendGoogleReviewRequest(appt)"
+                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-amber-50 border border-amber-300 px-2.5 py-2 text-xs font-bold text-amber-800 transition-all hover:bg-amber-100"
+                  title="Enviar solicitud de reseña de Google (5 estrellas) por WhatsApp"
+                >
+                  <Star class="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+                  <span>Pedir Reseña</span>
                 </button>
 
                 <!-- Subir Fotos Entrega -->
@@ -3178,6 +3286,15 @@ onUnmounted(() => {
             >
               <Send class="h-3.5 w-3.5" />
               <span>Enviar Resumen por WhatsApp</span>
+            </a>
+
+            <a
+              :href="getWhatsAppReviewShareUrl(lastCompletedTicket)"
+              target="_blank"
+              class="flex items-center justify-center gap-2 rounded-xl bg-amber-50 border border-amber-300 px-4 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors"
+            >
+              <Star class="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+              <span>Pedir Reseña en Google (5⭐) por WhatsApp</span>
             </a>
 
             <a
