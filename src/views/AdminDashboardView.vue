@@ -64,7 +64,13 @@ import {
   DollarSign,
   ShoppingBag,
   Star,
-  RefreshCw
+  RefreshCw,
+  CalendarDays,
+  List,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid
 } from '@lucide/vue'
 
 const router = useRouter()
@@ -1240,6 +1246,238 @@ const filteredAppointments = computed(() => {
   })
 })
 
+// -------------------------------------------------------------
+// SELECTOR Y MODOS DE VISTA DE AGENDA (Día, Semana, Mes, Lista)
+// -------------------------------------------------------------
+const agendaViewMode = ref<'day' | 'week' | 'month' | 'list'>('day')
+const calendarCursor = ref<Date>(new Date())
+const selectedDayDateStr = ref<string>(todayStr.value)
+
+const currentCalendarMonthTitle = computed(() => {
+  const y = calendarCursor.value.getFullYear()
+  const m = calendarCursor.value.getMonth()
+  const monthName = monthsEs[m] || ''
+  return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${y}`
+})
+
+const selectedDayFullTitle = computed(() => {
+  if (!selectedDayDateStr.value) return ''
+  const parts = selectedDayDateStr.value.split('-')
+  if (parts.length !== 3) return selectedDayDateStr.value
+  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  const dayName = daysOfWeekEs[d.getDay()] || ''
+  const monthName = monthsEs[d.getMonth()] || ''
+  return `${dayName} – ${d.getDate()} de ${monthName} de ${d.getFullYear()}`
+})
+
+function goToToday() {
+  const now = new Date()
+  calendarCursor.value = now
+  selectedDayDateStr.value = todayStr.value
+  agendaDateFilter.value = 'today'
+}
+
+function prevCalendarPeriod() {
+  if (agendaViewMode.value === 'day') {
+    const d = new Date(selectedDayDateStr.value + 'T12:00:00')
+    d.setDate(d.getDate() - 1)
+    const y = d.getFullYear()
+    const m = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    selectedDayDateStr.value = `${y}-${m}-${day}`
+    calendarCursor.value = new Date(d)
+  } else if (agendaViewMode.value === 'week') {
+    const d = new Date(calendarCursor.value)
+    d.setDate(d.getDate() - 7)
+    calendarCursor.value = d
+    const y = d.getFullYear()
+    const m = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    selectedDayDateStr.value = `${y}-${m}-${day}`
+  } else {
+    const d = new Date(calendarCursor.value)
+    d.setMonth(d.getMonth() - 1)
+    calendarCursor.value = d
+  }
+}
+
+function nextCalendarPeriod() {
+  if (agendaViewMode.value === 'day') {
+    const d = new Date(selectedDayDateStr.value + 'T12:00:00')
+    d.setDate(d.getDate() + 1)
+    const y = d.getFullYear()
+    const m = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    selectedDayDateStr.value = `${y}-${m}-${day}`
+    calendarCursor.value = new Date(d)
+  } else if (agendaViewMode.value === 'week') {
+    const d = new Date(calendarCursor.value)
+    d.setDate(d.getDate() + 7)
+    calendarCursor.value = d
+    const y = d.getFullYear()
+    const m = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    selectedDayDateStr.value = `${y}-${m}-${day}`
+  } else {
+    const d = new Date(calendarCursor.value)
+    d.setMonth(d.getMonth() + 1)
+    calendarCursor.value = d
+  }
+}
+
+function selectDay(dateStr: string) {
+  selectedDayDateStr.value = dateStr
+  calendarCursor.value = new Date(dateStr + 'T12:00:00')
+}
+
+// Strip semanal (los 7 días de la semana de la fecha seleccionada)
+const weekStripDays = computed(() => {
+  const refDate = new Date(selectedDayDateStr.value + 'T12:00:00')
+  const dayOfWeek = refDate.getDay()
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const monday = new Date(refDate)
+  monday.setDate(refDate.getDate() + diffToMonday)
+
+  const dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const dayNamesEs = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+  const result = []
+  for (let i = 0; i < 7; i++) {
+    const cur = new Date(monday)
+    cur.setDate(monday.getDate() + i)
+    const y = cur.getFullYear()
+    const m = (cur.getMonth() + 1).toString().padStart(2, '0')
+    const dayNum = cur.getDate().toString().padStart(2, '0')
+    const dateStr = `${y}-${m}-${dayNum}`
+
+    const appts = appointments.value.filter(a => a.date === dateStr && a.status !== 'cancelled')
+
+    result.push({
+      dateStr,
+      dayNumber: cur.getDate(),
+      letter: dayLetters[i],
+      shortName: dayNamesEs[i],
+      isToday: dateStr === todayStr.value,
+      isSelected: dateStr === selectedDayDateStr.value,
+      appointmentsCount: appts.length,
+      appointments: appts
+    })
+  }
+  return result
+})
+
+// Horario / Timeline para el día seleccionado (08:00 a 21:00)
+const dayTimelineHours = computed(() => {
+  const hours = [
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00',
+    '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'
+  ]
+
+  const dateStr = selectedDayDateStr.value
+  const dayAppts = appointments.value.filter(a => a.date === dateStr)
+
+  return hours.map(hourStr => {
+    const prefix = hourStr.slice(0, 2)
+    const matchingAppts = dayAppts.filter(a => a.time.startsWith(prefix + ':'))
+    return {
+      hour: hourStr,
+      appointments: matchingAppts
+    }
+  })
+})
+
+// Citas del día seleccionado
+const selectedDayAppointments = computed(() => {
+  return appointments.value
+    .filter(a => a.date === selectedDayDateStr.value)
+    .sort((a, b) => a.time.localeCompare(b.time))
+})
+
+// Días de la semana para vista Semana Completa
+const weekGridDays = computed(() => {
+  return weekStripDays.value.map(day => ({
+    ...day,
+    appointments: appointments.value
+      .filter(a => a.date === day.dateStr)
+      .sort((a, b) => a.time.localeCompare(b.time))
+  }))
+})
+
+// Celdas del calendario para vista Mes Completo (35 o 42 casillas)
+const monthCalendarCells = computed(() => {
+  const year = calendarCursor.value.getFullYear()
+  const month = calendarCursor.value.getMonth()
+
+  const firstDayOfMonth = new Date(year, month, 1)
+  const lastDayOfMonth = new Date(year, month + 1, 0)
+  const totalDays = lastDayOfMonth.getDate()
+
+  let firstDayWeekIndex = firstDayOfMonth.getDay()
+  firstDayWeekIndex = firstDayWeekIndex === 0 ? 6 : firstDayWeekIndex - 1
+
+  const cells = []
+
+  // Días del mes anterior
+  const prevMonthLastDay = new Date(year, month, 0).getDate()
+  for (let i = firstDayWeekIndex - 1; i >= 0; i--) {
+    const dayNum = prevMonthLastDay - i
+    const prevDate = new Date(year, month - 1, dayNum)
+    const y = prevDate.getFullYear()
+    const m = (prevDate.getMonth() + 1).toString().padStart(2, '0')
+    const d = dayNum.toString().padStart(2, '0')
+    const dateStr = `${y}-${m}-${d}`
+    const appts = appointments.value.filter(a => a.date === dateStr && a.status !== 'cancelled')
+    cells.push({
+      dateStr,
+      dayNumber: dayNum,
+      isCurrentMonth: false,
+      isToday: dateStr === todayStr.value,
+      isSelected: dateStr === selectedDayDateStr.value,
+      appointments: appts
+    })
+  }
+
+  // Días del mes actual
+  for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+    const curDate = new Date(year, month, dayNum)
+    const y = curDate.getFullYear()
+    const m = (month + 1).toString().padStart(2, '0')
+    const d = dayNum.toString().padStart(2, '0')
+    const dateStr = `${y}-${m}-${d}`
+    const appts = appointments.value.filter(a => a.date === dateStr && a.status !== 'cancelled')
+    cells.push({
+      dateStr,
+      dayNumber: dayNum,
+      isCurrentMonth: true,
+      isToday: dateStr === todayStr.value,
+      isSelected: dateStr === selectedDayDateStr.value,
+      appointments: appts
+    })
+  }
+
+  // Días del mes siguiente
+  const remainingCells = (7 - (cells.length % 7)) % 7
+  const totalNeeded = cells.length + remainingCells < 35 ? 35 - cells.length : remainingCells
+  for (let dayNum = 1; dayNum <= totalNeeded; dayNum++) {
+    const nextDate = new Date(year, month + 1, dayNum)
+    const y = nextDate.getFullYear()
+    const m = (nextDate.getMonth() + 1).toString().padStart(2, '0')
+    const d = dayNum.toString().padStart(2, '0')
+    const dateStr = `${y}-${m}-${d}`
+    const appts = appointments.value.filter(a => a.date === dateStr && a.status !== 'cancelled')
+    cells.push({
+      dateStr,
+      dayNumber: dayNum,
+      isCurrentMonth: false,
+      isToday: dateStr === todayStr.value,
+      isSelected: dateStr === selectedDayDateStr.value,
+      appointments: appts
+    })
+  }
+
+  return cells
+})
+
 async function setAppointmentStatus(apptId: string, newStatus: AppointmentStatus) {
   try {
     await updateAppointmentStatus(apptId, newStatus)
@@ -1384,7 +1622,9 @@ const manualAppointmentForm = ref({
   sendEmail: true
 })
 
-function openNewManualAppointment() {
+function openNewManualAppointment(initialDate?: any, initialTime?: string) {
+  const dateVal = typeof initialDate === 'string' ? initialDate : (selectedDayDateStr.value || todayStr.value)
+  const timeVal = typeof initialTime === 'string' ? initialTime : '11:00'
   const firstService = experiences.value[0] || { title: 'Eco Básica 4D/5D', price: '45€' }
   manualAppointmentForm.value = {
     clientName: '',
@@ -1394,8 +1634,8 @@ function openNewManualAppointment() {
     serviceTitle: firstService.title,
     servicePrice: firstService.price,
     serviceDuration: 45,
-    date: todayStr.value,
-    time: '11:00',
+    date: dateVal,
+    time: timeVal,
     notes: '',
     sendEmail: true
   }
@@ -1785,7 +2025,7 @@ onUnmounted(() => {
           <div class="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              @click="openNewManualAppointment"
+              @click="openNewManualAppointment()"
               class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-brown-dark active:scale-95"
             >
               <Plus class="h-4 w-4" />
@@ -1879,147 +2119,568 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Filter & Search Toolbar -->
+        <!-- Barra de Control del Calendario y Selector de Vistas -->
         <div class="flex flex-col gap-3 rounded-2xl border border-brand-pink-light/40 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-          <!-- Date Filter Pills -->
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <!-- Navegación Temporal: < Hoy > Mes Año -->
+          <div class="flex items-center gap-2">
             <button
               type="button"
-              @click="agendaDateFilter = 'today'"
-              :class="[
-                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
-                agendaDateFilter === 'today'
-                  ? 'bg-brand-brown text-white shadow-xs'
-                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
-              ]"
+              @click="prevCalendarPeriod"
+              class="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 text-brand-brown hover:bg-brand-cream active:scale-95 transition-all cursor-pointer"
+              title="Periodo anterior"
+            >
+              <ChevronLeft class="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              @click="goToToday"
+              class="rounded-xl border border-brand-pink-light/60 bg-brand-cream/40 px-3.5 py-1.5 text-xs font-bold text-brand-brown hover:bg-brand-beige active:scale-95 transition-all cursor-pointer"
             >
               Hoy
             </button>
             <button
               type="button"
-              @click="agendaDateFilter = 'week'"
-              :class="[
-                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
-                agendaDateFilter === 'week'
-                  ? 'bg-brand-brown text-white shadow-xs'
-                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
-              ]"
+              @click="nextCalendarPeriod"
+              class="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 text-brand-brown hover:bg-brand-cream active:scale-95 transition-all cursor-pointer"
+              title="Periodo siguiente"
             >
-              Esta Semana
+              <ChevronRight class="h-4 w-4" />
             </button>
-            <button
-              type="button"
-              @click="agendaDateFilter = 'month'"
-              :class="[
-                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
-                agendaDateFilter === 'month'
-                  ? 'bg-brand-brown text-white shadow-xs'
-                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
-              ]"
-            >
-              Este Mes
-            </button>
-            <button
-              type="button"
-              @click="agendaDateFilter = 'all'"
-              :class="[
-                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
-                agendaDateFilter === 'all'
-                  ? 'bg-brand-brown text-white shadow-xs'
-                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
-              ]"
-            >
-              Todas
-            </button>
+            <span class="ml-2 font-serif text-base sm:text-lg font-bold text-brand-brown-dark">
+              {{ currentCalendarMonthTitle }}
+            </span>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-center gap-2">
-            <!-- Status Dropdown -->
-            <select
-              v-model="agendaStatusFilter"
-              class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-1.5 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+          <!-- Selector de Modo de Vista (Día, Semana, Mes, Lista) -->
+          <div class="flex items-center gap-1 rounded-2xl bg-brand-cream/50 p-1 border border-brand-pink-light/40 overflow-x-auto">
+            <button
+              type="button"
+              @click="agendaViewMode = 'day'"
+              :class="[
+                'flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaViewMode === 'day'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'text-brand-brown hover:bg-white/60'
+              ]"
             >
-              <option value="all">Todos los estados</option>
-              <option value="confirmed">Confirmadas</option>
-              <option value="completed">Realizadas</option>
-              <option value="cancelled">Canceladas</option>
-              <option value="no_show">No Presentada</option>
-            </select>
+              <Clock class="h-3.5 w-3.5" />
+              <span>Día</span>
+            </button>
+            <button
+              type="button"
+              @click="agendaViewMode = 'week'"
+              :class="[
+                'flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaViewMode === 'week'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'text-brand-brown hover:bg-white/60'
+              ]"
+            >
+              <CalendarRange class="h-3.5 w-3.5" />
+              <span>Semana</span>
+            </button>
+            <button
+              type="button"
+              @click="agendaViewMode = 'month'"
+              :class="[
+                'flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaViewMode === 'month'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'text-brand-brown hover:bg-white/60'
+              ]"
+            >
+              <LayoutGrid class="h-3.5 w-3.5" />
+              <span>Mes</span>
+            </button>
+            <button
+              type="button"
+              @click="agendaViewMode = 'list'"
+              :class="[
+                'flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaViewMode === 'list'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'text-brand-brown hover:bg-white/60'
+              ]"
+            >
+              <List class="h-3.5 w-3.5" />
+              <span>Lista</span>
+            </button>
+          </div>
+        </div>
 
-            <!-- Search Field -->
-            <div class="relative w-full sm:w-60">
-              <Search class="absolute left-3 top-2.5 h-3.5 w-3.5 text-brand-brown/50" />
-              <input
-                v-model="agendaSearchQuery"
-                type="text"
-                placeholder="Buscar clienta, tlf, código..."
-                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 pl-8 pr-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
-              />
+        <!-- ============================================== -->
+        <!-- 1. VISTA DÍA / TIMELINE (Horario + Strip Semanal) -->
+        <!-- ============================================== -->
+        <div v-if="agendaViewMode === 'day'" class="space-y-4">
+          <!-- Week Date Strip (Idéntico a la app móvil de calendario) -->
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-3.5 shadow-xs">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+              <button
+                v-for="d in weekStripDays"
+                :key="d.dateStr"
+                type="button"
+                @click="selectDay(d.dateStr)"
+                class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all cursor-pointer relative"
+                :class="[
+                  d.isSelected
+                    ? 'bg-brand-brown text-white shadow-md scale-102 font-bold'
+                    : 'hover:bg-brand-cream/60 text-brand-brown',
+                  d.isToday && !d.isSelected ? 'ring-2 ring-brand-pink/70' : ''
+                ]"
+              >
+                <span class="text-[11px] font-bold uppercase tracking-wider opacity-75">
+                  {{ d.letter }}
+                </span>
+                <span
+                  class="text-lg sm:text-xl font-black mt-0.5 leading-none"
+                  :class="d.isSelected ? 'text-white' : 'text-stone-900'"
+                >
+                  {{ d.dayNumber }}
+                </span>
+                <!-- Puntito indicador de citas -->
+                <div class="mt-1 flex items-center justify-center h-2">
+                  <span
+                    v-if="d.appointmentsCount > 0"
+                    class="h-1.5 w-1.5 rounded-full"
+                    :class="d.isSelected ? 'bg-amber-300' : 'bg-brand-pink'"
+                  ></span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Encabezado del día seleccionado -->
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/30 pb-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-serif text-lg font-bold text-brand-brown-dark">
+                {{ selectedDayFullTitle }}
+              </h3>
+              <span
+                v-if="selectedDayDateStr === todayStr"
+                class="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider animate-pulse"
+              >
+                Hoy
+              </span>
+              <span
+                v-else-if="selectedDayDateStr === tomorrowStr"
+                class="rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider"
+              >
+                Mañana
+              </span>
+              <span
+                v-if="bookingSettings.blockedDates?.includes(selectedDayDateStr)"
+                class="rounded-full bg-rose-100 text-rose-800 px-2.5 py-0.5 text-[10px] font-bold"
+              >
+                🏖️ Festivo / Bloqueado
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-brand-brown/70 font-semibold">
+                {{ selectedDayAppointments.length }} {{ selectedDayAppointments.length === 1 ? 'cita' : 'citas' }} programadas
+              </span>
+              <button
+                type="button"
+                @click="openNewManualAppointment(selectedDayDateStr)"
+                class="flex items-center gap-1 rounded-xl bg-brand-brown px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-brown-dark transition-all cursor-pointer shadow-xs active:scale-95"
+              >
+                <Plus class="h-3.5 w-3.5" />
+                <span>Añadir Cita</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Timeline por Horas (08:00 a 21:00) -->
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 sm:p-6 shadow-xs space-y-3">
+            <div
+              v-for="slot in dayTimelineHours"
+              :key="slot.hour"
+              class="flex items-start gap-3 sm:gap-4 border-b border-brand-pink-light/20 pb-3 pt-1 group"
+            >
+              <!-- Hora -->
+              <div class="w-14 sm:w-16 shrink-0 pt-1 text-right">
+                <span class="font-mono text-xs font-bold text-brand-brown/70 group-hover:text-brand-brown">
+                  {{ slot.hour }}
+                </span>
+              </div>
+
+              <!-- Citas o Hueco Libre -->
+              <div class="flex-1 space-y-2">
+                <!-- Tarjeta de cita si existe en esta hora -->
+                <div
+                  v-for="appt in slot.appointments"
+                  :key="appt.id"
+                  class="rounded-2xl border border-brand-pink-light/40 bg-brand-cream/30 p-3.5 transition-all hover:bg-white hover:shadow-sm hover:border-brand-pink/60"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/20 pb-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-bold text-sm text-stone-900">{{ appt.clientName }}</span>
+                      <span class="font-mono text-xs font-bold text-brand-pink bg-brand-pink-light/30 px-2 py-0.5 rounded-lg">
+                        {{ appt.time }} h ({{ appt.serviceDuration }} min)
+                      </span>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        {{ appt.servicePrice }}
+                      </span>
+                    </div>
+
+                    <select
+                      :value="appt.status"
+                      @change="(e) => setAppointmentStatus(appt.id, (e.target as HTMLSelectElement).value as AppointmentStatus)"
+                      :class="[
+                        'rounded-lg px-2 py-0.5 text-xs font-bold border transition-colors cursor-pointer',
+                        appt.status === 'confirmed' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : '',
+                        appt.status === 'completed' ? 'bg-sky-50 text-sky-800 border-sky-300' : '',
+                        appt.status === 'cancelled' ? 'bg-rose-50 text-rose-800 border-rose-300' : '',
+                        appt.status === 'no_show' ? 'bg-amber-50 text-amber-800 border-amber-300' : ''
+                      ]"
+                    >
+                      <option value="confirmed">Confirmada</option>
+                      <option value="completed">Realizada</option>
+                      <option value="cancelled">Cancelada</option>
+                      <option value="no_show">No Presentada</option>
+                    </select>
+                  </div>
+
+                  <div class="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div class="text-stone-700">
+                      <span class="font-semibold text-brand-brown-dark">✨ {{ appt.serviceTitle }}</span>
+                      <span v-if="appt.notes" class="block text-[11px] text-stone-500 italic mt-0.5">💬 {{ appt.notes }}</span>
+                    </div>
+
+                    <!-- Botones de Acción Rápida -->
+                    <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        @click="chargeAppointmentInTpv(appt)"
+                        class="flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-emerald-700 cursor-pointer shadow-xs active:scale-95"
+                        title="Cobrar en TPV"
+                      >
+                        <Calculator class="h-3 w-3" />
+                        <span>Cobrar</span>
+                      </button>
+                      <button
+                        type="button"
+                        @click="openWhatsAppReminder(appt)"
+                        class="flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-300 px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                        title="Recordatorio WhatsApp"
+                      >
+                        <Send class="h-3 w-3" />
+                        <span>Recordatorio</span>
+                      </button>
+                      <button
+                        type="button"
+                        @click="sendGoogleReviewRequest(appt)"
+                        class="flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-300 px-2 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
+                        title="Pedir Reseña Google"
+                      >
+                        <Star class="h-3 w-3 text-amber-500 fill-amber-400" />
+                        <span>Pedir Reseña</span>
+                      </button>
+                      <button
+                        type="button"
+                        @click="createSessionFromAppointment(appt)"
+                        class="flex items-center gap-1 rounded-lg border border-brand-pink-light/60 bg-white px-2 py-1 text-xs font-bold text-brand-brown hover:bg-brand-cream/60 cursor-pointer"
+                        title="Subir fotos"
+                      >
+                        <Camera class="h-3 w-3" />
+                        <span class="hidden sm:inline">Fotos</span>
+                      </button>
+                      <button
+                        type="button"
+                        @click="openEditAppointment(appt)"
+                        class="p-1 rounded-lg border border-stone-200 text-stone-600 hover:text-stone-900 hover:bg-stone-50 cursor-pointer"
+                        title="Editar cita"
+                      >
+                        <Pencil class="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        @click="handleDeleteAppointment(appt)"
+                        class="p-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 cursor-pointer"
+                        title="Eliminar cita"
+                      >
+                        <Trash2 class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Hueco disponible: 1 clic para agendar -->
+                <div
+                  v-if="slot.appointments.length === 0"
+                  @click="openNewManualAppointment(selectedDayDateStr, slot.hour)"
+                  class="group/slot flex items-center justify-between rounded-xl border border-dashed border-stone-200 hover:border-brand-pink/60 px-3 py-2 text-xs text-stone-400 hover:text-brand-brown hover:bg-brand-cream/20 cursor-pointer transition-all"
+                >
+                  <span class="italic text-[11px] group-hover/slot:text-brand-brown font-medium">
+                    + Hueco disponible · Clic para agendar a las {{ slot.hour }}
+                  </span>
+                  <Plus class="h-3.5 w-3.5 opacity-40 group-hover/slot:opacity-100 text-brand-pink transition-opacity" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Appointment Cards List -->
-        <div v-if="filteredAppointments.length === 0" class="rounded-3xl border border-brand-pink-light/40 bg-white p-12 text-center shadow-xs">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-pink-light/30 text-brand-pink">
-            <Calendar class="h-7 w-7" />
-          </div>
-          <h3 class="mt-4 font-serif text-lg font-bold text-brand-brown-dark">No hay citas en este periodo</h3>
-          <p class="mx-auto mt-1 max-w-sm text-xs text-brand-brown/70">
-            No se han encontrado citas con los filtros seleccionados. Las citas reservadas por clientas en la web aparecerán aquí en tiempo real.
-          </p>
-          <div class="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              @click="openNewManualAppointment"
-              class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-brand-brown-dark"
+        <!-- ============================================== -->
+        <!-- 2. VISTA SEMANA (7 Columnas Lunes a Domingo)   -->
+        <!-- ============================================== -->
+        <div v-else-if="agendaViewMode === 'week'" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div
+              v-for="d in weekGridDays"
+              :key="d.dateStr"
+              class="rounded-3xl border bg-white p-3 shadow-xs flex flex-col min-h-[340px]"
+              :class="[
+                d.isToday ? 'border-brand-pink ring-2 ring-brand-pink/30 shadow-sm' : 'border-brand-pink-light/40',
+                d.isSelected ? 'bg-brand-cream/15' : ''
+              ]"
             >
-              <Plus class="h-4 w-4" />
-              <span>Registrar Cita Manual</span>
-            </button>
-            <button
-              type="button"
-              v-if="agendaDateFilter !== 'all' || agendaStatusFilter !== 'all' || agendaSearchQuery"
-              @click="agendaDateFilter = 'all'; agendaStatusFilter = 'all'; agendaSearchQuery = ''"
-              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-brand-cream/40 px-4 py-2.5 text-xs font-bold text-brand-brown transition-all hover:bg-brand-beige"
-            >
-              <RotateCcw class="h-4 w-4" />
-              <span>Ver Todas las Citas</span>
-            </button>
-          </div>
-        </div>
-
-        <div v-else class="space-y-3.5">
-          <div
-            v-for="appt in filteredAppointments"
-            :key="appt.id"
-            class="rounded-3xl border border-brand-pink-light/40 bg-white p-5 shadow-xs transition-all hover:border-brand-pink/60 hover:shadow-sm"
-          >
-            <!-- Top Row: Date, Time, Code & Status -->
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/20 pb-3">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="rounded-xl bg-brand-cream/80 px-3 py-1 text-xs font-bold text-brand-brown-dark border border-brand-pink-light/40">
-                  📅 {{ formatApptDateHuman(appt.date) }} · ⏰ {{ appt.time }} h ({{ appt.serviceDuration }} min)
-                </span>
-                <span class="font-mono text-xs font-extrabold text-brand-pink bg-brand-pink-light/30 px-2.5 py-1 rounded-xl">
-                  {{ appt.bookingCode }}
-                </span>
+              <!-- Cabecera del día -->
+              <div
+                @click="selectDay(d.dateStr); agendaViewMode = 'day'"
+                class="flex items-center justify-between border-b border-brand-pink-light/20 pb-2 cursor-pointer hover:opacity-85"
+              >
+                <div>
+                  <span class="text-xs font-bold text-brand-brown/70 uppercase block">{{ d.shortName }}</span>
+                  <span class="text-base font-black text-stone-900">{{ d.dayNumber }}</span>
+                </div>
                 <span
-                  v-if="appt.date === todayStr"
-                  class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider animate-pulse"
+                  v-if="d.appointments.length > 0"
+                  class="rounded-full bg-brand-pink px-2 py-0.5 text-[10px] font-extrabold text-white"
                 >
-                  Hoy
-                </span>
-                <span
-                  v-else-if="appt.date === tomorrowStr"
-                  class="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider"
-                >
-                  Mañana
+                  {{ d.appointments.length }}
                 </span>
               </div>
 
-              <!-- Status Changer Dropdown -->
-              <div class="flex items-center gap-2">
+              <!-- Citas en la columna -->
+              <div class="mt-2.5 flex-1 space-y-2 overflow-y-auto max-h-[420px] scrollbar-none">
+                <div
+                  v-for="appt in d.appointments"
+                  :key="appt.id"
+                  @click="selectDay(d.dateStr); agendaViewMode = 'day'"
+                  class="rounded-xl border border-brand-pink-light/40 bg-brand-cream/40 p-2 text-xs hover:bg-brand-cream transition-colors cursor-pointer"
+                >
+                  <div class="flex items-center justify-between font-bold text-stone-900">
+                    <span>{{ appt.time }} h</span>
+                    <span class="text-emerald-700 text-[11px]">{{ appt.servicePrice }}</span>
+                  </div>
+                  <p class="font-bold text-brand-brown-dark truncate mt-0.5">{{ appt.clientName }}</p>
+                  <p class="text-[11px] text-stone-500 truncate">{{ appt.serviceTitle }}</p>
+                </div>
+
+                <div v-if="d.appointments.length === 0" class="py-8 text-center text-xs text-stone-400 italic">
+                  Sin citas
+                </div>
+              </div>
+
+              <button
+                type="button"
+                @click="openNewManualAppointment(d.dateStr)"
+                class="mt-2 w-full flex items-center justify-center gap-1 rounded-xl border border-dashed border-stone-200 py-1.5 text-[11px] font-bold text-stone-500 hover:text-brand-brown hover:border-brand-pink hover:bg-brand-cream/30 cursor-pointer transition-all"
+              >
+                <Plus class="h-3 w-3" />
+                <span>Añadir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 3. VISTA MES (Cuadrícula Mensual Completa)     -->
+        <!-- ============================================== -->
+        <div v-else-if="agendaViewMode === 'month'" class="space-y-4">
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 sm:p-6 shadow-xs">
+            <!-- Días Lun-Dom -->
+            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs uppercase tracking-wider text-brand-brown/70 border-b border-brand-pink-light/30 pb-2 mb-2">
+              <span>Lun</span>
+              <span>Mar</span>
+              <span>Mié</span>
+              <span>Jue</span>
+              <span>Vie</span>
+              <span>Sáb</span>
+              <span>Dom</span>
+            </div>
+
+            <!-- Celdas del mes -->
+            <div class="grid grid-cols-7 gap-1 sm:gap-2">
+              <div
+                v-for="cell in monthCalendarCells"
+                :key="cell.dateStr"
+                @click="selectDay(cell.dateStr); agendaViewMode = 'day'"
+                class="min-h-[75px] sm:min-h-[95px] p-1.5 sm:p-2 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between"
+                :class="[
+                  cell.isCurrentMonth ? 'bg-white hover:bg-brand-cream/30' : 'bg-stone-50/50 text-stone-300 hover:bg-stone-100/50',
+                  cell.isToday ? 'border-brand-pink ring-2 ring-brand-pink/40 shadow-xs' : 'border-stone-100',
+                  cell.isSelected ? 'bg-brand-cream/40' : ''
+                ]"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="text-xs sm:text-sm font-bold"
+                    :class="[
+                      cell.isCurrentMonth ? (cell.isToday ? 'text-brand-pink font-black' : 'text-stone-800') : 'text-stone-400'
+                    ]"
+                  >
+                    {{ cell.dayNumber }}
+                  </span>
+                  <span
+                    v-if="cell.appointments.length > 0"
+                    class="rounded-full bg-brand-pink px-1.5 py-0.2 text-[10px] font-extrabold text-white"
+                  >
+                    {{ cell.appointments.length }}
+                  </span>
+                </div>
+
+                <div class="space-y-1 mt-1 overflow-hidden">
+                  <div
+                    v-for="appt in cell.appointments.slice(0, 2)"
+                    :key="appt.id"
+                    class="truncate rounded-md bg-brand-cream/70 px-1 py-0.5 text-[10px] font-semibold text-brand-brown-dark"
+                  >
+                    {{ appt.time }} {{ appt.clientName }}
+                  </div>
+                  <div
+                    v-if="cell.appointments.length > 2"
+                    class="text-[9px] font-bold text-brand-brown/70 pl-1"
+                  >
+                    +{{ cell.appointments.length - 2 }} más
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 4. VISTA LISTA (Buscador, Filtros y Tarjetas)  -->
+        <!-- ============================================== -->
+        <div v-else-if="agendaViewMode === 'list'" class="space-y-4">
+          <!-- Filtros y Buscador de Lista -->
+          <div class="flex flex-col gap-3 rounded-2xl border border-brand-pink-light/40 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                type="button"
+                @click="agendaDateFilter = 'today'"
+                :class="[
+                  'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                  agendaDateFilter === 'today'
+                    ? 'bg-brand-brown text-white shadow-xs'
+                    : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+                ]"
+              >
+                Hoy
+              </button>
+              <button
+                type="button"
+                @click="agendaDateFilter = 'week'"
+                :class="[
+                  'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                  agendaDateFilter === 'week'
+                    ? 'bg-brand-brown text-white shadow-xs'
+                    : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+                ]"
+              >
+                Esta Semana
+              </button>
+              <button
+                type="button"
+                @click="agendaDateFilter = 'month'"
+                :class="[
+                  'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                  agendaDateFilter === 'month'
+                    ? 'bg-brand-brown text-white shadow-xs'
+                    : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+                ]"
+              >
+                Este Mes
+              </button>
+              <button
+                type="button"
+                @click="agendaDateFilter = 'all'"
+                :class="[
+                  'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                  agendaDateFilter === 'all'
+                    ? 'bg-brand-brown text-white shadow-xs'
+                    : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+                ]"
+              >
+                Todas
+              </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-2">
+              <select
+                v-model="agendaStatusFilter"
+                class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-1.5 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="confirmed">Confirmadas</option>
+                <option value="completed">Realizadas</option>
+                <option value="cancelled">Canceladas</option>
+                <option value="no_show">No Presentada</option>
+              </select>
+
+              <div class="relative w-full sm:w-60">
+                <Search class="absolute left-3 top-2.5 h-3.5 w-3.5 text-brand-brown/50" />
+                <input
+                  v-model="agendaSearchQuery"
+                  type="text"
+                  placeholder="Buscar clienta, tlf, código..."
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 pl-8 pr-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Listado de tarjetas de citas -->
+          <div v-if="filteredAppointments.length === 0" class="rounded-3xl border border-brand-pink-light/40 bg-white p-12 text-center shadow-xs">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-pink-light/30 text-brand-pink">
+              <Calendar class="h-7 w-7" />
+            </div>
+            <h3 class="mt-4 font-serif text-lg font-bold text-brand-brown-dark">No hay citas en este periodo</h3>
+            <p class="mx-auto mt-1 max-w-sm text-xs text-brand-brown/70">
+              No se han encontrado citas con los filtros seleccionados.
+            </p>
+            <div class="mt-6 flex justify-center gap-3">
+              <button
+                type="button"
+                @click="openNewManualAppointment()"
+                class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-brand-brown-dark"
+              >
+                <Plus class="h-4 w-4" />
+                <span>Registrar Cita Manual</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="space-y-3.5">
+            <div
+              v-for="appt in filteredAppointments"
+              :key="appt.id"
+              class="rounded-3xl border border-brand-pink-light/40 bg-white p-5 shadow-xs transition-all hover:border-brand-pink/60 hover:shadow-sm"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/20 pb-3">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-xl bg-brand-cream/80 px-3 py-1 text-xs font-bold text-brand-brown-dark border border-brand-pink-light/40">
+                    📅 {{ formatApptDateHuman(appt.date) }} · ⏰ {{ appt.time }} h ({{ appt.serviceDuration }} min)
+                  </span>
+                  <span class="font-mono text-xs font-extrabold text-brand-pink bg-brand-pink-light/30 px-2.5 py-1 rounded-xl">
+                    {{ appt.bookingCode }}
+                  </span>
+                  <span
+                    v-if="appt.date === todayStr"
+                    class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider animate-pulse"
+                  >
+                    Hoy
+                  </span>
+                  <span
+                    v-else-if="appt.date === tomorrowStr"
+                    class="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider"
+                  >
+                    Mañana
+                  </span>
+                </div>
+
                 <select
                   :value="appt.status"
                   @change="(e) => setAppointmentStatus(appt.id, (e.target as HTMLSelectElement).value as AppointmentStatus)"
@@ -2037,140 +2698,130 @@ onUnmounted(() => {
                   <option value="no_show">No Presentada</option>
                 </select>
               </div>
-            </div>
 
-            <!-- Middle Row: Client & Service Details -->
-            <div class="grid grid-cols-1 gap-4 py-3.5 sm:grid-cols-12 sm:items-center">
-              <div class="space-y-1 sm:col-span-4">
-                <div class="flex items-center gap-2">
-                  <h4 class="text-base font-bold text-brand-brown-dark">{{ appt.clientName }}</h4>
-                  <span
-                    v-if="appt.gestationWeek"
-                    class="rounded-full bg-brand-pink-light/30 px-2 py-0.5 text-[10px] font-bold text-brand-brown"
-                  >
-                    {{ appt.gestationWeek }}
-                  </span>
+              <div class="grid grid-cols-1 gap-4 py-3.5 sm:grid-cols-12 sm:items-center">
+                <div class="space-y-1 sm:col-span-4">
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-base font-bold text-brand-brown-dark">{{ appt.clientName }}</h4>
+                    <span
+                      v-if="appt.gestationWeek"
+                      class="rounded-full bg-brand-pink-light/30 px-2 py-0.5 text-[10px] font-bold text-brand-brown"
+                    >
+                      {{ appt.gestationWeek }}
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-3 text-xs text-brand-brown/80">
+                    <a
+                      :href="`tel:${appt.clientPhone}`"
+                      class="flex items-center gap-1 font-semibold text-brand-brown hover:text-brand-pink transition-colors"
+                    >
+                      <Phone class="h-3.5 w-3.5 text-stone-500" />
+                      <span>{{ appt.clientPhone }}</span>
+                    </a>
+                    <a
+                      v-if="appt.clientEmail"
+                      :href="`mailto:${appt.clientEmail}`"
+                      class="flex items-center gap-1 text-stone-500 hover:text-brand-pink transition-colors"
+                    >
+                      <Mail class="h-3.5 w-3.5" />
+                      <span>{{ appt.clientEmail }}</span>
+                    </a>
+                  </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-3 text-xs text-brand-brown/80">
+
+                <div class="space-y-1 sm:col-span-4">
+                  <div class="text-xs font-bold text-brand-brown-dark">
+                    ✨ {{ appt.serviceTitle }}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      {{ appt.servicePrice }}
+                    </span>
+                    <span class="text-[11px] text-stone-500">({{ appt.serviceDuration }} min)</span>
+                  </div>
+                  <div v-if="appt.notes" class="text-[11px] text-stone-600 italic bg-brand-cream/30 rounded-lg px-2 py-1 border border-brand-pink-light/30">
+                    💬 "{{ appt.notes }}"
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-end gap-1.5 sm:col-span-4">
+                  <button
+                    type="button"
+                    @click="chargeAppointmentInTpv(appt)"
+                    class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-95"
+                    title="Cobrar en TPV"
+                  >
+                    <Calculator class="h-3.5 w-3.5" />
+                    <span>Cobrar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="openWhatsAppReminder(appt)"
+                    class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-300 px-2.5 py-2 text-xs font-bold text-emerald-800 transition-all hover:bg-emerald-100"
+                    title="Enviar recordatorio de cita por WhatsApp"
+                  >
+                    <Send class="h-3.5 w-3.5" />
+                    <span>Recordatorio</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="sendGoogleReviewRequest(appt)"
+                    class="flex cursor-pointer items-center gap-1 rounded-xl bg-amber-50 border border-amber-300 px-2.5 py-2 text-xs font-bold text-amber-800 transition-all hover:bg-amber-100"
+                    title="Enviar solicitud de reseña de Google"
+                  >
+                    <Star class="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+                    <span>Pedir Reseña</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="createSessionFromAppointment(appt)"
+                    class="flex cursor-pointer items-center gap-1 rounded-xl border border-brand-pink-light/60 bg-brand-cream/40 px-2.5 py-2 text-xs font-bold text-brand-brown transition-all hover:bg-brand-pink-light/30"
+                    title="Crear entrega de fotos"
+                  >
+                    <Camera class="h-3.5 w-3.5" />
+                    <span class="hidden xl:inline">Fotos</span>
+                  </button>
+
                   <a
-                    :href="`tel:${appt.clientPhone}`"
-                    class="flex items-center gap-1 font-semibold text-brand-brown hover:text-brand-pink transition-colors"
+                    :href="generateGoogleCalendarUrl(appt)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                    title="Añadir a Google Calendar"
                   >
-                    <Phone class="h-3.5 w-3.5 text-stone-500" />
-                    <span>{{ appt.clientPhone }}</span>
+                    <CalendarPlus class="h-3.5 w-3.5" />
                   </a>
-                  <a
-                    v-if="appt.clientEmail"
-                    :href="`mailto:${appt.clientEmail}`"
-                    class="flex items-center gap-1 text-stone-500 hover:text-brand-pink transition-colors"
+
+                  <button
+                    type="button"
+                    @click="downloadIcsForAppt(appt)"
+                    class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                    title="Descargar archivo .ics"
                   >
-                    <Mail class="h-3.5 w-3.5" />
-                    <span>{{ appt.clientEmail }}</span>
-                  </a>
+                    <Download class="h-3.5 w-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="openEditAppointment(appt)"
+                    class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-700 hover:text-brand-brown-dark hover:bg-brand-cream/50 transition-colors"
+                    title="Editar cita"
+                  >
+                    <Pencil class="h-3.5 w-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="handleDeleteAppointment(appt)"
+                    class="flex cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-rose-50/50 p-2 text-rose-600 hover:bg-rose-100 transition-colors"
+                    title="Eliminar cita"
+                  >
+                    <Trash2 class="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              </div>
-
-              <div class="space-y-1 sm:col-span-4">
-                <div class="text-xs font-bold text-brand-brown-dark">
-                  ✨ {{ appt.serviceTitle }}
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    {{ appt.servicePrice }}
-                  </span>
-                  <span class="text-[11px] text-stone-500">({{ appt.serviceDuration }} min)</span>
-                </div>
-                <div v-if="appt.notes" class="text-[11px] text-stone-600 italic bg-brand-cream/30 rounded-lg px-2 py-1 border border-brand-pink-light/30">
-                  💬 "{{ appt.notes }}"
-                </div>
-              </div>
-
-              <!-- Quick Action Buttons -->
-              <div class="flex flex-wrap items-center justify-end gap-1.5 sm:col-span-4">
-                <!-- Cobrar en TPV -->
-                <button
-                  type="button"
-                  @click="chargeAppointmentInTpv(appt)"
-                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-95"
-                  title="Cargar clienta y servicio en el TPV para cobrar"
-                >
-                  <Calculator class="h-3.5 w-3.5" />
-                  <span>Cobrar</span>
-                </button>
-
-                <!-- WhatsApp Reminder -->
-                <button
-                  type="button"
-                  @click="openWhatsAppReminder(appt)"
-                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-300 px-2.5 py-2 text-xs font-bold text-emerald-800 transition-all hover:bg-emerald-100"
-                  title="Enviar recordatorio de cita por WhatsApp"
-                >
-                  <Send class="h-3.5 w-3.5" />
-                  <span>Recordatorio</span>
-                </button>
-
-                <!-- ⭐ Pedir Reseña Google -->
-                <button
-                  type="button"
-                  @click="sendGoogleReviewRequest(appt)"
-                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-amber-50 border border-amber-300 px-2.5 py-2 text-xs font-bold text-amber-800 transition-all hover:bg-amber-100"
-                  title="Enviar solicitud de reseña de Google (5 estrellas) por WhatsApp"
-                >
-                  <Star class="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
-                  <span>Pedir Reseña</span>
-                </button>
-
-                <!-- Subir Fotos Entrega -->
-                <button
-                  type="button"
-                  @click="createSessionFromAppointment(appt)"
-                  class="flex cursor-pointer items-center gap-1 rounded-xl border border-brand-pink-light/60 bg-brand-cream/40 px-2.5 py-2 text-xs font-bold text-brand-brown transition-all hover:bg-brand-pink-light/30"
-                  title="Crear entrega de fotos para esta clienta"
-                >
-                  <Camera class="h-3.5 w-3.5" />
-                  <span class="hidden xl:inline">Fotos</span>
-                </button>
-
-                <!-- Google Calendar -->
-                <a
-                  :href="generateGoogleCalendarUrl(appt)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                  title="Añadir a Google Calendar"
-                >
-                  <CalendarPlus class="h-3.5 w-3.5" />
-                </a>
-
-                <!-- .ICS Download -->
-                <button
-                  type="button"
-                  @click="downloadIcsForAppt(appt)"
-                  class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
-                  title="Descargar archivo .ics para Outlook/Apple"
-                >
-                  <Download class="h-3.5 w-3.5" />
-                </button>
-
-                <!-- Editar Cita -->
-                <button
-                  type="button"
-                  @click="openEditAppointment(appt)"
-                  class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-700 hover:text-brand-brown-dark hover:bg-brand-cream/50 transition-colors"
-                  title="Editar datos de la cita (nombre de la clienta, notas, fecha u hora)"
-                >
-                  <Pencil class="h-3.5 w-3.5" />
-                </button>
-
-                <!-- Delete -->
-                <button
-                  type="button"
-                  @click="handleDeleteAppointment(appt)"
-                  class="flex cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-rose-50/50 p-2 text-rose-600 hover:bg-rose-100 transition-colors"
-                  title="Eliminar cita"
-                >
-                  <Trash2 class="h-3.5 w-3.5" />
-                </button>
               </div>
             </div>
           </div>
