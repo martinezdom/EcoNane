@@ -2,7 +2,21 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteData } from '@/composables/useSiteData'
-import type { Promotion, Experience, Pack, ClientSession, PaymentMethod, TicketItem, SaleTicket, BusinessInfo } from '@/types'
+import type {
+  Promotion,
+  Experience,
+  Pack,
+  Product,
+  ClientSession,
+  PaymentMethod,
+  TicketItem,
+  SaleTicket,
+  BusinessInfo,
+  Appointment,
+  AppointmentStatus,
+  BookingSettings,
+  DaySchedule
+} from '@/types'
 import {
   Tag,
   CreditCard,
@@ -17,6 +31,7 @@ import {
   RotateCcw,
   Sparkles,
   Calendar,
+  CalendarPlus,
   Phone,
   User,
   Lock,
@@ -58,6 +73,8 @@ const {
   sessions,
   businessInfo,
   salesTickets,
+  appointments,
+  bookingSettings,
   isAdminLoggedIn,
   isCloudSynced,
   updatePromotion,
@@ -84,14 +101,22 @@ const {
   sendTicketEmail,
   getWhatsAppTicketShareUrl,
   exportTicketsToCSV,
-  formatExperienceWhatsAppLink
+  formatExperienceWhatsAppLink,
+  getAvailableSlots,
+  createAppointment,
+  updateAppointmentStatus,
+  updateAppointment,
+  deleteAppointment,
+  saveBookingSettings,
+  generateGoogleCalendarUrl,
+  generateWhatsAppBookingUrl
 } = useSiteData()
 
 if (!isAdminLoggedIn.value) {
   router.push('/admin/login')
 }
 
-const activeTab = ref<'tpv' | 'accounting' | 'sessions' | 'prices' | 'promo' | 'settings'>('tpv')
+const activeTab = ref<'agenda' | 'tpv' | 'accounting' | 'sessions' | 'prices' | 'promo' | 'settings'>('agenda')
 const saveSuccessMessage = ref('')
 
 function showSuccess(msg: string) {
@@ -1111,6 +1136,293 @@ function handlePrintDailyClose() {
 }
 
 // -------------------------------------------------------------
+// 6. AGENDA Y CITAS ONLINE (Booksy Alternative)
+// -------------------------------------------------------------
+const agendaDateFilter = ref<'today' | 'week' | 'month' | 'all'>('today')
+const agendaStatusFilter = ref<string>('all')
+const agendaSearchQuery = ref('')
+
+const todayStr = computed(() => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const day = now.getDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
+
+const todayAppointmentsCount = computed(() => {
+  return appointments.value.filter(a => a.date === todayStr.value && a.status !== 'cancelled').length
+})
+
+const upcomingAppointmentsCount = computed(() => {
+  return appointments.value.filter(a => a.date >= todayStr.value && a.status === 'confirmed').length
+})
+
+const thisMonthCompletedCount = computed(() => {
+  const currentMonthPrefix = todayStr.value.slice(0, 7)
+  return appointments.value.filter(a => a.date.startsWith(currentMonthPrefix) && a.status === 'completed').length
+})
+
+const filteredAppointments = computed(() => {
+  let list = [...appointments.value]
+
+  // Date filter
+  if (agendaDateFilter.value === 'today') {
+    list = list.filter(a => a.date === todayStr.value)
+  } else if (agendaDateFilter.value === 'week') {
+    const today = new Date()
+    const firstDay = new Date(today)
+    firstDay.setDate(today.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1)) // Monday
+    const lastDay = new Date(firstDay)
+    lastDay.setDate(firstDay.getDate() + 6) // Sunday
+    const startStr = firstDay.toISOString().slice(0, 10)
+    const endStr = lastDay.toISOString().slice(0, 10)
+    list = list.filter(a => a.date >= startStr && a.date <= endStr)
+  } else if (agendaDateFilter.value === 'month') {
+    const currentMonthPrefix = todayStr.value.slice(0, 7)
+    list = list.filter(a => a.date.startsWith(currentMonthPrefix))
+  }
+
+  // Status filter
+  if (agendaStatusFilter.value !== 'all') {
+    list = list.filter(a => a.status === agendaStatusFilter.value)
+  }
+
+  // Search query
+  if (agendaSearchQuery.value.trim()) {
+    const q = agendaSearchQuery.value.toLowerCase().trim()
+    list = list.filter(a =>
+      a.clientName.toLowerCase().includes(q) ||
+      a.clientPhone.toLowerCase().includes(q) ||
+      (a.clientEmail && a.clientEmail.toLowerCase().includes(q)) ||
+      a.bookingCode.toLowerCase().includes(q) ||
+      a.serviceTitle.toLowerCase().includes(q)
+    )
+  }
+
+  // Sort: Chronological by date, then time
+  return list.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date)
+    return a.time.localeCompare(b.time)
+  })
+})
+
+async function setAppointmentStatus(apptId: string, newStatus: AppointmentStatus) {
+  try {
+    await updateAppointmentStatus(apptId, newStatus)
+    showSuccess(`Estado de la cita actualizado a: ${newStatus}`)
+  } catch (err: any) {
+    alert('Error al actualizar el estado: ' + (err?.message || err))
+  }
+}
+
+async function handleDeleteAppointment(appt: Appointment) {
+  if (confirm(`¿Seguro que deseas eliminar la cita ${appt.bookingCode} de ${appt.clientName}?`)) {
+    try {
+      await deleteAppointment(appt.id)
+      showSuccess(`Cita ${appt.bookingCode} eliminada correctamente.`)
+    } catch (err: any) {
+      alert('Error al eliminar la cita: ' + (err?.message || err))
+    }
+  }
+}
+
+function chargeAppointmentInTpv(appt: Appointment) {
+  tpvClientName.value = appt.clientName || ''
+  tpvClientPhone.value = appt.clientPhone || ''
+  tpvClientEmail.value = appt.clientEmail || ''
+  tpvNotes.value = `Cita Ref: ${appt.bookingCode}${appt.notes ? ' · ' + appt.notes : ''}`
+  addToCart(appt.serviceTitle, appt.servicePrice)
+  activeTab.value = 'tpv'
+  showSuccess(`¡Cita ${appt.bookingCode} cargada en el TPV!`)
+}
+
+function createSessionFromAppointment(appt: Appointment) {
+  newSession.value.clientName = appt.clientName || ''
+  newSession.value.clientPhone = appt.clientPhone || ''
+  newSession.value.serviceType = appt.serviceTitle || ''
+  activeTab.value = 'sessions'
+  showSuccess(`¡Datos de ${appt.clientName} preparados para subir fotos!`)
+}
+
+function openWhatsAppReminder(appt: Appointment) {
+  const cleanPhone = appt.clientPhone.replace(/\D/g, '')
+  const fullPhone = cleanPhone.startsWith('34') ? cleanPhone : `34${cleanPhone}`
+  const text = encodeURIComponent(
+    `¡Hola ${appt.clientName}! ❤️ Te recordamos tu cita de ecografía en EcoNane:\n\n` +
+    `📅 *Fecha:* ${appt.date}\n` +
+    `⏰ *Hora:* ${appt.time} h (${appt.serviceDuration} min)\n` +
+    `✨ *Servicio:* ${appt.serviceTitle} (${appt.servicePrice})\n` +
+    `📍 *Ubicación:* Carrer Colón, 114, La Vila Joiosa\n` +
+    `🔖 *Código de cita:* ${appt.bookingCode}\n\n` +
+    `Si tienes cualquier duda o necesitas ajustar la hora, estamos aquí para ayudarte. ¡Te esperamos!`
+  )
+  window.open(`https://wa.me/${fullPhone}?text=${text}`, '_blank')
+}
+
+function downloadIcsForAppt(appt: Appointment) {
+  const [year, month, day] = appt.date.split('-')
+  const [hour, min] = appt.time.split(':')
+  const start = `${year}${month}${day}T${hour}${min}00`
+  const dur = appt.serviceDuration || 45
+  const endMinutes = Number(hour) * 60 + Number(min) + dur
+  const endH = Math.floor(endMinutes / 60).toString().padStart(2, '0')
+  const endM = (endMinutes % 60).toString().padStart(2, '0')
+  const end = `${year}${month}${day}T${endH}${endM}00`
+
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//EcoNane//Agenda//ES
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+SUMMARY:Cita ${appt.serviceTitle} - ${appt.clientName}
+DESCRIPTION:Cita confirmada en EcoNane (Código: ${appt.bookingCode}). Tel: ${appt.clientPhone}.
+LOCATION:Carrer Colón\\, 114\\, 03570 La Vila Joiosa\\, Alicante
+DTSTART:${start}
+DTEND:${end}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Cita-EcoNane-${appt.bookingCode}.ics`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+// Modal: Nueva Cita Manual
+const showManualAppointmentModal = ref(false)
+const manualAppointmentForm = ref({
+  clientName: '',
+  clientPhone: '',
+  clientEmail: '',
+  gestationWeek: '',
+  serviceTitle: '',
+  servicePrice: '',
+  serviceDuration: 45,
+  date: todayStr.value,
+  time: '11:00',
+  notes: '',
+  sendEmail: true
+})
+
+function openNewManualAppointment() {
+  const firstService = experiences.value[0] || { title: 'Eco Básica 4D/5D', price: '45€' }
+  manualAppointmentForm.value = {
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    gestationWeek: '',
+    serviceTitle: firstService.title,
+    servicePrice: firstService.price,
+    serviceDuration: 45,
+    date: todayStr.value,
+    time: '11:00',
+    notes: '',
+    sendEmail: true
+  }
+  showManualAppointmentModal.value = true
+}
+
+const manualAvailableSlots = computed(() => {
+  if (!manualAppointmentForm.value.date) return []
+  return getAvailableSlots(manualAppointmentForm.value.date, manualAppointmentForm.value.serviceDuration)
+})
+
+async function handleCreateManualAppointment() {
+  if (!manualAppointmentForm.value.clientName.trim() || !manualAppointmentForm.value.clientPhone.trim()) {
+    alert('Por favor indica al menos el nombre y el teléfono de la clienta.')
+    return
+  }
+  if (!manualAppointmentForm.value.date || !manualAppointmentForm.value.time) {
+    alert('Por favor selecciona la fecha y hora de la cita.')
+    return
+  }
+
+  try {
+    const appt = await createAppointment({
+      clientName: manualAppointmentForm.value.clientName.trim(),
+      clientPhone: manualAppointmentForm.value.clientPhone.trim(),
+      clientEmail: manualAppointmentForm.value.clientEmail.trim(),
+      gestationWeek: manualAppointmentForm.value.gestationWeek.trim(),
+      serviceTitle: manualAppointmentForm.value.serviceTitle,
+      servicePrice: manualAppointmentForm.value.servicePrice,
+      serviceDuration: manualAppointmentForm.value.serviceDuration,
+      date: manualAppointmentForm.value.date,
+      time: manualAppointmentForm.value.time,
+      notes: manualAppointmentForm.value.notes.trim()
+    })
+
+    showManualAppointmentModal.value = false
+    showSuccess(`¡Cita registrada con éxito! Código: ${appt.bookingCode}`)
+  } catch (err: any) {
+    alert('Error al crear la cita: ' + (err?.message || err))
+  }
+}
+
+// Modal: Configurar Horarios y Festivos
+const showBookingSettingsModal = ref(false)
+const settingsForm = ref<BookingSettings>(JSON.parse(JSON.stringify(bookingSettings.value)))
+const newBlockedDateInput = ref('')
+
+const weekDayLabels: Record<number, string> = {
+  1: 'Lunes',
+  2: 'Martes',
+  3: 'Miércoles',
+  4: 'Jueves',
+  5: 'Viernes',
+  6: 'Sábado',
+  0: 'Domingo'
+}
+
+const scheduleDays = computed(() => {
+  return [1, 2, 3, 4, 5, 6, 0].map(dayIndex => ({
+    dayIndex,
+    label: weekDayLabels[dayIndex] || '',
+    data: settingsForm.value.schedule[dayIndex] || {
+      isOpen: false,
+      morningStart: '10:00',
+      morningEnd: '14:00',
+      afternoonStart: '16:30',
+      afternoonEnd: '20:30'
+    }
+  }))
+})
+
+function openBookingSettingsModal() {
+  settingsForm.value = JSON.parse(JSON.stringify(bookingSettings.value))
+  showBookingSettingsModal.value = true
+}
+
+function addBlockedDate() {
+  if (!newBlockedDateInput.value) return
+  if (!settingsForm.value.blockedDates.includes(newBlockedDateInput.value)) {
+    settingsForm.value.blockedDates.push(newBlockedDateInput.value)
+    settingsForm.value.blockedDates.sort()
+  }
+  newBlockedDateInput.value = ''
+}
+
+function removeBlockedDate(index: number) {
+  settingsForm.value.blockedDates.splice(index, 1)
+}
+
+async function handleSaveBookingSettings() {
+  try {
+    await saveBookingSettings(settingsForm.value)
+    showBookingSettingsModal.value = false
+    showSuccess('¡Configuración de horarios y festivos guardada con éxito!')
+  } catch (err: any) {
+    alert('Error al guardar la configuración: ' + (err?.message || err))
+  }
+}
+
+// -------------------------------------------------------------
 // 7. DATOS FISCALES DEL NEGOCIO (EMISIÓN LEGAL DE FACTURAS)
 // -------------------------------------------------------------
 const businessForm = ref<BusinessInfo>({ ...businessInfo.value })
@@ -1137,6 +1449,10 @@ function handleKeydown(e: KeyboardEvent) {
       showCustomItemForm.value = false
     } else if (showNewProductModal.value) {
       showNewProductModal.value = false
+    } else if (showManualAppointmentModal.value) {
+      showManualAppointmentModal.value = false
+    } else if (showBookingSettingsModal.value) {
+      showBookingSettingsModal.value = false
     } else if (ticketToCancel.value) {
       ticketToCancel.value = null
     }
@@ -1188,6 +1504,25 @@ onUnmounted(() => {
       <!-- Navigation Tabs -->
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex gap-2 overflow-x-auto border-t border-brand-pink-light/20 pt-2 pb-1.5 scrollbar-none">
+          <button
+            @click="activeTab = 'agenda'"
+            :class="[
+              'flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200',
+              activeTab === 'agenda'
+                ? 'bg-brand-brown text-white shadow-md'
+                : 'text-brand-brown-dark/75 hover:bg-brand-beige hover:text-brand-brown-dark'
+            ]"
+          >
+            <Calendar class="h-4 w-4" />
+            <span>Agenda y Citas</span>
+            <span
+              v-if="todayAppointmentsCount > 0"
+              class="ml-1 rounded-full bg-brand-pink px-2 py-0.5 text-xs font-bold text-white shadow-xs"
+            >
+              {{ todayAppointmentsCount }} hoy
+            </span>
+          </button>
+
           <button
             @click="activeTab = 'tpv'"
             :class="[
@@ -1288,6 +1623,368 @@ onUnmounted(() => {
     <!-- Main Content Area -->
     <main class="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
       <!-- ========================================== -->
+      <!-- TAB: AGENDA Y CITAS ONLINE (Booksy Alternative) -->
+      <!-- ========================================== -->
+      <div v-if="activeTab === 'agenda'" class="space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="font-serif text-2xl font-bold text-brand-brown-dark">Agenda y Citas</h2>
+              <span class="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-800">
+                Sistema Nativo · 0€ Comisiones
+              </span>
+            </div>
+            <p class="text-sm text-brand-brown/80">
+              Gestiona todas las reservas web y presenciales, envía recordatorios y cóbralas directamente en el TPV.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              @click="openNewManualAppointment"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-brown-dark active:scale-95"
+            >
+              <Plus class="h-4 w-4" />
+              <span>+ Nueva Cita Manual</span>
+            </button>
+
+            <button
+              type="button"
+              @click="openBookingSettingsModal"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-4 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
+            >
+              <Settings class="h-4 w-4" />
+              <span>Horarios y Festivos</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-brand-brown/70 uppercase tracking-wider">Citas Hoy</span>
+              <div class="rounded-xl bg-brand-pink-light/40 p-2 text-brand-pink">
+                <Calendar class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ todayAppointmentsCount }}</span>
+              <span class="text-[11px] text-brand-brown/60">programadas</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-brand-brown/70 uppercase tracking-wider">Próximas Citas</span>
+              <div class="rounded-xl bg-emerald-100 p-2 text-emerald-700">
+                <Clock class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ upcomingAppointmentsCount }}</span>
+              <span class="text-[11px] text-brand-brown/60">confirmadas</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-brand-brown/70 uppercase tracking-wider">Completadas</span>
+              <div class="rounded-xl bg-sky-100 p-2 text-sky-700">
+                <CheckCircle2 class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ thisMonthCompletedCount }}</span>
+              <span class="text-[11px] text-brand-brown/60">este mes</span>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-brand-pink-light/40 bg-white p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-brand-brown/70 uppercase tracking-wider">Total Histórico</span>
+              <div class="rounded-xl bg-purple-100 p-2 text-purple-700">
+                <Sparkles class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ appointments.length }}</span>
+              <span class="text-[11px] text-brand-brown/60">en sistema</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="flex flex-col gap-3 rounded-2xl border border-brand-pink-light/40 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+          <!-- Date Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              type="button"
+              @click="agendaDateFilter = 'today'"
+              :class="[
+                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaDateFilter === 'today'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+              ]"
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              @click="agendaDateFilter = 'week'"
+              :class="[
+                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaDateFilter === 'week'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+              ]"
+            >
+              Esta Semana
+            </button>
+            <button
+              type="button"
+              @click="agendaDateFilter = 'month'"
+              :class="[
+                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaDateFilter === 'month'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+              ]"
+            >
+              Este Mes
+            </button>
+            <button
+              type="button"
+              @click="agendaDateFilter = 'all'"
+              :class="[
+                'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap',
+                agendaDateFilter === 'all'
+                  ? 'bg-brand-brown text-white shadow-xs'
+                  : 'bg-brand-cream/60 text-brand-brown hover:bg-brand-beige'
+              ]"
+            >
+              Todas
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center gap-2">
+            <!-- Status Dropdown -->
+            <select
+              v-model="agendaStatusFilter"
+              class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3 py-1.5 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="confirmed">Confirmadas</option>
+              <option value="completed">Realizadas</option>
+              <option value="cancelled">Canceladas</option>
+              <option value="no_show">No Presentada</option>
+            </select>
+
+            <!-- Search Field -->
+            <div class="relative w-full sm:w-60">
+              <Search class="absolute left-3 top-2.5 h-3.5 w-3.5 text-brand-brown/50" />
+              <input
+                v-model="agendaSearchQuery"
+                type="text"
+                placeholder="Buscar clienta, tlf, código..."
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 pl-8 pr-3 py-1.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment Cards List -->
+        <div v-if="filteredAppointments.length === 0" class="rounded-3xl border border-brand-pink-light/40 bg-white p-12 text-center shadow-xs">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-pink-light/30 text-brand-pink">
+            <Calendar class="h-7 w-7" />
+          </div>
+          <h3 class="mt-4 font-serif text-lg font-bold text-brand-brown-dark">No hay citas en este periodo</h3>
+          <p class="mx-auto mt-1 max-w-sm text-xs text-brand-brown/70">
+            No se han encontrado citas con los filtros seleccionados. Las citas reservadas por clientas en la web aparecerán aquí en tiempo real.
+          </p>
+          <div class="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              @click="openNewManualAppointment"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-brand-brown-dark"
+            >
+              <Plus class="h-4 w-4" />
+              <span>Registrar Cita Manual</span>
+            </button>
+            <button
+              type="button"
+              v-if="agendaDateFilter !== 'all' || agendaStatusFilter !== 'all' || agendaSearchQuery"
+              @click="agendaDateFilter = 'all'; agendaStatusFilter = 'all'; agendaSearchQuery = ''"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-brand-cream/40 px-4 py-2.5 text-xs font-bold text-brand-brown transition-all hover:bg-brand-beige"
+            >
+              <RotateCcw class="h-4 w-4" />
+              <span>Ver Todas las Citas</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="space-y-3.5">
+          <div
+            v-for="appt in filteredAppointments"
+            :key="appt.id"
+            class="rounded-3xl border border-brand-pink-light/40 bg-white p-5 shadow-xs transition-all hover:border-brand-pink/60 hover:shadow-sm"
+          >
+            <!-- Top Row: Date, Time, Code & Status -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-pink-light/20 pb-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-xl bg-brand-cream/80 px-3 py-1 text-xs font-bold text-brand-brown-dark border border-brand-pink-light/40">
+                  📅 {{ appt.date }} · ⏰ {{ appt.time }} h ({{ appt.serviceDuration }} min)
+                </span>
+                <span class="font-mono text-xs font-extrabold text-brand-pink bg-brand-pink-light/30 px-2.5 py-1 rounded-xl">
+                  {{ appt.bookingCode }}
+                </span>
+                <span
+                  v-if="appt.date === todayStr"
+                  class="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider animate-pulse"
+                >
+                  Hoy
+                </span>
+              </div>
+
+              <!-- Status Changer Dropdown -->
+              <div class="flex items-center gap-2">
+                <select
+                  :value="appt.status"
+                  @change="(e) => setAppointmentStatus(appt.id, (e.target as HTMLSelectElement).value as AppointmentStatus)"
+                  :class="[
+                    'rounded-xl px-2.5 py-1 text-xs font-bold border transition-colors cursor-pointer',
+                    appt.status === 'confirmed' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : '',
+                    appt.status === 'completed' ? 'bg-sky-50 text-sky-800 border-sky-300' : '',
+                    appt.status === 'cancelled' ? 'bg-rose-50 text-rose-800 border-rose-300' : '',
+                    appt.status === 'no_show' ? 'bg-amber-50 text-amber-800 border-amber-300' : ''
+                  ]"
+                >
+                  <option value="confirmed">Confirmada</option>
+                  <option value="completed">Realizada</option>
+                  <option value="cancelled">Cancelada</option>
+                  <option value="no_show">No Presentada</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Middle Row: Client & Service Details -->
+            <div class="grid grid-cols-1 gap-4 py-3.5 sm:grid-cols-12 sm:items-center">
+              <div class="space-y-1 sm:col-span-5">
+                <div class="flex items-center gap-2">
+                  <h4 class="font-serif text-base font-bold text-brand-brown-dark">{{ appt.clientName }}</h4>
+                  <span
+                    v-if="appt.gestationWeek"
+                    class="rounded-full bg-brand-pink-light/30 px-2 py-0.5 text-[10px] font-bold text-brand-brown"
+                  >
+                    {{ appt.gestationWeek }}
+                  </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-brand-brown/80">
+                  <a
+                    :href="`tel:${appt.clientPhone}`"
+                    class="flex items-center gap-1 font-semibold text-brand-brown hover:text-brand-pink transition-colors"
+                  >
+                    <Phone class="h-3.5 w-3.5" />
+                    <span>{{ appt.clientPhone }}</span>
+                  </a>
+                  <a
+                    v-if="appt.clientEmail"
+                    :href="`mailto:${appt.clientEmail}`"
+                    class="flex items-center gap-1 text-brand-brown/70 hover:text-brand-pink transition-colors"
+                  >
+                    <Mail class="h-3.5 w-3.5" />
+                    <span>{{ appt.clientEmail }}</span>
+                  </a>
+                </div>
+              </div>
+
+              <div class="space-y-1 sm:col-span-4">
+                <div class="text-xs font-bold text-brand-brown-dark">
+                  ✨ {{ appt.serviceTitle }}
+                </div>
+                <div class="text-xs font-semibold text-emerald-700">
+                  Importe: {{ appt.servicePrice }}
+                </div>
+                <div v-if="appt.notes" class="text-[11px] text-stone-500 italic">
+                  "{{ appt.notes }}"
+                </div>
+              </div>
+
+              <!-- Quick Action Buttons -->
+              <div class="flex flex-wrap items-center justify-end gap-1.5 sm:col-span-3">
+                <!-- Cobrar en TPV -->
+                <button
+                  type="button"
+                  @click="chargeAppointmentInTpv(appt)"
+                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-95"
+                  title="Cargar clienta y servicio en el TPV para cobrar"
+                >
+                  <Calculator class="h-3.5 w-3.5" />
+                  <span>Cobrar en TPV</span>
+                </button>
+
+                <!-- WhatsApp Reminder -->
+                <button
+                  type="button"
+                  @click="openWhatsAppReminder(appt)"
+                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-300 px-2.5 py-2 text-xs font-bold text-emerald-800 transition-all hover:bg-emerald-100"
+                  title="Enviar recordatorio de cita por WhatsApp"
+                >
+                  <Send class="h-3.5 w-3.5" />
+                  <span class="hidden xl:inline">WhatsApp</span>
+                </button>
+
+                <!-- Subir Fotos Entrega -->
+                <button
+                  type="button"
+                  @click="createSessionFromAppointment(appt)"
+                  class="flex cursor-pointer items-center gap-1 rounded-xl border border-brand-pink-light/60 bg-brand-cream/40 px-2.5 py-2 text-xs font-bold text-brand-brown transition-all hover:bg-brand-pink-light/30"
+                  title="Crear entrega de fotos para esta clienta"
+                >
+                  <Camera class="h-3.5 w-3.5" />
+                  <span class="hidden xl:inline">Fotos</span>
+                </button>
+
+                <!-- Google Calendar -->
+                <a
+                  :href="generateGoogleCalendarUrl(appt)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                  title="Añadir a Google Calendar"
+                >
+                  <CalendarPlus class="h-3.5 w-3.5" />
+                </a>
+
+                <!-- .ICS Download -->
+                <button
+                  type="button"
+                  @click="downloadIcsForAppt(appt)"
+                  class="flex cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                  title="Descargar archivo .ics para Outlook/Apple"
+                >
+                  <Download class="h-3.5 w-3.5" />
+                </button>
+
+                <!-- Delete -->
+                <button
+                  type="button"
+                  @click="handleDeleteAppointment(appt)"
+                  class="flex cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-rose-50/50 p-2 text-rose-600 hover:bg-rose-100 transition-colors"
+                  title="Eliminar cita"
+                >
+                  <Trash2 class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
       <!-- TAB: TPV / CAJA RÁPIDA (Ventas y Facturación) -->
       <!-- ========================================== -->
       <div v-if="activeTab === 'tpv'" class="space-y-6">
@@ -1305,22 +2002,42 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <!-- Quick client loader from photo sessions -->
-          <div v-if="sessions.length > 0" class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-            <span class="text-xs font-semibold text-brand-brown/80 shrink-0">⚡ Cargar clienta de cita:</span>
-            <select
-              @change="(e) => {
-                const s = sessions.find(item => item.id === (e.target as HTMLSelectElement).value)
-                if (s) selectClientFromSession(s)
-                ;(e.target as HTMLSelectElement).value = ''
-              }"
-              class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark shadow-sm focus:border-brand-pink focus:outline-none cursor-pointer"
-            >
-              <option value="" disabled selected>Seleccionar cita reciente...</option>
-              <option v-for="s in sessions" :key="s.id" :value="s.id">
-                {{ s.clientName }} ({{ s.serviceType }})
-              </option>
-            </select>
+          <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <!-- Quick client loader from appointments -->
+            <div v-if="appointments.length > 0" class="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
+              <span class="text-xs font-semibold text-brand-brown/80 shrink-0">📅 Cargar de Agenda:</span>
+              <select
+                @change="(e) => {
+                  const a = appointments.find(item => item.id === (e.target as HTMLSelectElement).value)
+                  if (a) chargeAppointmentInTpv(a)
+                  ;(e.target as HTMLSelectElement).value = ''
+                }"
+                class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark shadow-sm focus:border-brand-pink focus:outline-none cursor-pointer"
+              >
+                <option value="" disabled selected>Seleccionar cita agendada...</option>
+                <option v-for="a in appointments" :key="a.id" :value="a.id">
+                  {{ a.date }} {{ a.time }} · {{ a.clientName }} ({{ a.serviceTitle }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Quick client loader from photo sessions -->
+            <div v-if="sessions.length > 0" class="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
+              <span class="text-xs font-semibold text-brand-brown/80 shrink-0">📸 De Entrega:</span>
+              <select
+                @change="(e) => {
+                  const s = sessions.find(item => item.id === (e.target as HTMLSelectElement).value)
+                  if (s) selectClientFromSession(s)
+                  ;(e.target as HTMLSelectElement).value = ''
+                }"
+                class="w-full sm:w-auto rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark shadow-sm focus:border-brand-pink focus:outline-none cursor-pointer"
+              >
+                <option value="" disabled selected>Seleccionar entrega...</option>
+                <option v-for="s in sessions" :key="s.id" :value="s.id">
+                  {{ s.clientName }} ({{ s.serviceType }})
+                </option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -3651,6 +4368,383 @@ onUnmounted(() => {
               <span>Reiniciar a Ticket 0001</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- MODAL: NUEVA CITA MANUAL                       -->
+      <!-- ============================================== -->
+      <div
+        v-if="showManualAppointmentModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+      >
+        <div class="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-brand-pink-light/40">
+          <button
+            type="button"
+            @click="showManualAppointmentModal = false"
+            class="absolute right-5 top-5 rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+          >
+            <X class="h-5 w-5" />
+          </button>
+
+          <div class="flex items-center gap-2 mb-1">
+            <Calendar class="h-5 w-5 text-brand-pink" />
+            <h3 class="font-serif text-xl font-bold text-brand-brown-dark">Nueva Cita Manual</h3>
+          </div>
+          <p class="text-xs text-brand-brown/70 mb-6">
+            Registra una cita solicitada por teléfono, WhatsApp o presencialmente en la clínica.
+          </p>
+
+          <form @submit.prevent="handleCreateManualAppointment" class="space-y-4">
+            <!-- Client Name & Phone -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Nombre de la Mamá / Familia *</label>
+                <input
+                  v-model="manualAppointmentForm.clientName"
+                  type="text"
+                  required
+                  placeholder="Ej: Laura Domínguez"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Teléfono Móvil *</label>
+                <input
+                  v-model="manualAppointmentForm.clientPhone"
+                  type="tel"
+                  required
+                  placeholder="Ej: 644189856"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Email & Gestation Week -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Email (Para confirmación)</label>
+                <input
+                  v-model="manualAppointmentForm.clientEmail"
+                  type="email"
+                  placeholder="cliente@ejemplo.com"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Semanas de Gestación</label>
+                <input
+                  v-model="manualAppointmentForm.gestationWeek"
+                  type="text"
+                  placeholder="Ej: Semana 24"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Service Selection -->
+            <div>
+              <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Servicio / Experiencia *</label>
+              <select
+                v-model="manualAppointmentForm.serviceTitle"
+                @change="(e) => {
+                  const val = (e.target as HTMLSelectElement).value
+                  const exp = experiences.find(x => x.title === val)
+                  if (exp) {
+                    manualAppointmentForm.servicePrice = exp.price
+                    let dur = 45
+                    if (exp.duration) {
+                      const m = exp.duration.match(/\d+/)
+                      if (m) dur = parseInt(m[0], 10)
+                    }
+                    manualAppointmentForm.serviceDuration = dur
+                    return
+                  }
+                  const pack = packs.find(x => x.title === val)
+                  if (pack) {
+                    manualAppointmentForm.servicePrice = pack.price
+                    manualAppointmentForm.serviceDuration = 55
+                  }
+                }"
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none cursor-pointer"
+              >
+                <optgroup label="Ecografías y Experiencias">
+                  <option v-for="exp in experiences" :key="exp.title" :value="exp.title">
+                    {{ exp.title }} ({{ exp.price }})
+                  </option>
+                </optgroup>
+                <optgroup label="Packs de Sesiones">
+                  <option v-for="pack in packs" :key="pack.title" :value="pack.title">
+                    {{ pack.title }} ({{ pack.price }})
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Date & Time -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Fecha de la Cita *</label>
+                <input
+                  v-model="manualAppointmentForm.date"
+                  type="date"
+                  required
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Hora (ej. 11:30) *</label>
+                <input
+                  v-model="manualAppointmentForm.time"
+                  type="text"
+                  required
+                  placeholder="11:30"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2.5 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Suggested Available Slots chips -->
+            <div v-if="manualAvailableSlots.length > 0">
+              <label class="block text-[11px] font-bold text-brand-brown/70 uppercase mb-1">
+                Huecos disponibles calculados para esta fecha:
+              </label>
+              <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-brand-cream/20 rounded-xl border border-brand-pink-light/30">
+                <button
+                  v-for="slot in manualAvailableSlots"
+                  :key="slot"
+                  type="button"
+                  @click="manualAppointmentForm.time = slot"
+                  :class="[
+                    'px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                    manualAppointmentForm.time === slot
+                      ? 'bg-brand-brown text-white shadow-xs'
+                      : 'bg-white text-brand-brown border border-brand-pink-light/40 hover:bg-brand-pink-light/30'
+                  ]"
+                >
+                  {{ slot }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Observaciones / Acompañantes</label>
+              <textarea
+                v-model="manualAppointmentForm.notes"
+                rows="2"
+                placeholder="Detalles adicionales, petición especial..."
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/30 px-3.5 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:bg-white focus:outline-none"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-brand-pink-light/20">
+              <button
+                type="button"
+                @click="showManualAppointmentModal = false"
+                class="rounded-xl px-4 py-2.5 text-xs font-semibold text-brand-brown hover:bg-brand-cream transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand-brown px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-brown-dark active:scale-95 transition-all"
+              >
+                <Plus class="h-4 w-4" />
+                <span>Guardar Cita</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- MODAL: CONFIGURACIÓN DE HORARIOS Y FESTIVOS    -->
+      <!-- ============================================== -->
+      <div
+        v-if="showBookingSettingsModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+      >
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-brand-pink-light/40">
+          <button
+            type="button"
+            @click="showBookingSettingsModal = false"
+            class="absolute right-5 top-5 rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+          >
+            <X class="h-5 w-5" />
+          </button>
+
+          <div class="flex items-center gap-2 mb-1">
+            <Settings class="h-5 w-5 text-brand-pink" />
+            <h3 class="font-serif text-xl font-bold text-brand-brown-dark">Configuración de Horarios y Disponibilidad</h3>
+          </div>
+          <p class="text-xs text-brand-brown/70 mb-6">
+            Ajusta los días de apertura, turnos de mañana/tarde y bloquea festivos o vacaciones para que nadie pueda reservar en esas fechas.
+          </p>
+
+          <form @submit.prevent="handleSaveBookingSettings" class="space-y-6">
+            <!-- General Parameters: Interval & Buffer -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl bg-brand-cream/30 p-4 border border-brand-pink-light/40">
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Intervalo entre turnos</label>
+                <select
+                  v-model.number="settingsForm.slotIntervalMinutes"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+                >
+                  <option :value="30">30 minutos</option>
+                  <option :value="40">40 minutos</option>
+                  <option :value="45">45 minutos (Recomendado)</option>
+                  <option :value="50">50 minutos</option>
+                  <option :value="60">60 minutos</option>
+                </select>
+                <p class="text-[10px] text-brand-brown/60 mt-1">Frecuencia en la que se generan los huecos disponibles.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-brand-brown-dark uppercase mb-1">Margen / descanso entre citas</label>
+                <select
+                  v-model.number="settingsForm.bufferMinutes"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+                >
+                  <option :value="0">0 minutos (Citas seguidas)</option>
+                  <option :value="5">5 minutos</option>
+                  <option :value="10">10 minutos</option>
+                  <option :value="15">15 minutos (Para ventilación y preparación)</option>
+                  <option :value="20">20 minutos</option>
+                </select>
+                <p class="text-[10px] text-brand-brown/60 mt-1">Tiempo mínimo reservado tras cada sesión antes de la siguiente.</p>
+              </div>
+            </div>
+
+            <!-- Weekly Schedule (Days 1 to 6 and 0) -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-brand-brown-dark mb-3">
+                Horario Semanal de Apertura
+              </h4>
+              <div class="space-y-2.5">
+                <div
+                  v-for="day in scheduleDays"
+                  :key="day.dayIndex"
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl border border-brand-pink-light/40 bg-brand-cream/10"
+                >
+                  <div class="flex items-center gap-2.5 w-36">
+                    <input
+                      :id="`day_toggle_${day.dayIndex}`"
+                      type="checkbox"
+                      v-model="day.data.isOpen"
+                      class="h-4 w-4 rounded text-brand-brown focus:ring-brand-pink cursor-pointer"
+                    />
+                    <label :for="`day_toggle_${day.dayIndex}`" class="text-xs font-bold text-brand-brown-dark cursor-pointer">
+                      {{ day.label }}
+                    </label>
+                  </div>
+
+                  <div v-if="day.data.isOpen" class="flex flex-wrap items-center gap-2 text-xs">
+                    <!-- Turno Mañana -->
+                    <span class="text-[11px] font-semibold text-brand-brown/70">Mañana:</span>
+                    <input
+                      type="time"
+                      v-model="day.data.morningStart"
+                      class="rounded-lg border border-brand-pink-light/60 bg-white px-2 py-1 text-xs text-brand-brown-dark focus:outline-none"
+                    />
+                    <span>a</span>
+                    <input
+                      type="time"
+                      v-model="day.data.morningEnd"
+                      class="rounded-lg border border-brand-pink-light/60 bg-white px-2 py-1 text-xs text-brand-brown-dark focus:outline-none"
+                    />
+
+                    <!-- Turno Tarde -->
+                    <span class="text-[11px] font-semibold text-brand-brown/70 ml-2">Tarde:</span>
+                    <input
+                      type="time"
+                      v-model="day.data.afternoonStart"
+                      class="rounded-lg border border-brand-pink-light/60 bg-white px-2 py-1 text-xs text-brand-brown-dark focus:outline-none"
+                    />
+                    <span>a</span>
+                    <input
+                      type="time"
+                      v-model="day.data.afternoonEnd"
+                      class="rounded-lg border border-brand-pink-light/60 bg-white px-2 py-1 text-xs text-brand-brown-dark focus:outline-none"
+                    />
+                  </div>
+
+                  <div v-else class="text-xs text-stone-400 italic">
+                    Cerrado todo el día
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Blocked Dates / Festivos / Vacaciones -->
+            <div class="rounded-2xl border border-brand-pink-light/40 bg-brand-cream/20 p-4 space-y-3">
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-brand-brown-dark">
+                  Días Festivos o Cerrados por Vacaciones
+                </h4>
+                <p class="text-[11px] text-brand-brown/70">
+                  Las fechas bloqueadas no permitirán reservas online en ningún horario.
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="newBlockedDateInput"
+                  type="date"
+                  class="rounded-xl border border-brand-pink-light/60 bg-white px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+                <button
+                  type="button"
+                  @click="addBlockedDate"
+                  class="flex cursor-pointer items-center gap-1 rounded-xl bg-brand-brown px-3.5 py-2 text-xs font-bold text-white hover:bg-brand-brown-dark transition-all"
+                >
+                  <Plus class="h-3.5 w-3.5" />
+                  <span>Añadir Fecha</span>
+                </button>
+              </div>
+
+              <!-- List of Blocked Dates -->
+              <div v-if="settingsForm.blockedDates && settingsForm.blockedDates.length > 0" class="flex flex-wrap gap-2 pt-1">
+                <span
+                  v-for="(blocked, idx) in settingsForm.blockedDates"
+                  :key="blocked"
+                  class="flex items-center gap-1.5 rounded-full bg-rose-100 border border-rose-200 px-3 py-1 text-xs font-bold text-rose-800"
+                >
+                  <span>🚫 {{ blocked }}</span>
+                  <button
+                    type="button"
+                    @click="removeBlockedDate(idx)"
+                    class="rounded-full hover:bg-rose-200 p-0.5 text-rose-600 transition-colors cursor-pointer"
+                  >
+                    <X class="h-3 w-3" />
+                  </button>
+                </span>
+              </div>
+              <p v-else class="text-xs text-stone-400 italic">
+                No hay fechas bloqueadas actualmente.
+              </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-brand-pink-light/20">
+              <button
+                type="button"
+                @click="showBookingSettingsModal = false"
+                class="rounded-xl px-4 py-2.5 text-xs font-semibold text-brand-brown hover:bg-brand-cream transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand-brown px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-brand-brown-dark active:scale-95 transition-all"
+              >
+                <Check class="h-4 w-4" />
+                <span>Guardar Configuración</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </main>

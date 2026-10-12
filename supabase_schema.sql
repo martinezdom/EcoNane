@@ -72,12 +72,36 @@ ALTER TABLE public.sales_tickets ADD COLUMN IF NOT EXISTS discount_amount NUMERI
 ALTER TABLE public.sales_tickets ADD COLUMN IF NOT EXISTS discount_note TEXT DEFAULT '';
 ALTER TABLE public.sales_tickets ADD COLUMN IF NOT EXISTS view_token TEXT DEFAULT '';
 
--- 4. Habilitar Seguridad por Filas (Row Level Security - RLS)
+-- 4. Tabla de Citas y Reservas Online / Agenda (Reemplazo Booksy)
+CREATE TABLE IF NOT EXISTS public.appointments (
+  id TEXT PRIMARY KEY,
+  booking_code TEXT UNIQUE NOT NULL,
+  date TEXT NOT NULL,
+  time TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL DEFAULT 45,
+  service_title TEXT NOT NULL,
+  service_price TEXT DEFAULT '',
+  client_name TEXT NOT NULL,
+  client_phone TEXT NOT NULL,
+  client_email TEXT DEFAULT '',
+  gestation_week TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'confirmed', -- 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  cancelled_reason TEXT DEFAULT '',
+  reminder_sent BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Migraciones seguras para site_settings:
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS booking_settings JSONB DEFAULT '{}';
+
+-- 5. Habilitar Seguridad por Filas (Row Level Security - RLS)
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.client_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sales_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
--- 5. Políticas de Lectura y Escritura Públicas para la Web y Panel
+-- 6. Políticas de Lectura y Escritura Públicas para la Web y Panel
 CREATE POLICY "Permitir lectura publica en site_settings" ON public.site_settings
   FOR SELECT USING (true);
 
@@ -96,7 +120,13 @@ CREATE POLICY "Permitir lectura publica en sales_tickets" ON public.sales_ticket
 CREATE POLICY "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets
   FOR ALL USING (true);
 
--- 6. Crear el Bucket de Almacenamiento para las Fotos de Ecografías
+CREATE POLICY "Permitir lectura publica en appointments" ON public.appointments
+  FOR SELECT USING (true);
+
+CREATE POLICY "Permitir insercion y gestion publica en appointments" ON public.appointments
+  FOR ALL USING (true);
+
+-- 7. Crear el Bucket de Almacenamiento para las Fotos de Ecografías
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('ultrasound-photos', 'ultrasound-photos', true)
 ON CONFLICT (id) DO NOTHING;

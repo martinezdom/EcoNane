@@ -121,3 +121,41 @@ export type BusinessInfo = {
   defaultIva: number
 }
 
+export type AppointmentStatus = 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+
+export type Appointment = {
+  id: string
+  bookingCode: string
+  clientName: string
+  clientPhone: string
+  clientEmail?: string
+  gestationWeek?: string
+  serviceTitle: string
+  serviceDuration: number
+  servicePrice: string
+  date: string // YYYY-MM-DD
+  time: string // HH:MM
+  notes?: string
+  status: AppointmentStatus
+  createdAt: string
+  cancelledReason?: string
+  reminderSent?: boolean
+}
+
+export type DaySchedule = {
+  isOpen: boolean
+  morningStart: string
+  morningEnd: string
+  afternoonStart: string
+  afternoonEnd: string
+}
+
+export type BookingSettings = {
+  slotIntervalMinutes: number
+  bufferMinutes: number
+  minNoticeHours: number
+  maxFutureDays: number
+  schedule: Record<number, DaySchedule> // 0: Sunday, 1: Monday, ... 6: Saturday
+  blockedDates: string[] // Array of 'YYYY-MM-DD'
+}
+

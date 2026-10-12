@@ -8,7 +8,11 @@ import type {
   SaleTicket,
   TicketItem,
   BusinessInfo,
-  PaymentMethod
+  PaymentMethod,
+  Appointment,
+  AppointmentStatus,
+  BookingSettings,
+  DaySchedule
 } from '@/types'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
@@ -21,6 +25,8 @@ const STORAGE_KEY_AUTH = 'econane_admin_auth'
 const STORAGE_KEY_PIN = 'econane_admin_pin'
 const STORAGE_KEY_TICKETS = 'econane_sales_tickets'
 const STORAGE_KEY_BIZ = 'econane_business_info'
+const STORAGE_KEY_APPOINTMENTS = 'econane_appointments'
+const STORAGE_KEY_BOOKING_SETTINGS = 'econane_booking_settings'
 
 // Helper: SHA-256 Hashing via Web Crypto API
 async function hashString(str: string): Promise<string> {
@@ -206,6 +212,23 @@ const defaultDemoTickets: SaleTicket[] = []
 // Initial SHA-256 hash of 'econane2026'
 const DEFAULT_HASH = '1f81014e3650630fc655c6e83efec4aa3ee734c54cb43a413d964cb70a831e50'
 
+const defaultBookingSettings: BookingSettings = {
+  slotIntervalMinutes: 45,
+  bufferMinutes: 15,
+  minNoticeHours: 2,
+  maxFutureDays: 60,
+  schedule: {
+    0: { isOpen: false, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    1: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    2: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    3: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    4: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    5: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    6: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:00' }
+  },
+  blockedDates: []
+}
+
 // Global Reactive Singletons
 const promotion = ref<Promotion>(loadFromStorage(STORAGE_KEY_PROMO, defaultPromotion))
 const experiences = ref<Experience[]>(
@@ -218,6 +241,8 @@ const products = ref<Product[]>(loadFromStorage(STORAGE_KEY_PRODUCTS, defaultPro
 const sessions = ref<ClientSession[]>(loadFromStorage(STORAGE_KEY_SESSIONS, defaultDemoSessions))
 const businessInfo = ref<BusinessInfo>(loadFromStorage(STORAGE_KEY_BIZ, defaultBusinessInfo))
 const salesTickets = ref<SaleTicket[]>(loadFromStorage(STORAGE_KEY_TICKETS, defaultDemoTickets))
+const appointments = ref<Appointment[]>(loadFromStorage(STORAGE_KEY_APPOINTMENTS, []))
+const bookingSettings = ref<BookingSettings>(loadFromStorage(STORAGE_KEY_BOOKING_SETTINGS, defaultBookingSettings))
 const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
 const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
 const isCloudSynced = ref<boolean>(false)
@@ -238,6 +263,8 @@ watch(products, (val) => localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringi
 watch(sessions, (val) => localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(val)), { deep: true })
 watch(businessInfo, (val) => localStorage.setItem(STORAGE_KEY_BIZ, JSON.stringify(val)), { deep: true })
 watch(salesTickets, (val) => localStorage.setItem(STORAGE_KEY_TICKETS, JSON.stringify(val)), { deep: true })
+watch(appointments, (val) => localStorage.setItem(STORAGE_KEY_APPOINTMENTS, JSON.stringify(val)), { deep: true })
+watch(bookingSettings, (val) => localStorage.setItem(STORAGE_KEY_BOOKING_SETTINGS, JSON.stringify(val)), { deep: true })
 watch(adminPinHash, (val) => localStorage.setItem(STORAGE_KEY_PIN, JSON.stringify(val)))
 
 // Supabase Cloud Sync Engine
@@ -341,6 +368,41 @@ async function syncFromSupabase() {
         emailSent: Boolean(row.email_sent),
         viewToken: row.view_token || ''
       }))
+    }
+
+    if (settingsData && settingsData.booking_settings) {
+      bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
+    }
+
+    // 4. Fetch Appointments (Agenda de Citas)
+    try {
+      const { data: apptData, error: apptError } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('date', { ascending: true })
+
+      if (!apptError && apptData && apptData.length > 0) {
+        appointments.value = apptData.map((row: any) => ({
+          id: row.id,
+          bookingCode: row.booking_code,
+          clientName: row.client_name,
+          clientPhone: row.client_phone,
+          clientEmail: row.client_email || '',
+          gestationWeek: row.gestation_week || '',
+          serviceTitle: row.service_title,
+          serviceDuration: Number(row.duration_minutes) || 45,
+          servicePrice: row.service_price || '',
+          date: row.date,
+          time: row.time,
+          notes: row.notes || '',
+          status: (row.status as AppointmentStatus) || 'confirmed',
+          createdAt: row.created_at,
+          cancelledReason: row.cancelled_reason || '',
+          reminderSent: Boolean(row.reminder_sent)
+        }))
+      }
+    } catch (e) {
+      // Fallback si la tabla aún no se ha creado
     }
 
     isCloudSynced.value = true
@@ -947,6 +1009,271 @@ export function useSiteData() {
     URL.revokeObjectURL(url)
   }
 
+  function generateBookingCode(): string {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+    const code = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    return `ECO-${code}`
+  }
+
+  function getAvailableSlots(dateStr: string, sessionDuration = 45): string[] {
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return []
+
+    const dateObj = new Date(`${dateStr}T00:00:00`)
+    if (isNaN(dateObj.getTime())) return []
+
+    if (bookingSettings.value.blockedDates?.includes(dateStr)) return []
+
+    const dayOfWeek = dateObj.getDay()
+    const daySched = bookingSettings.value.schedule?.[dayOfWeek]
+    if (!daySched || !daySched.isOpen) return []
+
+    const toMins = (time: string) => {
+      const [h, m] = time.split(':').map(Number)
+      return (h || 0) * 60 + (m || 0)
+    }
+
+    const toTimeStr = (mins: number) => {
+      const h = Math.floor(mins / 60).toString().padStart(2, '0')
+      const m = (mins % 60).toString().padStart(2, '0')
+      return `${h}:${m}`
+    }
+
+    const interval = bookingSettings.value.slotIntervalMinutes || 45
+    const step = Math.max(interval, 30)
+    const rawSlots: string[] = []
+
+    if (daySched.morningStart && daySched.morningEnd) {
+      let cur = toMins(daySched.morningStart)
+      const end = toMins(daySched.morningEnd)
+      while (cur + sessionDuration <= end) {
+        rawSlots.push(toTimeStr(cur))
+        cur += step
+      }
+    }
+
+    if (daySched.afternoonStart && daySched.afternoonEnd) {
+      let cur = toMins(daySched.afternoonStart)
+      const end = toMins(daySched.afternoonEnd)
+      while (cur + sessionDuration <= end) {
+        rawSlots.push(toTimeStr(cur))
+        cur += step
+      }
+    }
+
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+    const currentMinutesToday = now.getHours() * 60 + now.getMinutes()
+    const minNoticeMinutes = (bookingSettings.value.minNoticeHours || 2) * 60
+
+    const dayAppointments = appointments.value.filter(
+      (a) => a.date === dateStr && a.status === 'confirmed'
+    )
+
+    return rawSlots.filter((slotTime) => {
+      const slotMins = toMins(slotTime)
+
+      if (dateStr === todayStr && slotMins < currentMinutesToday + minNoticeMinutes) {
+        return false
+      }
+
+      for (const appt of dayAppointments) {
+        const apptMins = toMins(appt.time)
+        const apptDuration = appt.serviceDuration || 45
+        const slotEnd = slotMins + sessionDuration
+        const apptEnd = apptMins + apptDuration
+        if (slotMins < apptEnd && apptMins < slotEnd) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }
+
+  async function createAppointment(data: {
+    clientName: string
+    clientPhone: string
+    clientEmail?: string
+    gestationWeek?: string
+    serviceTitle: string
+    serviceDuration?: number
+    servicePrice?: string
+    date: string
+    time: string
+    notes?: string
+  }): Promise<Appointment> {
+    const id = `appt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+    const bookingCode = generateBookingCode()
+    const duration = data.serviceDuration || 45
+
+    const newAppt: Appointment = {
+      id,
+      bookingCode,
+      clientName: data.clientName.trim(),
+      clientPhone: data.clientPhone.trim(),
+      clientEmail: (data.clientEmail || '').trim(),
+      gestationWeek: (data.gestationWeek || '').trim(),
+      serviceTitle: data.serviceTitle.trim(),
+      serviceDuration: duration,
+      servicePrice: (data.servicePrice || '').trim(),
+      date: data.date,
+      time: data.time,
+      notes: (data.notes || '').trim(),
+      status: 'confirmed',
+      createdAt: new Date().toISOString()
+    }
+
+    appointments.value = [newAppt, ...appointments.value]
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.from('appointments').insert({
+          id: newAppt.id,
+          booking_code: newAppt.bookingCode,
+          client_name: newAppt.clientName,
+          client_phone: newAppt.clientPhone,
+          client_email: newAppt.clientEmail,
+          gestation_week: newAppt.gestationWeek,
+          service_title: newAppt.serviceTitle,
+          duration_minutes: newAppt.serviceDuration,
+          service_price: newAppt.servicePrice,
+          date: newAppt.date,
+          time: newAppt.time,
+          notes: newAppt.notes,
+          status: newAppt.status,
+          created_at: newAppt.createdAt
+        })
+      } catch (err) {
+        console.warn('Could not insert appointment in Supabase:', err)
+      }
+    }
+
+    sendBookingConfirmationEmail(newAppt).catch(() => {})
+
+    return newAppt
+  }
+
+  async function updateAppointmentStatus(id: string, status: AppointmentStatus, cancelledReason?: string) {
+    const idx = appointments.value.findIndex(a => a.id === id)
+    if (idx !== -1) {
+      appointments.value[idx]!.status = status
+      if (cancelledReason) {
+        appointments.value[idx]!.cancelledReason = cancelledReason
+      }
+    }
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.from('appointments').update({
+          status,
+          cancelled_reason: cancelledReason || ''
+        }).eq('id', id)
+      } catch (err) {
+        console.warn('Could not update appointment status in Supabase:', err)
+      }
+    }
+  }
+
+  async function updateAppointment(id: string, updates: Partial<Appointment>) {
+    const idx = appointments.value.findIndex(a => a.id === id)
+    if (idx !== -1) {
+      appointments.value[idx] = { ...appointments.value[idx]!, ...updates }
+    }
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        const payload: any = {}
+        if (updates.date) payload.date = updates.date
+        if (updates.time) payload.time = updates.time
+        if (updates.clientName) payload.client_name = updates.clientName
+        if (updates.clientPhone) payload.client_phone = updates.clientPhone
+        if (updates.clientEmail !== undefined) payload.client_email = updates.clientEmail
+        if (updates.notes !== undefined) payload.notes = updates.notes
+        if (updates.status) payload.status = updates.status
+
+        await supabase.from('appointments').update(payload).eq('id', id)
+      } catch (err) {
+        console.warn('Could not update appointment in Supabase:', err)
+      }
+    }
+  }
+
+  async function deleteAppointment(id: string) {
+    appointments.value = appointments.value.filter(a => a.id !== id)
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.from('appointments').delete().eq('id', id)
+      } catch (err) {
+        console.warn('Could not delete appointment in Supabase:', err)
+      }
+    }
+  }
+
+  async function saveBookingSettings(newSettings: BookingSettings) {
+    bookingSettings.value = { ...newSettings }
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.from('site_settings').upsert({
+          id: 'main',
+          booking_settings: newSettings
+        })
+      } catch (err) {
+        console.warn('Could not save booking settings in Supabase:', err)
+      }
+    }
+  }
+
+  function generateGoogleCalendarUrl(appt: Appointment): string {
+    const title = encodeURIComponent(`Ecografía en EcoNane - ${appt.serviceTitle}`)
+    const details = encodeURIComponent(
+      `Cita en EcoNane para ${appt.clientName} (Código: ${appt.bookingCode}).\nServicio: ${appt.serviceTitle}\nTeléfono: +34 644 18 98 56\nUbicación: Carrer Colón, 114, 03570 La Vila Joiosa`
+    )
+    const location = encodeURIComponent('Carrer Colón, 114, 03570 La Vila Joiosa, Alicante')
+
+    const [year, month, day] = appt.date.split('-')
+    const [hour, min] = appt.time.split(':')
+    const startStr = `${year}${month}${day}T${hour}${min}00`
+
+    const dur = appt.serviceDuration || 45
+    const endMinutes = Number(hour) * 60 + Number(min) + dur
+    const endH = Math.floor(endMinutes / 60).toString().padStart(2, '0')
+    const endM = (endMinutes % 60).toString().padStart(2, '0')
+    const endStr = `${year}${month}${day}T${endH}${endM}00`
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`
+  }
+
+  function generateWhatsAppBookingUrl(appt: Appointment): string {
+    const text = encodeURIComponent(
+      `¡Hola Mireia! ❤️ He reservado mi cita en EcoNane:\n\n` +
+      `🤰 Mamá: ${appt.clientName}\n` +
+      `📅 Fecha: ${appt.date} a las ${appt.time} h\n` +
+      `✨ Servicio: ${appt.serviceTitle}\n` +
+      `🔖 Código: ${appt.bookingCode}\n\n` +
+      `¡Muchas gracias!`
+    )
+    return `https://wa.me/34644189856?text=${text}`
+  }
+
+  async function sendBookingConfirmationEmail(appt: Appointment): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch('/api/send-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointment: appt,
+          businessInfo: businessInfo.value
+        })
+      })
+      if (res.ok) {
+        return { success: true }
+      }
+      return { success: false, message: 'No se pudo enviar el correo de confirmación' }
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Error de conexión' }
+    }
+  }
+
   return {
     promotion,
     experiences,
@@ -955,6 +1282,8 @@ export function useSiteData() {
     sessions,
     businessInfo,
     salesTickets,
+    appointments,
+    bookingSettings,
     isAdminLoggedIn,
     isCloudSynced,
     isSupabaseConfigured,
@@ -988,6 +1317,15 @@ export function useSiteData() {
     exportTicketsToCSV,
     syncFromSupabase,
     formatExperienceWhatsAppLink,
-    formatPackWhatsAppLink
+    formatPackWhatsAppLink,
+    getAvailableSlots,
+    createAppointment,
+    updateAppointmentStatus,
+    updateAppointment,
+    deleteAppointment,
+    saveBookingSettings,
+    generateGoogleCalendarUrl,
+    generateWhatsAppBookingUrl,
+    sendBookingConfirmationEmail
   }
 }

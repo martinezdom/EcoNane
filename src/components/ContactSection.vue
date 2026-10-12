@@ -16,8 +16,11 @@ import {
   Navigation
 } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
+import BookingWizard from '@/components/BookingWizard.vue'
 
 const { experiences, packs } = useSiteData()
+
+const activeBookingMode = ref<'online' | 'whatsapp'>('online')
 
 const name = ref('')
 const email = ref('')
@@ -297,181 +300,220 @@ const sendByEmail = async () => {
           </div>
         </div>
 
-        <!-- Interactive Booking Form Right Column -->
-        <div class="border-brand-pink-light/40 rounded-3xl border bg-white p-6 shadow-sm sm:p-8 lg:col-span-7">
-          <div class="flex items-center gap-2 text-xs font-bold text-brand-pink uppercase tracking-wider mb-2">
-            <Sparkles class="h-3.5 w-3.5 fill-brand-pink" />
-            <span>Formulario de Cita</span>
+        <!-- Interactive Booking Right Column -->
+        <div class="lg:col-span-7 space-y-4">
+          <!-- Booking Mode Switcher Tabs -->
+          <div class="flex rounded-2xl bg-brand-cream/80 p-1 border border-brand-pink-light/50 shadow-xs">
+            <button
+              type="button"
+              @click="activeBookingMode = 'online'"
+              :class="[
+                'flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer',
+                activeBookingMode === 'online'
+                  ? 'bg-brand-brown text-white shadow-sm'
+                  : 'text-brand-brown hover:text-brand-brown-dark hover:bg-white/60'
+              ]"
+            >
+              <Calendar class="h-4 w-4" />
+              <span>Reserva Online Inmediata</span>
+              <span class="rounded-full bg-brand-pink px-2 py-0.5 text-[9px] font-extrabold text-white uppercase tracking-wider">Cita Directa</span>
+            </button>
+            <button
+              type="button"
+              @click="activeBookingMode = 'whatsapp'"
+              :class="[
+                'flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer',
+                activeBookingMode === 'whatsapp'
+                  ? 'bg-brand-brown text-white shadow-sm'
+                  : 'text-brand-brown hover:text-brand-brown-dark hover:bg-white/60'
+              ]"
+            >
+              <Send class="h-4 w-4" />
+              <span>Consulta Rápida / WhatsApp</span>
+            </button>
           </div>
 
-          <h3 class="text-brand-brown-dark mb-6 font-serif text-2xl font-bold">
-            Personaliza tu cita
-          </h3>
+          <!-- Mode 1: Booking Wizard Component -->
+          <div v-if="activeBookingMode === 'online'">
+            <BookingWizard />
+          </div>
 
-          <form @submit.prevent="sendWhatsApp" class="space-y-6" novalidate>
-            <!-- Campo Honeypot anti-spam (invisible para humanos, solo visible para bots) -->
-            <div class="hidden" aria-hidden="true">
-              <label for="form_website_hp">No rellenes este campo</label>
-              <input
-                id="form_website_hp"
-                v-model="honey"
-                type="text"
-                tabindex="-1"
-                autocomplete="off"
-              />
+          <!-- Mode 2: Quick Inquiry / WhatsApp Form -->
+          <div v-else class="border-brand-pink-light/40 rounded-3xl border bg-white p-6 shadow-sm sm:p-8">
+            <div class="flex items-center gap-2 text-xs font-bold text-brand-pink uppercase tracking-wider mb-2">
+              <Sparkles class="h-3.5 w-3.5 fill-brand-pink" />
+              <span>Formulario de Consulta Rápida</span>
             </div>
 
-            <!-- 1. Gestation Week Interactive Selector (No selection by default) -->
-            <div>
-              <label class="text-brand-brown-dark mb-2 block text-xs font-bold uppercase tracking-wider">
-                1. ¿De cuántas semanas estás aproximadamente? (Opcional)
-              </label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  v-for="g in gestationOptions"
-                  :key="g.label"
-                  type="button"
-                  @click="toggleGestation(g)"
-                  :class="[
-                    'flex flex-col text-left p-3 rounded-2xl border transition-all cursor-pointer',
-                    selectedGestation.startsWith(g.label)
-                      ? 'border-brand-brown bg-brand-brown text-white shadow-md'
-                      : 'border-brand-pink-light/60 bg-brand-cream/30 text-brand-brown-dark hover:border-brand-pink hover:bg-brand-beige/50'
-                  ]"
-                >
-                  <span class="text-xs font-bold">{{ g.label }}</span>
-                  <span
+            <h3 class="text-brand-brown-dark mb-6 font-serif text-2xl font-bold">
+              Pregúntanos lo que necesites
+            </h3>
+
+            <form @submit.prevent="sendWhatsApp" class="space-y-6" novalidate>
+              <!-- Campo Honeypot anti-spam (invisible para humanos, solo visible para bots) -->
+              <div class="hidden" aria-hidden="true">
+                <label for="form_website_hp">No rellenes este campo</label>
+                <input
+                  id="form_website_hp"
+                  v-model="honey"
+                  type="text"
+                  tabindex="-1"
+                  autocomplete="off"
+                />
+              </div>
+
+              <!-- 1. Gestation Week Interactive Selector (No selection by default) -->
+              <div>
+                <label class="text-brand-brown-dark mb-2 block text-xs font-bold uppercase tracking-wider">
+                  1. ¿De cuántas semanas estás aproximadamente? (Opcional)
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    v-for="g in gestationOptions"
+                    :key="g.label"
+                    type="button"
+                    @click="toggleGestation(g)"
                     :class="[
-                      'text-[11px] mt-0.5',
-                      selectedGestation.startsWith(g.label) ? 'text-white/80' : 'text-brand-brown/70'
+                      'flex flex-col text-left p-3 rounded-2xl border transition-all cursor-pointer',
+                      selectedGestation.startsWith(g.label)
+                        ? 'border-brand-brown bg-brand-brown text-white shadow-md'
+                        : 'border-brand-pink-light/60 bg-brand-cream/30 text-brand-brown-dark hover:border-brand-pink hover:bg-brand-beige/50'
                     ]"
                   >
-                    {{ g.hint }}
-                  </span>
+                    <span class="text-xs font-bold">{{ g.label }}</span>
+                    <span
+                      :class="[
+                        'text-[11px] mt-0.5',
+                        selectedGestation.startsWith(g.label) ? 'text-white/80' : 'text-brand-brown/70'
+                      ]"
+                    >
+                      {{ g.hint }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Service Selector -->
+              <div>
+                <label for="scan" class="text-brand-brown-dark mb-2 block text-xs font-bold uppercase tracking-wider">
+                  2. Servicio o Experiencia que deseas *
+                </label>
+                <select id="scan" v-model="selectedService" class="form-select font-semibold text-brand-brown-dark">
+                  <option v-for="opt in allServices" :key="opt" :value="opt">
+                    {{ opt }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- 3. Name, Phone & Email -->
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="flex flex-col">
+                  <label for="name" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
+                    Tu nombre completo *
+                  </label>
+                  <input
+                    id="name"
+                    v-model="name"
+                    type="text"
+                    placeholder="Ej: Laura Domínguez"
+                    :class="[
+                      'form-input transition-colors',
+                      errors.name ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                    ]"
+                    @input="errors.name = ''"
+                  />
+                  <span v-if="errors.name" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.name }}</span>
+                </div>
+
+                <div class="flex flex-col">
+                  <label for="phone" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
+                    Teléfono móvil *
+                  </label>
+                  <input
+                    id="phone"
+                    v-model="phone"
+                    type="tel"
+                    placeholder="Ej: 644189856"
+                    :class="[
+                      'form-input transition-colors',
+                      errors.phone ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                    ]"
+                    @input="errors.phone = ''"
+                  />
+                  <span v-if="errors.phone" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.phone }}</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col">
+                <label for="email" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
+                  Correo Electrónico (Para recibir respuesta o confirmación)
+                </label>
+                <input
+                  id="email"
+                  v-model="email"
+                  type="email"
+                  placeholder="Ej: tu-email@ejemplo.com"
+                  :class="[
+                    'form-input transition-colors',
+                    errors.email ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
+                  ]"
+                  @input="errors.email = ''"
+                />
+                <span v-if="errors.email" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.email }}</span>
+              </div>
+
+              <!-- 4. Optional Note -->
+              <div class="flex flex-col">
+                <label for="message" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
+                  ¿Quieres indicarnos algo más? (Opcional)
+                </label>
+                <textarea
+                  id="message"
+                  v-model="message"
+                  rows="2"
+                  placeholder="Acompañantes que vendrán, alguna duda o fecha especial..."
+                  class="form-textarea text-xs"
+                ></textarea>
+              </div>
+
+              <!-- Status Alerts for Email Sending -->
+              <div v-if="emailStatus === 'success'" class="flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-800">
+                <CheckCircle2 class="h-5 w-5 shrink-0 text-emerald-600" />
+                <span>¡Solicitud enviada correctamente! Nos pondremos en contacto contigo lo antes posible para confirmar tu cita.</span>
+              </div>
+
+              <div v-if="emailStatus === 'error'" class="flex items-center gap-3 rounded-2xl bg-rose-50 border border-rose-200 p-4 text-xs font-semibold text-rose-800">
+                <AlertCircle class="h-5 w-5 shrink-0 text-rose-600" />
+                <span>{{ emailErrorMessage }}</span>
+              </div>
+
+              <!-- Dual Action Buttons -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button
+                  type="submit"
+                  class="flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-center text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-98"
+                >
+                  <Send class="h-4 w-4" />
+                  <span>Solicitar por WhatsApp</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="sendByEmail"
+                  :disabled="emailStatus === 'loading'"
+                  class="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-brand-brown bg-brand-brown px-4 py-3.5 text-center text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-brown-dark active:scale-98 disabled:opacity-50"
+                >
+                  <Loader2 v-if="emailStatus === 'loading'" class="h-4 w-4 animate-spin text-white" />
+                  <Mail v-else class="h-4 w-4 text-white" />
+                  <span>{{ emailStatus === 'loading' ? 'Enviando...' : 'Enviar por Correo' }}</span>
                 </button>
               </div>
-            </div>
 
-            <!-- 2. Service Selector -->
-            <div>
-              <label for="scan" class="text-brand-brown-dark mb-2 block text-xs font-bold uppercase tracking-wider">
-                2. Servicio o Experiencia que deseas *
-              </label>
-              <select id="scan" v-model="selectedService" class="form-select font-semibold text-brand-brown-dark">
-                <option v-for="opt in allServices" :key="opt" :value="opt">
-                  {{ opt }}
-                </option>
-              </select>
-            </div>
-
-            <!-- 3. Name, Phone & Email -->
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="flex flex-col">
-                <label for="name" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
-                  Tu nombre completo *
-                </label>
-                <input
-                  id="name"
-                  v-model="name"
-                  type="text"
-                  placeholder="Ej: Laura Domínguez"
-                  :class="[
-                    'form-input transition-colors',
-                    errors.name ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
-                  ]"
-                  @input="errors.name = ''"
-                />
-                <span v-if="errors.name" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.name }}</span>
-              </div>
-
-              <div class="flex flex-col">
-                <label for="phone" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
-                  Teléfono móvil *
-                </label>
-                <input
-                  id="phone"
-                  v-model="phone"
-                  type="tel"
-                  placeholder="Ej: 644189856"
-                  :class="[
-                    'form-input transition-colors',
-                    errors.phone ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
-                  ]"
-                  @input="errors.phone = ''"
-                />
-                <span v-if="errors.phone" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.phone }}</span>
-              </div>
-            </div>
-
-            <div class="flex flex-col">
-              <label for="email" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
-                Correo Electrónico (Para recibir confirmación o contactar por email)
-              </label>
-              <input
-                id="email"
-                v-model="email"
-                type="email"
-                placeholder="Ej: tu-email@ejemplo.com"
-                :class="[
-                  'form-input transition-colors',
-                  errors.email ? 'border-rose-400 bg-rose-50/40 focus:ring-rose-200' : ''
-                ]"
-                @input="errors.email = ''"
-              />
-              <span v-if="errors.email" class="text-[11px] text-rose-600 mt-1 font-medium">{{ errors.email }}</span>
-            </div>
-
-            <!-- 4. Optional Note -->
-            <div class="flex flex-col">
-              <label for="message" class="text-brand-brown-dark mb-1.5 text-xs font-bold uppercase tracking-wider">
-                ¿Quieres indicarnos algo más? (Opcional)
-              </label>
-              <textarea
-                id="message"
-                v-model="message"
-                rows="2"
-                placeholder="Acompañantes que vendrán, alguna duda o fecha especial..."
-                class="form-textarea text-xs"
-              ></textarea>
-            </div>
-
-            <!-- Status Alerts for Email Sending -->
-            <div v-if="emailStatus === 'success'" class="flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-800">
-              <CheckCircle2 class="h-5 w-5 shrink-0 text-emerald-600" />
-              <span>¡Solicitud enviada correctamente! Nos pondremos en contacto contigo lo antes posible para confirmar tu cita.</span>
-            </div>
-
-            <div v-if="emailStatus === 'error'" class="flex items-center gap-3 rounded-2xl bg-rose-50 border border-rose-200 p-4 text-xs font-semibold text-rose-800">
-              <AlertCircle class="h-5 w-5 shrink-0 text-rose-600" />
-              <span>{{ emailErrorMessage }}</span>
-            </div>
-
-            <!-- Dual Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <button
-                type="submit"
-                class="flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-center text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-98"
-              >
-                <Send class="h-4 w-4" />
-                <span>Solicitar por WhatsApp</span>
-              </button>
-
-              <button
-                type="button"
-                @click="sendByEmail"
-                :disabled="emailStatus === 'loading'"
-                class="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-brand-brown bg-brand-brown px-4 py-3.5 text-center text-xs sm:text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-brown-dark active:scale-98 disabled:opacity-50"
-              >
-                <Loader2 v-if="emailStatus === 'loading'" class="h-4 w-4 animate-spin text-white" />
-                <Mail v-else class="h-4 w-4 text-white" />
-                <span>{{ emailStatus === 'loading' ? 'Enviando...' : 'Enviar por Correo' }}</span>
-              </button>
-            </div>
-
-            <p class="text-center text-[11px] text-brand-brown/70">
-              Elige la opción que prefieras: te responderemos para coordinar tu cita lo antes posible.
-            </p>
-          </form>
+              <p class="text-center text-[11px] text-brand-brown/70">
+                Elige la opción que prefieras: te responderemos para coordinar tu cita lo antes posible.
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>
