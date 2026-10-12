@@ -2013,9 +2013,6 @@ onUnmounted(() => {
           <div>
             <div class="flex items-center gap-2">
               <h2 class="font-serif text-2xl font-bold text-brand-brown-dark">Agenda y Citas</h2>
-              <span class="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-800">
-                Sistema Nativo · 0€ Comisiones
-              </span>
             </div>
             <p class="text-sm text-brand-brown/80">
               Gestiona todas las reservas web y presenciales, envía recordatorios y cóbralas directamente en el TPV.
@@ -2029,7 +2026,7 @@ onUnmounted(() => {
               class="flex cursor-pointer items-center gap-1.5 rounded-2xl bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-brown-dark active:scale-95"
             >
               <Plus class="h-4 w-4" />
-              <span>+ Nueva Cita Manual</span>
+              <span>Nueva Cita Manual</span>
             </button>
 
             <button
