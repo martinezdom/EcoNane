@@ -1163,6 +1163,65 @@ export function useSiteData() {
     URL.revokeObjectURL(url)
   }
 
+  function exportAppointmentsToCSV(apptsToExport: Appointment[], filename = 'agenda-citas-econane.csv') {
+    const sanitizeCell = (val: string | number | undefined | null): string => {
+      if (val === undefined || val === null) return ''
+      let str = String(val).trim()
+      if (/^[=+\-@]/.test(str)) {
+        str = `'${str}`
+      }
+      if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+        str = `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+
+    const headers = [
+      'Código Cita',
+      'Fecha',
+      'Hora',
+      'Duración (min)',
+      'Clienta / Familia',
+      'Teléfono',
+      'Email',
+      'Semana Gestación',
+      'Servicio',
+      'Importe',
+      'Estado',
+      'Observaciones / Notas',
+      'Fecha Creación'
+    ]
+
+    const rows = apptsToExport.map(a => {
+      return [
+        sanitizeCell(a.bookingCode),
+        sanitizeCell(a.date),
+        sanitizeCell(a.time),
+        sanitizeCell(a.serviceDuration),
+        sanitizeCell(a.clientName),
+        sanitizeCell(a.clientPhone),
+        sanitizeCell(a.clientEmail || ''),
+        sanitizeCell(a.gestationWeek || ''),
+        sanitizeCell(a.serviceTitle),
+        sanitizeCell(a.servicePrice),
+        sanitizeCell(a.status.toUpperCase()),
+        sanitizeCell(a.notes || ''),
+        sanitizeCell(a.createdAt)
+      ].join(';')
+    })
+
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows].join('\r\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   function generateBookingCode(): string {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
     const code = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
@@ -1469,6 +1528,7 @@ export function useSiteData() {
     getWhatsAppTicketShareUrl,
     getTicketByToken,
     exportTicketsToCSV,
+    exportAppointmentsToCSV,
     syncFromSupabase,
     formatExperienceWhatsAppLink,
     formatPackWhatsAppLink,

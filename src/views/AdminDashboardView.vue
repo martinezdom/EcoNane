@@ -102,6 +102,7 @@ const {
   sendTicketEmail,
   getWhatsAppTicketShareUrl,
   exportTicketsToCSV,
+  exportAppointmentsToCSV,
   formatExperienceWhatsAppLink,
   getAvailableSlots,
   createAppointment,
@@ -1704,7 +1705,7 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <div class="flex items-center gap-2.5">
+          <div class="flex flex-wrap items-center gap-2">
             <button
               type="button"
               @click="openNewManualAppointment"
@@ -1716,8 +1717,18 @@ onUnmounted(() => {
 
             <button
               type="button"
+              @click="exportAppointmentsToCSV(filteredAppointments)"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-3.5 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
+              title="Descargar lista de citas filtradas a Excel / CSV"
+            >
+              <Download class="h-4 w-4" />
+              <span>Exportar Excel</span>
+            </button>
+
+            <button
+              type="button"
               @click="openBookingSettingsModal"
-              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-4 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
+              class="flex cursor-pointer items-center gap-1.5 rounded-2xl border border-brand-pink-light/60 bg-white px-3.5 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-cream active:scale-95"
             >
               <Settings class="h-4 w-4" />
               <span>Horarios y Festivos</span>
