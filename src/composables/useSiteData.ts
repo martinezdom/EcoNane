@@ -233,7 +233,7 @@ const defaultAppointments: Appointment[] = [
   {
     id: 'appt-tata-1',
     bookingCode: 'ECO-1318',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -242,14 +242,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-13',
     time: '18:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-2',
     bookingCode: 'ECO-1411',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -258,14 +258,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '30€',
     date: '2026-10-14',
     time: '11:00',
-    notes: 'Anotada por Tata (Latidos)',
+    notes: 'Reserva por WhatsApp (Latidos)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-3',
     bookingCode: 'ECO-1417',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -274,14 +274,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-14',
     time: '17:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-4',
     bookingCode: 'ECO-1619',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -290,14 +290,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-16',
     time: '19:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-5',
     bookingCode: 'ECO-1711',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -306,14 +306,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-17',
     time: '11:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-6',
     bookingCode: 'ECO-2417',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -322,14 +322,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-24',
     time: '17:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:42:00.000Z'
   },
   {
     id: 'appt-tata-7',
     bookingCode: 'ECO-2718',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -338,14 +338,14 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '45€',
     date: '2026-10-27',
     time: '18:00',
-    notes: 'Anotada por Tata (5D)',
+    notes: 'Reserva por WhatsApp (5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   },
   {
     id: 'appt-tata-8',
     bookingCode: 'ECO-0210',
-    clientName: 'Reserva WhatsApp (Tata)',
+    clientName: 'Reserva WhatsApp',
     clientPhone: '644189856',
     clientEmail: '',
     gestationWeek: '',
@@ -354,7 +354,7 @@ const defaultAppointments: Appointment[] = [
     servicePrice: '75€',
     date: '2026-11-02',
     time: '10:00',
-    notes: 'Anotada por Tata (Gafas VR + Eco 5D)',
+    notes: 'Reserva por WhatsApp (Gafas VR + Eco 5D)',
     status: 'confirmed',
     createdAt: '2026-10-12T18:40:00.000Z'
   }
@@ -365,12 +365,22 @@ function getInitialAppointments(): Appointment[] {
   if (!stored || stored.length === 0) {
     return defaultAppointments
   }
-  const existingIds = new Set(stored.map(a => a.id))
+  const updatedStored = stored.map(s => {
+    if (s.clientName === 'Reserva WhatsApp (Tata)') {
+      return {
+        ...s,
+        clientName: 'Reserva WhatsApp',
+        notes: s.notes ? s.notes.replace(' (Tata)', '').replace('Anotada por Tata', 'Reserva por WhatsApp') : s.notes
+      }
+    }
+    return s
+  })
+  const existingIds = new Set(updatedStored.map(a => a.id))
   const missing = defaultAppointments.filter(d => !existingIds.has(d.id))
   if (missing.length > 0) {
-    return [...stored, ...missing]
+    return [...updatedStored, ...missing]
   }
-  return stored
+  return updatedStored
 }
 
 // Global Reactive Singletons
