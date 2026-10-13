@@ -713,7 +713,9 @@ async function handleProcessSale() {
 // -------------------------------------------------------------
 // 6. CONTABILIDAD E INFORMES FISCALES (HACIENDA & ASESOR)
 // -------------------------------------------------------------
-const accountingPeriod = ref<'today' | 'month' | 't1' | 't2' | 't3' | 't4' | 'year' | 'custom'>('today')
+// CONTABILIDAD, CAJA E INFORMES FISCALES
+// -------------------------------------------------------------
+const accountingPeriod = ref<'today' | 'month' | 't1' | 't2' | 't3' | 't4' | 'year' | 'all' | 'custom'>('month')
 const customDateFrom = ref('')
 const customDateTo = ref('')
 const accountingSearch = ref('')
@@ -725,6 +727,100 @@ const isCancelling = ref(false)
 
 const resendingTicketId = ref<string | null>(null)
 const selectedTicketForDetail = ref<SaleTicket | null>(null)
+
+// Modal para registrar facturas anteriores / históricas (ej: recuperar tickets nº 1 o 2)
+const showManualTicketModal = ref(false)
+const manualTicketForm = ref({
+  sequence: 1,
+  year: new Date().getFullYear(),
+  date: new Date().toISOString().slice(0, 10),
+  time: '18:00',
+  clientName: '',
+  clientPhone: '',
+  clientEmail: '',
+  clientNif: '',
+  concept: 'Ecografía 5D Emocional',
+  amount: 45,
+  paymentMethod: 'efectivo' as PaymentMethod,
+  notes: ''
+})
+
+function openManualTicketModal(presetSeq?: number) {
+  const currentYear = new Date().getFullYear()
+  let targetSeq = presetSeq || 1
+  if (!presetSeq) {
+    const existingSeqs = salesTickets.value
+      .filter(t => t.year === currentYear)
+      .map(t => t.sequence || 0)
+    for (let i = 1; i <= Math.max(...existingSeqs, 0) + 1; i++) {
+      if (!existingSeqs.includes(i)) {
+        targetSeq = i
+        break
+      }
+    }
+  }
+
+  manualTicketForm.value = {
+    sequence: targetSeq,
+    year: currentYear,
+    date: new Date().toISOString().slice(0, 10),
+    time: '18:00',
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    clientNif: '',
+    concept: 'Ecografía 5D Emocional',
+    amount: 45,
+    paymentMethod: 'efectivo',
+    notes: 'Registro de factura simplificada anterior'
+  }
+  showManualTicketModal.value = true
+}
+
+async function handleSaveManualTicket() {
+  if (!manualTicketForm.value.clientName.trim()) {
+    alert('Por favor indica el nombre de la clienta.')
+    return
+  }
+  if (!manualTicketForm.value.amount || manualTicketForm.value.amount <= 0) {
+    alert('Por favor indica un importe válido mayor que 0.')
+    return
+  }
+
+  const series = businessInfo.value.ticketSeries || 'FS'
+  const customSeq = Number(manualTicketForm.value.sequence) || 1
+  const customYear = Number(manualTicketForm.value.year) || new Date().getFullYear()
+  const customNum = `${series}-${customYear}-${String(customSeq).padStart(4, '0')}`
+
+  try {
+    await createSaleTicket({
+      clientName: manualTicketForm.value.clientName.trim(),
+      clientPhone: manualTicketForm.value.clientPhone.trim(),
+      clientEmail: manualTicketForm.value.clientEmail.trim(),
+      clientNif: manualTicketForm.value.clientNif.trim(),
+      customDate: manualTicketForm.value.date,
+      customTime: manualTicketForm.value.time,
+      customSequence: customSeq,
+      customTicketNumber: customNum,
+      paymentMethod: manualTicketForm.value.paymentMethod,
+      notes: manualTicketForm.value.notes,
+      items: [
+        {
+          id: `item-${Date.now()}`,
+          title: manualTicketForm.value.concept.trim() || 'Servicio EcoNane',
+          unitPrice: manualTicketForm.value.amount,
+          quantity: 1,
+          totalPrice: manualTicketForm.value.amount,
+          ivaPercent: 21
+        }
+      ]
+    })
+    showManualTicketModal.value = false
+    showSuccess(`Factura ${customNum} registrada correctamente en la nube.`)
+  } catch (err: any) {
+    alert('Error al registrar factura: ' + (err?.message || err))
+  }
+}
 
 const filteredTickets = computed(() => {
   const now = new Date()
@@ -738,6 +834,8 @@ const filteredTickets = computed(() => {
       if (ticketDate !== todayStr) return false
     } else if (accountingPeriod.value === 'month') {
       if (!ticketDate.startsWith(currentMonthStr)) return false
+    } else if (accountingPeriod.value === 'all') {
+      // Sin filtro de fecha: muestra todos
     } else if (accountingPeriod.value === 't1') {
       if (ticket.year !== currentYear) return false
       const m = ticketDate.slice(5, 7)
@@ -3532,6 +3630,15 @@ onUnmounted(() => {
 
           <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <button
+              @click="openManualTicketModal()"
+              class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-brand-pink-light/80 bg-white px-4 py-2.5 text-xs font-bold text-brand-brown-dark shadow-xs transition-all hover:bg-brand-cream active:scale-95"
+              title="Registrar manualmente un ticket anterior (ej. FS-2026-0001, FS-2026-0002)"
+            >
+              <Plus class="h-3.5 w-3.5 text-brand-brown" />
+              <span>Registrar Factura Anterior</span>
+            </button>
+
+            <button
               @click="handlePrintDailyClose"
               class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-brand-brown/20 bg-brand-brown px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-brand-brown-dark active:scale-95"
               title="Imprimir resumen de cierre de caja (arqueo) del día para cuadrar efectivo, datáfono y Bizum"
@@ -3557,12 +3664,13 @@ onUnmounted(() => {
 
             <button
               v-for="p in [
-                { id: 'today', label: 'Hoy (Cierre)' },
                 { id: 'month', label: 'Este Mes' },
-                { id: 't1', label: '1º Trimestre (T1)' },
-                { id: 't2', label: '2º Trimestre (T2)' },
-                { id: 't3', label: '3º Trimestre (T3)' },
+                { id: 'today', label: 'Hoy (Cierre)' },
+                { id: 'all', label: 'Todos los Tickets' },
                 { id: 't4', label: '4º Trimestre (T4)' },
+                { id: 't3', label: '3º Trimestre (T3)' },
+                { id: 't2', label: '2º Trimestre (T2)' },
+                { id: 't1', label: '1º Trimestre (T1)' },
                 { id: 'year', label: 'Año Completo' },
                 { id: 'custom', label: 'Personalizado' }
               ]"
@@ -3715,8 +3823,21 @@ onUnmounted(() => {
             </span>
           </div>
 
-          <div v-if="filteredTickets.length === 0" class="p-12 text-center">
-            <p class="text-sm text-brand-brown/70">No se encontraron tickets en este período o con los filtros seleccionados.</p>
+          <div v-if="filteredTickets.length === 0" class="p-12 text-center space-y-3">
+            <Receipt class="h-10 w-10 text-brand-brown/30 mx-auto" />
+            <p class="text-sm font-semibold text-brand-brown-dark">No se encontraron tickets en este período o con los filtros seleccionados.</p>
+            <p v-if="salesTickets.length > 0" class="text-xs text-brand-brown/70">
+              Hay {{ salesTickets.length }} ticket(s) registrado(s) en total en el sistema (por ejemplo, en otros días o meses).
+            </p>
+            <div v-if="salesTickets.length > 0 && accountingPeriod !== 'all'" class="pt-2">
+              <button
+                type="button"
+                @click="accountingPeriod = 'all'"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-brand-brown px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-brown-dark cursor-pointer transition-all active:scale-95"
+              >
+                Ver todos los tickets registrados ({{ salesTickets.length }})
+              </button>
+            </div>
           </div>
 
           <div v-else class="overflow-x-auto">
@@ -4094,6 +4215,205 @@ onUnmounted(() => {
               class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 disabled:opacity-50 cursor-pointer"
             >
               {{ isCancelling ? 'Anulando...' : 'Confirmar Anulación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- MODAL: REGISTRAR FACTURA ANTERIOR / HISTÓRICA -->
+      <!-- ========================================== -->
+      <div
+        v-if="showManualTicketModal"
+        @click.self="showManualTicketModal = false"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in"
+      >
+        <div class="relative w-full max-w-lg rounded-3xl border border-brand-pink-light/40 bg-white p-5 sm:p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
+          <!-- Header -->
+          <div class="flex items-center justify-between border-b border-brand-pink-light/30 pb-3">
+            <div>
+              <h3 class="font-serif text-lg font-bold text-brand-brown-dark">Registrar Factura Anterior</h3>
+              <p class="text-xs text-brand-brown/70">
+                Añade facturas emitidas antes o manualmente para incluirlas en el libro de contabilidad y sincronizarlas en Supabase.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="showManualTicketModal = false"
+              class="rounded-full p-2 text-brand-brown/50 hover:text-brand-brown hover:bg-brand-cream/60 transition-colors cursor-pointer"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </div>
+
+          <!-- Form Grid -->
+          <div class="space-y-4 text-xs">
+            <!-- Nº Ticket / Secuencia & Año -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Nº Secuencia:</label>
+                <div class="flex items-center gap-2">
+                  <span class="rounded-xl bg-brand-cream px-3 py-2 font-mono font-bold text-brand-brown text-xs border border-brand-pink-light/40">
+                    {{ businessInfo.ticketSeries || 'FS' }}-{{ manualTicketForm.year }}-
+                  </span>
+                  <input
+                    v-model.number="manualTicketForm.sequence"
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                    class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 font-mono font-bold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                  />
+                </div>
+                <span class="text-[10px] text-brand-brown/60">Ejemplo: 1 para FS-2026-0001, 2 para FS-2026-0002</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Año de Emisión:</label>
+                <input
+                  v-model.number="manualTicketForm.year"
+                  type="number"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 font-mono font-bold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Fecha y Hora -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Fecha:</label>
+                <input
+                  v-model="manualTicketForm.date"
+                  type="date"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Hora:</label>
+                <input
+                  v-model="manualTicketForm.time"
+                  type="time"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Clienta & Teléfono -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Clienta / Familia *:</label>
+                <input
+                  v-model="manualTicketForm.clientName"
+                  type="text"
+                  placeholder="Ej: Tatiana Martínez"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Teléfono (opcional):</label>
+                <input
+                  v-model="manualTicketForm.clientPhone"
+                  type="tel"
+                  placeholder="612 345 678"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Email & NIF -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Email (opcional):</label>
+                <input
+                  v-model="manualTicketForm.clientEmail"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">NIF / CIF (opcional):</label>
+                <input
+                  v-model="manualTicketForm.clientNif"
+                  type="text"
+                  placeholder="12345678Z"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Concepto / Servicio -->
+            <div>
+              <label class="block font-bold text-brand-brown-dark mb-1">Concepto / Servicio *:</label>
+              <input
+                v-model="manualTicketForm.concept"
+                type="text"
+                placeholder="Ej: Ecografía 5D Emocional"
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+              />
+            </div>
+
+            <!-- Importe Total & Forma de Pago -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Importe Total (€ IVA incl.) *:</label>
+                <div class="relative">
+                  <input
+                    v-model.number="manualTicketForm.amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="45.00"
+                    class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 font-mono font-bold text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+                  />
+                  <span class="absolute right-3 top-2 font-bold text-brand-brown/60">€</span>
+                </div>
+                <span class="text-[10px] text-brand-brown/60">
+                  Base: {{ (manualTicketForm.amount / 1.21).toFixed(2) }} € · IVA (21%): {{ (manualTicketForm.amount - (manualTicketForm.amount / 1.21)).toFixed(2) }} €
+                </span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-brand-brown-dark mb-1">Forma de Pago:</label>
+                <select
+                  v-model="manualTicketForm.paymentMethod"
+                  class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs font-semibold text-brand-brown-dark focus:border-brand-pink focus:outline-none cursor-pointer"
+                >
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta">Tarjeta (Datáfono)</option>
+                  <option value="bizum">Bizum</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div>
+              <label class="block font-bold text-brand-brown-dark mb-1">Notas / Observaciones:</label>
+              <input
+                v-model="manualTicketForm.notes"
+                type="text"
+                placeholder="Opcional..."
+                class="w-full rounded-xl border border-brand-pink-light/60 bg-brand-cream/20 px-3 py-2 text-xs text-brand-brown-dark focus:border-brand-pink focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-2 border-t border-brand-pink-light/30 pt-3">
+            <button
+              type="button"
+              @click="showManualTicketModal = false"
+              class="rounded-xl px-4 py-2 text-xs font-semibold text-brand-brown/80 hover:bg-brand-cream/40 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              @click="handleSaveManualTicket"
+              class="flex items-center gap-1.5 rounded-xl bg-brand-brown px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-brown-dark active:scale-95 cursor-pointer"
+            >
+              <Check class="h-4 w-4" />
+              <span>Guardar Factura</span>
             </button>
           </div>
         </div>

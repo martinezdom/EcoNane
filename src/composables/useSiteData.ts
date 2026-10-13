@@ -464,14 +464,14 @@ async function syncFromSupabase() {
       })
     }
 
-    // 2. Fetch Client Sessions
-    const { data: sessionsData } = await supabase
+    // 2. Fetch Client Sessions with safe bidirectional merge
+    const { data: sessionsData, error: sessionsError } = await supabase
       .from('client_sessions')
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (sessionsData && sessionsData.length > 0) {
-      sessions.value = sessionsData.map((row: any) => ({
+    if (!sessionsError && sessionsData) {
+      const cloudSessions: ClientSession[] = sessionsData.map((row: any) => ({
         id: row.id,
         code: row.code,
         clientName: row.client_name,
@@ -484,16 +484,48 @@ async function syncFromSupabase() {
         photos: row.photos || [],
         zipUrl: row.zip_url || ''
       }))
+
+      // Protect local sessions that aren't yet in Supabase
+      const cloudSessionCodes = new Set(cloudSessions.map(s => s.code))
+      const cloudSessionIds = new Set(cloudSessions.map(s => s.id))
+      const localOnlySessions = sessions.value.filter(
+        s => !cloudSessionIds.has(s.id) && !cloudSessionCodes.has(s.code)
+      )
+
+      if (localOnlySessions.length > 0) {
+        try {
+          const rowsToInsert = localOnlySessions.map(s => ({
+            id: s.id,
+            code: s.code,
+            client_name: s.clientName,
+            client_phone: s.clientPhone,
+            session_date: s.sessionDate,
+            service_type: s.serviceType,
+            expiry_days: s.expiryDays,
+            note: s.note,
+            photos: s.photos,
+            zip_url: s.zipUrl,
+            created_at: s.createdAt
+          }))
+          await supabase.from('client_sessions').upsert(rowsToInsert)
+        } catch (e) {
+          console.warn('Could not auto-sync local sessions to Supabase:', e)
+        }
+      }
+
+      sessions.value = [...cloudSessions, ...localOnlySessions].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
     }
 
-    // 3. Fetch Sales Tickets (TPV / Facturación)
-    const { data: ticketsData } = await supabase
+    // 3. Fetch Sales Tickets (TPV / Facturación) with safe bidirectional merge
+    const { data: ticketsData, error: ticketsError } = await supabase
       .from('sales_tickets')
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (ticketsData && ticketsData.length > 0) {
-      salesTickets.value = ticketsData.map((row: any) => ({
+    if (!ticketsError && ticketsData) {
+      const cloudTickets: SaleTicket[] = ticketsData.map((row: any) => ({
         id: row.id,
         ticketNumber: row.ticket_number,
         sequence: Number(row.sequence) || 1,
@@ -522,21 +554,68 @@ async function syncFromSupabase() {
         emailSent: Boolean(row.email_sent),
         viewToken: row.view_token || ''
       }))
+
+      // Protect local tickets that aren't yet in Supabase
+      const cloudTicketIds = new Set(cloudTickets.map(t => t.id))
+      const cloudTicketNumbers = new Set(cloudTickets.map(t => t.ticketNumber))
+      const localOnlyTickets = salesTickets.value.filter(
+        t => !cloudTicketIds.has(t.id) && !cloudTicketNumbers.has(t.ticketNumber)
+      )
+
+      if (localOnlyTickets.length > 0) {
+        try {
+          const rowsToInsert = localOnlyTickets.map(t => ({
+            id: t.id,
+            ticket_number: t.ticketNumber,
+            sequence: t.sequence,
+            year: t.year,
+            date: t.date,
+            time: t.time,
+            client_name: t.clientName,
+            client_email: t.clientEmail || '',
+            client_phone: t.clientPhone || '',
+            client_nif: t.clientNif || '',
+            client_address: t.clientAddress || '',
+            is_nominative: Boolean(t.isNominative),
+            items: t.items || [],
+            subtotal: t.subtotal,
+            iva_rate: t.ivaRate,
+            iva_amount: t.ivaAmount,
+            discount_amount: t.discountAmount || 0,
+            discount_note: t.discountNote || '',
+            total: t.total,
+            payment_method: t.paymentMethod,
+            status: t.status,
+            notes: t.notes || '',
+            email_sent: Boolean(t.emailSent),
+            view_token: t.viewToken || '',
+            created_at: t.createdAt
+          }))
+          await supabase.from('sales_tickets').upsert(rowsToInsert)
+        } catch (uploadErr) {
+          console.warn('Could not auto-sync local tickets to Supabase:', uploadErr)
+        }
+      }
+
+      salesTickets.value = [...cloudTickets, ...localOnlyTickets].sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year
+        return (b.sequence || 0) - (a.sequence || 0)
+      })
     }
 
     if (settingsData && settingsData.booking_settings) {
       bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
     }
 
-    // 4. Fetch Appointments (Agenda de Citas)
+    // 4. Fetch Appointments (Agenda de Citas) with safe bidirectional merge
     try {
       const { data: apptData, error: apptError } = await supabase
         .from('appointments')
         .select('*')
         .order('date', { ascending: true })
 
-      if (!apptError && apptData && apptData.length > 0) {
-        appointments.value = apptData.map((row: any) => ({
+      if (!apptError && apptData) {
+        const cloudAppts: Appointment[] = apptData.map((row: any) => ({
           id: row.id,
           bookingCode: row.booking_code,
           clientName: row.client_name,
@@ -554,29 +633,42 @@ async function syncFromSupabase() {
           cancelledReason: row.cancelled_reason || '',
           reminderSent: Boolean(row.reminder_sent)
         }))
-      } else if (!apptError && apptData && apptData.length === 0 && appointments.value.length > 0) {
-        // La tabla se acaba de crear en Supabase y está vacía: subimos las citas iniciales para sincronización multi-dispositivo inmediata
-        try {
-          const rowsToInsert = appointments.value.map(a => ({
-            id: a.id,
-            booking_code: a.bookingCode,
-            date: a.date,
-            time: a.time,
-            duration_minutes: a.serviceDuration || 45,
-            service_title: a.serviceTitle,
-            service_price: a.servicePrice || '',
-            client_name: a.clientName,
-            client_phone: a.clientPhone,
-            client_email: a.clientEmail || '',
-            gestation_week: a.gestationWeek || '',
-            notes: a.notes || '',
-            status: a.status || 'confirmed',
-            reminder_sent: a.reminderSent || false
-          }))
-          await supabase.from('appointments').insert(rowsToInsert)
-        } catch (seedErr) {
-          console.warn('Could not auto-seed appointments into Supabase:', seedErr)
+
+        const cloudApptIds = new Set(cloudAppts.map(a => a.id))
+        const cloudApptCodes = new Set(cloudAppts.map(a => a.bookingCode))
+        const localOnlyAppts = appointments.value.filter(
+          a => !cloudApptIds.has(a.id) && !cloudApptCodes.has(a.bookingCode)
+        )
+
+        if (localOnlyAppts.length > 0) {
+          try {
+            const rowsToInsert = localOnlyAppts.map(a => ({
+              id: a.id,
+              booking_code: a.bookingCode,
+              date: a.date,
+              time: a.time,
+              duration_minutes: a.serviceDuration || 45,
+              service_title: a.serviceTitle,
+              service_price: a.servicePrice || '',
+              client_name: a.clientName,
+              client_phone: a.clientPhone,
+              client_email: a.clientEmail || '',
+              gestation_week: a.gestationWeek || '',
+              notes: a.notes || '',
+              status: a.status || 'confirmed',
+              reminder_sent: a.reminderSent || false,
+              created_at: a.createdAt
+            }))
+            await supabase.from('appointments').upsert(rowsToInsert)
+          } catch (seedErr) {
+            console.warn('Could not auto-seed appointments into Supabase:', seedErr)
+          }
         }
+
+        appointments.value = [...cloudAppts, ...localOnlyAppts].sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date)
+          return a.time.localeCompare(b.time)
+        })
       }
     } catch (e) {
       // Fallback si la tabla aún no se ha creado
@@ -894,14 +986,16 @@ export function useSiteData() {
     customDate?: string
     customTime?: string
     ivaRate?: number
+    customSequence?: number
+    customTicketNumber?: string
   }): Promise<SaleTicket> {
     const now = new Date()
     const dateStr = payload.customDate || now.toISOString().slice(0, 10)
     const timeStr = payload.customTime || now.toTimeString().slice(0, 5)
     const year = new Date(dateStr).getFullYear() || now.getFullYear()
-    const sequence = getNextTicketSequence(year)
+    const sequence = payload.customSequence !== undefined ? payload.customSequence : getNextTicketSequence(year)
     const series = businessInfo.value.ticketSeries || 'FS'
-    const ticketNumber = `${series}-${year}-${String(sequence).padStart(4, '0')}`
+    const ticketNumber = payload.customTicketNumber || `${series}-${year}-${String(sequence).padStart(4, '0')}`
     const id = `ticket-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
     const viewToken = generateTicketViewToken()
 
@@ -941,9 +1035,13 @@ export function useSiteData() {
     }
 
     salesTickets.value.unshift(newTicket)
+    salesTickets.value.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year
+      return (b.sequence || 0) - (a.sequence || 0)
+    })
 
     if (supabase && isSupabaseConfigured) {
-      await supabase.from('sales_tickets').insert({
+      await supabase.from('sales_tickets').upsert({
         id: newTicket.id,
         ticket_number: newTicket.ticketNumber,
         sequence: newTicket.sequence,
