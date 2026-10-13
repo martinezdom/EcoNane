@@ -401,6 +401,40 @@ const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
 const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
 const isCloudSynced = ref<boolean>(false)
 
+// Entorno y Aislamiento de Base de Datos Local vs Producción
+export const isDevEnvironment = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  Boolean((import.meta as any).env?.DEV)
+)
+
+// Modo de Datos: 'local' (pruebas aisladas en localStorage) o 'cloud' (Supabase producción)
+// En localhost arranca en 'local' para que ninguna prueba contamine la clínica.
+// En producción (web publicada) siempre está en 'cloud'.
+const savedDataSource = typeof window !== 'undefined'
+  ? (localStorage.getItem('econane_data_source_mode') as 'local' | 'cloud')
+  : null
+
+export const activeDataSource = ref<'local' | 'cloud'>(
+  isDevEnvironment ? (savedDataSource || 'local') : 'cloud'
+)
+
+export function isCloudActive(): boolean {
+  return Boolean(supabase && isSupabaseConfigured && activeDataSource.value === 'cloud')
+}
+
+export async function setDataSourceMode(mode: 'local' | 'cloud') {
+  activeDataSource.value = mode
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('econane_data_source_mode', mode)
+  }
+  if (mode === 'cloud') {
+    await syncFromSupabase()
+  } else {
+    isCloudSynced.value = false
+  }
+}
+
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key)
@@ -423,7 +457,7 @@ watch(adminPinHash, (val) => localStorage.setItem(STORAGE_KEY_PIN, JSON.stringif
 
 // Supabase Cloud Sync Engine
 async function syncFromSupabase() {
-  if (!supabase || !isSupabaseConfigured) return
+  if (!supabase || !isSupabaseConfigured || !isCloudActive()) return
 
   try {
     // 1. Fetch Site Settings (Promo, Prices, Packs, PIN Hash, Business Info)
@@ -485,40 +519,36 @@ async function syncFromSupabase() {
         zipUrl: row.zip_url || ''
       }))
 
-      // Protect local sessions that aren't yet in Supabase
-      const cloudSessionCodes = new Set(cloudSessions.map(s => s.code))
-      const cloudSessionIds = new Set(cloudSessions.map(s => s.id))
-      const localOnlySessions = sessions.value.filter(
-        s => !cloudSessionIds.has(s.id) && !cloudSessionCodes.has(s.code)
-      )
-
-      if (localOnlySessions.length > 0) {
-        try {
-          const rowsToInsert = localOnlySessions.map(s => ({
-            id: s.id,
-            code: s.code,
-            client_name: s.clientName,
-            client_phone: s.clientPhone,
-            session_date: s.sessionDate,
-            service_type: s.serviceType,
-            expiry_days: s.expiryDays,
-            note: s.note,
-            photos: s.photos,
-            zip_url: s.zipUrl,
-            created_at: s.createdAt
-          }))
-          await supabase.from('client_sessions').upsert(rowsToInsert)
-        } catch (e) {
-          console.warn('Could not auto-sync local sessions to Supabase:', e)
+      if (cloudSessions.length > 0) {
+        sessions.value = cloudSessions.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      } else {
+        // Initial setup only: If cloud is completely empty, seed initial sessions
+        if (sessions.value.length > 0) {
+          try {
+            const rowsToInsert = sessions.value.map(s => ({
+              id: s.id,
+              code: s.code,
+              client_name: s.clientName,
+              client_phone: s.clientPhone,
+              session_date: s.sessionDate,
+              service_type: s.serviceType,
+              expiry_days: s.expiryDays,
+              note: s.note,
+              photos: s.photos,
+              zip_url: s.zipUrl,
+              created_at: s.createdAt
+            }))
+            await supabase.from('client_sessions').upsert(rowsToInsert)
+          } catch (e) {
+            console.warn('Could not auto-seed sessions to Supabase:', e)
+          }
         }
       }
-
-      sessions.value = [...cloudSessions, ...localOnlySessions].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
     }
 
-    // 3. Fetch Sales Tickets (TPV / Facturación) with safe bidirectional merge
+    // 3. Fetch Sales Tickets (TPV / Facturación) from Cloud
     const { data: ticketsData, error: ticketsError } = await supabase
       .from('sales_tickets')
       .select('*')
@@ -555,59 +585,19 @@ async function syncFromSupabase() {
         viewToken: row.view_token || ''
       }))
 
-      // Protect local tickets that aren't yet in Supabase
-      const cloudTicketIds = new Set(cloudTickets.map(t => t.id))
-      const cloudTicketNumbers = new Set(cloudTickets.map(t => t.ticketNumber))
-      const localOnlyTickets = salesTickets.value.filter(
-        t => !cloudTicketIds.has(t.id) && !cloudTicketNumbers.has(t.ticketNumber)
-      )
-
-      if (localOnlyTickets.length > 0) {
-        try {
-          const rowsToInsert = localOnlyTickets.map(t => ({
-            id: t.id,
-            ticket_number: t.ticketNumber,
-            sequence: t.sequence,
-            year: t.year,
-            date: t.date,
-            time: t.time,
-            client_name: t.clientName,
-            client_email: t.clientEmail || '',
-            client_phone: t.clientPhone || '',
-            client_nif: t.clientNif || '',
-            client_address: t.clientAddress || '',
-            is_nominative: Boolean(t.isNominative),
-            items: t.items || [],
-            subtotal: t.subtotal,
-            iva_rate: t.ivaRate,
-            iva_amount: t.ivaAmount,
-            discount_amount: t.discountAmount || 0,
-            discount_note: t.discountNote || '',
-            total: t.total,
-            payment_method: t.paymentMethod,
-            status: t.status,
-            notes: t.notes || '',
-            email_sent: Boolean(t.emailSent),
-            view_token: t.viewToken || '',
-            created_at: t.createdAt
-          }))
-          await supabase.from('sales_tickets').upsert(rowsToInsert)
-        } catch (uploadErr) {
-          console.warn('Could not auto-sync local tickets to Supabase:', uploadErr)
-        }
+      if (cloudTickets.length > 0) {
+        salesTickets.value = cloudTickets.sort((a, b) => {
+          if (b.year !== a.year) return b.year - a.year
+          return (b.sequence || 0) - (a.sequence || 0)
+        })
       }
-
-      salesTickets.value = [...cloudTickets, ...localOnlyTickets].sort((a, b) => {
-        if (b.year !== a.year) return b.year - a.year
-        return (b.sequence || 0) - (a.sequence || 0)
-      })
     }
 
     if (settingsData && settingsData.booking_settings) {
       bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
     }
 
-    // 4. Fetch Appointments (Agenda de Citas) with safe bidirectional merge
+    // 4. Fetch Appointments (Agenda de Citas) from Cloud
     try {
       const { data: apptData, error: apptError } = await supabase
         .from('appointments')
@@ -634,41 +624,13 @@ async function syncFromSupabase() {
           reminderSent: Boolean(row.reminder_sent)
         }))
 
-        const cloudApptIds = new Set(cloudAppts.map(a => a.id))
-        const cloudApptCodes = new Set(cloudAppts.map(a => a.bookingCode))
-        const localOnlyAppts = appointments.value.filter(
-          a => !cloudApptIds.has(a.id) && !cloudApptCodes.has(a.bookingCode)
-        )
-
-        if (localOnlyAppts.length > 0) {
-          try {
-            const rowsToInsert = localOnlyAppts.map(a => ({
-              id: a.id,
-              booking_code: a.bookingCode,
-              date: a.date,
-              time: a.time,
-              duration_minutes: a.serviceDuration || 45,
-              service_title: a.serviceTitle,
-              service_price: a.servicePrice || '',
-              client_name: a.clientName,
-              client_phone: a.clientPhone,
-              client_email: a.clientEmail || '',
-              gestation_week: a.gestationWeek || '',
-              notes: a.notes || '',
-              status: a.status || 'confirmed',
-              reminder_sent: a.reminderSent || false,
-              created_at: a.createdAt
-            }))
-            await supabase.from('appointments').upsert(rowsToInsert)
-          } catch (seedErr) {
-            console.warn('Could not auto-seed appointments into Supabase:', seedErr)
-          }
+        if (cloudAppts.length > 0) {
+          // Cloud has canonical appointments (including the 9 real production ones)
+          appointments.value = cloudAppts.sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date)
+            return a.time.localeCompare(b.time)
+          })
         }
-
-        appointments.value = [...cloudAppts, ...localOnlyAppts].sort((a, b) => {
-          if (a.date !== b.date) return a.date.localeCompare(b.date)
-          return a.time.localeCompare(b.time)
-        })
       }
     } catch (e) {
       // Fallback si la tabla aún no se ha creado
@@ -680,8 +642,10 @@ async function syncFromSupabase() {
   }
 }
 
-// Auto-run cloud sync
-syncFromSupabase()
+// Auto-run cloud sync if cloud mode is active
+if (isCloudActive()) {
+  syncFromSupabase()
+}
 
 export function useSiteData() {
   function generateSecureToken(): string {
@@ -693,7 +657,7 @@ export function useSiteData() {
 
   async function updatePromotion(newPromo: Promotion) {
     promotion.value = { ...newPromo }
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -712,7 +676,7 @@ export function useSiteData() {
 
   async function updateExperiences(newExperiences: Experience[]) {
     experiences.value = [...newExperiences]
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -731,7 +695,7 @@ export function useSiteData() {
 
   async function updatePacks(newPacks: Pack[]) {
     packs.value = [...newPacks]
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -750,7 +714,7 @@ export function useSiteData() {
 
   async function updateProducts(newProducts: Product[]) {
     products.value = [...newProducts]
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -783,7 +747,7 @@ export function useSiteData() {
   }
 
   async function uploadPhotosToCloud(sessionId: string, code: string, photos: string[]): Promise<string[]> {
-    if (!supabase || !isSupabaseConfigured) return photos
+    if (!supabase || !isCloudActive()) return photos
 
     const uploadedUrls: string[] = []
 
@@ -854,7 +818,7 @@ export function useSiteData() {
     sessions.value.unshift(newSession)
 
     // Asynchronously upload to Supabase Storage & Database if configured
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       uploadPhotosToCloud(id, code, newSession.photos).then(async (cloudPhotos) => {
         newSession.photos = cloudPhotos
         await supabase!.from('client_sessions').insert({
@@ -877,7 +841,7 @@ export function useSiteData() {
 
   async function deleteSession(id: string) {
     sessions.value = sessions.value.filter((s) => s.id !== id)
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('client_sessions').delete().eq('id', id)
     }
   }
@@ -920,7 +884,7 @@ export function useSiteData() {
   async function setAdminPin(newPin: string) {
     const hashed = await hashString(newPin.trim())
     adminPinHash.value = hashed
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -935,7 +899,7 @@ export function useSiteData() {
 
   async function updateBusinessInfo(newInfo: BusinessInfo) {
     businessInfo.value = { ...newInfo }
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('site_settings').upsert({
         id: 'main',
         promotion: promotion.value,
@@ -1040,7 +1004,7 @@ export function useSiteData() {
       return (b.sequence || 0) - (a.sequence || 0)
     })
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('sales_tickets').upsert({
         id: newTicket.id,
         ticket_number: newTicket.ticketNumber,
@@ -1093,7 +1057,7 @@ export function useSiteData() {
     ticket.cancelledReason = reason || 'Anulación a petición del comercio'
     ticket.cancelledAt = new Date().toISOString()
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('sales_tickets').update({
         status: 'anulado',
         cancelled_reason: ticket.cancelledReason,
@@ -1106,7 +1070,7 @@ export function useSiteData() {
 
   async function deleteSaleTicket(ticketId: string): Promise<boolean> {
     salesTickets.value = salesTickets.value.filter(t => t.id !== ticketId)
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('sales_tickets').delete().eq('id', ticketId)
     }
     return true
@@ -1115,7 +1079,7 @@ export function useSiteData() {
   async function resetSalesTickets(): Promise<void> {
     salesTickets.value = []
     localStorage.removeItem(STORAGE_KEY_TICKETS)
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('sales_tickets').delete().neq('id', 'keep_table_structure_none')
     }
   }
@@ -1123,7 +1087,7 @@ export function useSiteData() {
   async function resetAllSessions(): Promise<void> {
     sessions.value = []
     localStorage.removeItem(STORAGE_KEY_SESSIONS)
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       await supabase.from('client_sessions').delete().neq('id', 'keep_table_structure_none')
     }
   }
@@ -1168,7 +1132,7 @@ export function useSiteData() {
       }
 
       ticket.emailSent = true
-      if (supabase && isSupabaseConfigured) {
+      if (supabase && isCloudActive()) {
         await supabase.from('sales_tickets').update({
           email_sent: true
         }).eq('id', ticket.id)
@@ -1459,7 +1423,7 @@ export function useSiteData() {
 
     appointments.value = [newAppt, ...appointments.value]
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       try {
         await supabase.from('appointments').insert({
           id: newAppt.id,
@@ -1496,7 +1460,7 @@ export function useSiteData() {
       }
     }
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       try {
         await supabase.from('appointments').update({
           status,
@@ -1514,7 +1478,7 @@ export function useSiteData() {
       appointments.value[idx] = { ...appointments.value[idx]!, ...updates }
     }
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       try {
         const payload: any = {}
         if (updates.date) payload.date = updates.date
@@ -1534,7 +1498,7 @@ export function useSiteData() {
 
   async function deleteAppointment(id: string) {
     appointments.value = appointments.value.filter(a => a.id !== id)
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       try {
         await supabase.from('appointments').delete().eq('id', id)
       } catch (err) {
@@ -1545,7 +1509,7 @@ export function useSiteData() {
 
   async function saveBookingSettings(newSettings: BookingSettings) {
     bookingSettings.value = { ...newSettings }
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isCloudActive()) {
       try {
         await supabase.from('site_settings').upsert({
           id: 'main',
@@ -1621,6 +1585,10 @@ export function useSiteData() {
     isAdminLoggedIn,
     isCloudSynced,
     isSupabaseConfigured,
+    isDevEnvironment,
+    activeDataSource,
+    setDataSourceMode,
+    isCloudActive,
     updatePromotion,
     resetPromotionToDefault,
     updateExperiences,
