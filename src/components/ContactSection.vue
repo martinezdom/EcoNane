@@ -239,7 +239,7 @@ const sendByEmail = async () => {
               </div>
               <div>
                 <h4 class="text-brand-brown-dark text-sm font-semibold">Horario de Atención</h4>
-                <p class="text-brand-brown/80 mt-1 text-sm">Lunes a Sábado: 10:00 - 20:00</p>
+                <p class="text-brand-brown/80 mt-1 text-sm">Lunes a Sábado: 9:45 – 20:30 (Domingos cerrado)</p>
               </div>
             </div>
 

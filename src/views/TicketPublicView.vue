@@ -11,12 +11,13 @@ import {
   CreditCard,
   Building,
   CheckCircle2,
-  Lock
+  Lock,
+  Loader2
 } from '@lucide/vue'
 
 const route = useRoute()
 const router = useRouter()
-const { getTicketByToken, businessInfo } = useSiteData()
+const { getTicketByToken, businessInfo, isCloudSynced, isCloudActive } = useSiteData()
 
 const ticketNumber = computed(() => (route.params.ticketNumber as string) || '')
 const token = computed(() => (route.query.token as string) || '')
@@ -26,6 +27,7 @@ const ticket = computed(() => {
   return getTicketByToken(ticketNumber.value, token.value)
 })
 
+const isLoading = computed(() => isCloudActive() && !isCloudSynced.value && !ticket.value)
 const isAuthorized = computed(() => Boolean(ticket.value))
 
 function handlePrint() {
@@ -39,8 +41,17 @@ function handleGoHome() {
 
 <template>
   <div class="min-h-screen bg-brand-cream/40 py-8 px-4 sm:px-6 lg:px-8 print:p-0 print:bg-white text-stone-800">
+    <!-- Cloud Syncing Loader -->
+    <div v-if="isLoading" class="max-w-md mx-auto my-16 bg-white rounded-3xl p-10 shadow-sm border border-brand-pink-light/40 text-center">
+      <Loader2 class="w-10 h-10 mx-auto mb-4 text-brand-pink animate-spin" />
+      <h1 class="text-xl font-bold font-serif text-brand-brown-dark mb-2">Cargando comprobante...</h1>
+      <p class="text-xs text-stone-500 leading-relaxed">
+        Conectando de forma segura con la clínica...
+      </p>
+    </div>
+
     <!-- IDOR / Unauthorized View -->
-    <div v-if="!ticket" class="max-w-md mx-auto my-16 bg-white rounded-3xl p-8 shadow-sm border border-brand-pink-light/40 text-center">
+    <div v-else-if="!ticket" class="max-w-md mx-auto my-16 bg-white rounded-3xl p-8 shadow-sm border border-brand-pink-light/40 text-center">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
         <Lock class="w-8 h-8" />
       </div>

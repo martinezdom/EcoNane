@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSiteData } from '@/composables/useSiteData'
 import type { ClientSession } from '@/types'
@@ -28,12 +28,14 @@ import {
 } from '@lucide/vue'
 
 const route = useRoute()
-const { getSessionByCode, verifySessionPhone } = useSiteData()
+const { getSessionByCode, verifySessionPhone, sessions, isCloudSynced, isCloudActive } = useSiteData()
 
 const code = computed(() => (route.params.code as string) || '')
 const sessionData = ref<ClientSession | null>(null)
 const isExpired = ref(false)
 const isUnlocked = ref(false)
+
+const isLoading = computed(() => isCloudActive() && !isCloudSynced.value && !sessionData.value)
 
 // PIN / Phone Input
 const phoneInput = ref('')
@@ -140,19 +142,29 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown)
+function loadSession() {
   if (code.value) {
     const result = getSessionByCode(code.value)
-    sessionData.value = result.session
-    isExpired.value = result.isExpired
+    if (result.session) {
+      sessionData.value = result.session
+      isExpired.value = result.isExpired
 
-    // Check if previously unlocked in this session
-    const unlockedKey = `econane_unlocked_${code.value}`
-    if (sessionStorage.getItem(unlockedKey) === 'true') {
-      isUnlocked.value = true
+      // Check if previously unlocked in this session
+      const unlockedKey = `econane_unlocked_${code.value}`
+      if (sessionStorage.getItem(unlockedKey) === 'true') {
+        isUnlocked.value = true
+      }
     }
   }
+}
+
+watch([code, sessions], () => {
+  loadSession()
+}, { immediate: true })
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+  loadSession()
 })
 
 onUnmounted(() => {
@@ -266,9 +278,21 @@ function downloadSinglePhoto(photoUrl: string) {
     </header>
 
     <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+      <!-- 0. State: Loading from Cloud -->
+      <div
+        v-if="isLoading"
+        class="mx-auto max-w-lg rounded-3xl border border-brand-pink-light/40 bg-white p-6 text-center shadow-lg sm:p-12"
+      >
+        <Loader2 class="mx-auto mb-4 h-12 w-12 text-brand-pink animate-spin" />
+        <h2 class="font-serif text-2xl font-bold text-brand-brown-dark">Cargando tu ecografía...</h2>
+        <p class="mt-2 text-sm leading-relaxed text-brand-brown/80">
+          Conectando de forma segura con la clínica...
+        </p>
+      </div>
+
       <!-- 1. State: Session NOT Found -->
       <div
-        v-if="!sessionData"
+        v-else-if="!sessionData"
         class="mx-auto max-w-lg rounded-3xl border border-brand-pink-light/40 bg-white p-6 text-center shadow-lg sm:p-12"
       >
         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">

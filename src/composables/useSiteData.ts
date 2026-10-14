@@ -218,13 +218,13 @@ const defaultBookingSettings: BookingSettings = {
   minNoticeHours: 2,
   maxFutureDays: 60,
   schedule: {
-    0: { isOpen: false, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    1: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    2: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    3: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    4: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    5: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
-    6: { isOpen: true, morningStart: '10:00', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:00' }
+    0: { isOpen: false, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    1: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    2: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    3: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    4: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    5: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' },
+    6: { isOpen: true, morningStart: '09:45', morningEnd: '14:00', afternoonStart: '16:30', afternoonEnd: '20:30' }
   },
   blockedDates: []
 }
@@ -1359,7 +1359,7 @@ export function useSiteData() {
     }
 
     const now = new Date()
-    const todayStr = now.toISOString().slice(0, 10)
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     const currentMinutesToday = now.getHours() * 60 + now.getMinutes()
     const minNoticeMinutes = (bookingSettings.value.minNoticeHours || 2) * 60
 
@@ -1522,9 +1522,10 @@ export function useSiteData() {
   }
 
   function generateGoogleCalendarUrl(appt: Appointment): string {
-    const title = encodeURIComponent(`Ecografía en EcoNane - ${appt.serviceTitle}`)
+    if (!appt || !appt.date || !appt.time) return '#'
+    const title = encodeURIComponent(`Ecografía en EcoNane - ${appt.serviceTitle || ''}`)
     const details = encodeURIComponent(
-      `Cita en EcoNane para ${appt.clientName} (Código: ${appt.bookingCode}).\nServicio: ${appt.serviceTitle}\nTeléfono: +34 644 18 98 56\nUbicación: Carrer Colón, 114, 03570 La Vila Joiosa`
+      `Cita en EcoNane para ${appt.clientName || 'Mamá'} (Código: ${appt.bookingCode || ''}).\nServicio: ${appt.serviceTitle || ''}\nTeléfono: +34 644 18 98 56\nUbicación: Carrer Colón, 114, 03570 La Vila Joiosa`
     )
     const location = encodeURIComponent('Carrer Colón, 114, 03570 La Vila Joiosa, Alicante')
 
