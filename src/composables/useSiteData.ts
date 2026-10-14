@@ -861,8 +861,10 @@ export function useSiteData() {
   function verifySessionPhone(session: ClientSession, inputDigits: string): boolean {
     const cleanRegistered = session.clientPhone.replace(/\D/g, '')
     const cleanInput = inputDigits.replace(/\D/g, '')
-    if (cleanInput.length < 4) return false
-    return cleanRegistered.endsWith(cleanInput)
+    if (cleanInput.length < 4 || cleanRegistered.length < 4) return false
+    const last4Registered = cleanRegistered.slice(-4)
+    const last4Input = cleanInput.slice(-4)
+    return last4Registered === last4Input || cleanRegistered.endsWith(cleanInput) || cleanInput.endsWith(cleanRegistered)
   }
 
   async function loginAdmin(enteredPin: string): Promise<boolean> {
