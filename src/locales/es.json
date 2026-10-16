@@ -77,6 +77,16 @@
     "p1": "En EcoNane no realizamos pruebas médicas diagnósticas: creamos momentos de conexión pura y emocionante entre tú, tu bebé y tu familia.",
     "p2": "Con la mejor tecnología 5D y unas gafas de realidad virtual pioneras en la zona, cuidamos cada segundo para que guardes en el corazón el recuerdo más dulce de tu embarazo."
   },
+  "reviews": {
+    "tag": "Opiniones Reales",
+    "title": "Familias felices en EcoNane",
+    "subtitle": "La satisfacción y el cariño de las mamás y papás que ya han vivido la emoción de ver a su bebé con nosotros.",
+    "googleRating": "5.0 en Google",
+    "googleVerified": "Reseña verificada en Google",
+    "googleBadge": "100% valoraciones de 5 estrellas",
+    "viewOnGoogle": "Ver opiniones en Google",
+    "leaveReview": "Escribir una reseña"
+  },
   "contact": {
     "tag": "Dónde Estamos y Citas",
     "title": "Pide tu cita o ven a conocernos",

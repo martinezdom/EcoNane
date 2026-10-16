@@ -5,6 +5,7 @@ import PromotionSection from '@/components/PromotionSection.vue'
 import Features from '@/components/Features.vue'
 import Experiences from '@/components/Experiences.vue'
 import AboutAndGallery from '@/components/AboutAndGallery.vue'
+import ReviewsSection from '@/components/ReviewsSection.vue'
 import FAQSection from '@/components/FAQSection.vue'
 import ContactSection from '@/components/ContactSection.vue'
 import Footer from '@/components/Footer.vue'
@@ -21,6 +22,7 @@ import Footer from '@/components/Footer.vue'
       <Features />
       <Experiences />
       <AboutAndGallery />
+      <ReviewsSection />
       <ContactSection />
       <FAQSection />
     </main>

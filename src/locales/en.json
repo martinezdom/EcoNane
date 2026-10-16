@@ -77,6 +77,16 @@
     "p1": "At EcoNane, we do not perform diagnostic medical procedures: we create pure, emotional bonding moments between you, your baby, and your family.",
     "p2": "Equipped with state-of-the-art 5D technology and immersive VR goggles, we cherish every second to give you the sweetest memory of your pregnancy."
   },
+  "reviews": {
+    "tag": "Real Experiences",
+    "title": "Happy families at EcoNane",
+    "subtitle": "The warmth and feedback from mothers and families who have experienced the joy of meeting their baby with us.",
+    "googleRating": "5.0 on Google",
+    "googleVerified": "Verified Google Review",
+    "googleBadge": "100% 5-star rating",
+    "viewOnGoogle": "View reviews on Google",
+    "leaveReview": "Write a review"
+  },
   "contact": {
     "tag": "Location & Bookings",
     "title": "Book your appointment or visit us",

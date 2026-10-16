@@ -129,6 +129,12 @@ const benefits: Benefit[] = [
               >{{ t('nav.faq') }}</a
             >
             <a
+              href="#resenas"
+              @click.prevent="navigateToSection('#resenas')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('reviews.tag', 'Opiniones') }}</a
+            >
+            <a
               href="#contacto"
               @click.prevent="navigateToSection('#contacto')"
               class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
