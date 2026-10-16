@@ -17,7 +17,8 @@ import {
   Phone,
   Mail,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Camera
 } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
 import type { Appointment } from '@/types'
@@ -36,7 +37,9 @@ const {
 // Steps: 1: Service, 2: Date & Time, 3: Client Details, 4: Confirmed
 const currentStep = ref<1 | 2 | 3 | 4>(1)
 
-// Step 1: Selected Service
+// Step 1: Selected Service & Categories
+type ServiceCategory = 'all' | 'experience' | 'pack' | 'collab'
+
 type ServiceOption = {
   id: string
   title: string
@@ -44,8 +47,11 @@ type ServiceOption = {
   price: string
   badge?: string
   description?: string
+  category: 'experience' | 'pack' | 'collab'
   type: 'experience' | 'pack'
 }
+
+const activeBookingCategory = ref<ServiceCategory>('all')
 
 const serviceOptions = computed<ServiceOption[]>(() => {
   const list: ServiceOption[] = []
@@ -67,6 +73,7 @@ const serviceOptions = computed<ServiceOption[]>(() => {
         price: e.price,
         badge: e.badge,
         description: e.description,
+        category: 'experience',
         type: 'experience'
       })
     })
@@ -78,8 +85,9 @@ const serviceOptions = computed<ServiceOption[]>(() => {
       title: p.title,
       duration: 55,
       price: p.price,
-      badge: p.save ? `Ahorras ${p.save}` : undefined,
+      badge: p.save || undefined,
       description: p.description,
+      category: 'pack',
       type: 'pack'
     })
   })
@@ -93,11 +101,24 @@ const serviceOptions = computed<ServiceOption[]>(() => {
       price: cp.price,
       badge: cp.badge || 'Eco + Foto',
       description: `${cp.subtitle} (Penélope Photograph)`,
+      category: 'collab',
       type: 'pack'
     })
   })
 
   return list
+})
+
+const categoryTabs = computed(() => [
+  { id: 'all' as ServiceCategory, label: 'Todas', count: serviceOptions.value.length },
+  { id: 'experience' as ServiceCategory, label: 'Ecografías', count: experiences.value.filter(e => e.active !== false).length, icon: Sparkles },
+  { id: 'pack' as ServiceCategory, label: 'Packs Ecografías', count: packs.value.length, icon: Heart },
+  { id: 'collab' as ServiceCategory, label: 'Eco + Fotos', count: collaboratorPacks.value.length, icon: Camera, badge: 'Penélope' }
+])
+
+const filteredServiceOptions = computed(() => {
+  if (activeBookingCategory.value === 'all') return serviceOptions.value
+  return serviceOptions.value.filter(s => s.category === activeBookingCategory.value)
 })
 
 const selectedService = ref<ServiceOption | null>(null)
@@ -453,10 +474,44 @@ function resetWizard() {
     <!-- ============================================== -->
     <!-- STEP 1: SELECT EXPERIENCE / PACK               -->
     <!-- ============================================== -->
-    <div v-if="currentStep === 1" class="space-y-4 animate-in fade-in">
+    <div v-if="currentStep === 1" class="space-y-5 animate-in fade-in">
+      <!-- Category Filter Pills -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pb-1 border-b border-brand-pink-light/30">
+        <button
+          v-for="cat in categoryTabs"
+          :key="cat.id"
+          type="button"
+          @click="activeBookingCategory = cat.id"
+          :class="[
+            'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
+            activeBookingCategory === cat.id
+              ? 'bg-brand-brown text-white shadow-xs'
+              : 'bg-brand-cream/80 text-brand-brown hover:bg-brand-pink-light/30 border border-brand-pink-light/40'
+          ]"
+        >
+          <component :is="cat.icon" v-if="cat.icon" class="h-3.5 w-3.5" />
+          <span>{{ cat.label }}</span>
+          <span
+            :class="[
+              'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
+              activeBookingCategory === cat.id ? 'bg-white/20 text-white' : 'bg-brand-pink-light/50 text-brand-brown'
+            ]"
+          >
+            {{ cat.count }}
+          </span>
+          <span
+            v-if="cat.badge"
+            class="hidden sm:inline-block rounded-full bg-brand-pink px-1.5 py-0.2 text-[9px] font-extrabold uppercase text-white tracking-wider"
+          >
+            {{ cat.badge }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Services Grid -->
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div
-          v-for="service in serviceOptions"
+          v-for="service in filteredServiceOptions"
           :key="service.id"
           @click="selectedService = service"
           :class="[
