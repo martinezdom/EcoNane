@@ -16,9 +16,11 @@ import {
   Navigation
 } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
+import { useI18n } from '@/composables/useI18n'
 import BookingWizard from '@/components/BookingWizard.vue'
 
 const { experiences, packs } = useSiteData()
+const { t } = useI18n()
 
 const activeBookingMode = ref<'online' | 'whatsapp'>('online')
 
@@ -173,13 +175,13 @@ const sendByEmail = async () => {
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="mx-auto mb-14 max-w-2xl text-center">
         <span class="text-brand-pink text-xs font-semibold tracking-widest uppercase">
-          Cita Previa
+          {{ t('contact.tag', 'Cita Previa') }}
         </span>
         <h2 class="text-brand-brown-dark mt-3 font-serif text-3xl font-bold sm:text-4xl lg:text-5xl">
-          Reserva tu momento especial
+          {{ t('contact.title', 'Reserva tu momento especial') }}
         </h2>
         <p class="text-brand-brown/80 mt-3 text-sm sm:text-base">
-          Elige tu semana de gestación y el servicio que prefieres. Te responderemos para confirmar tu día y hora.
+          {{ t('contact.subtitle', 'Elige tu semana de gestación y el servicio que prefieres. Te responderemos para confirmar tu día y hora.') }}
         </p>
       </div>
 
@@ -196,7 +198,7 @@ const sendByEmail = async () => {
                 <MapPin class="h-5 w-5" />
               </div>
               <div>
-                <h4 class="text-brand-brown-dark text-sm font-semibold">Ubicación</h4>
+                <h4 class="text-brand-brown-dark text-sm font-semibold">{{ t('contact.locationTitle', 'Ubicación') }}</h4>
                 <p class="text-brand-brown/90 mt-1 text-sm font-medium">Carrer Colón, 114</p>
                 <p class="text-brand-brown/75 text-xs">03570 La Vila Joiosa, Alicante</p>
                 <a
@@ -205,9 +207,22 @@ const sendByEmail = async () => {
                   rel="noopener noreferrer"
                   class="text-brand-pink hover:text-brand-brown-dark mt-1 inline-flex items-center gap-1 text-xs font-semibold underline transition-colors"
                 >
-                  <span>Ver perfil en Google</span>
+                  <span>{{ t('contact.viewMap', 'Ver perfil en Google') }}</span>
                   <ExternalLink class="h-3 w-3" />
                 </a>
+              </div>
+            </div>
+
+            <!-- Parking & Easy Access Card -->
+            <div class="flex items-start gap-4">
+              <div class="bg-brand-pink-light/40 text-brand-brown flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <Navigation class="h-5 w-5" />
+              </div>
+              <div>
+                <h4 class="text-brand-brown-dark text-sm font-semibold">{{ t('contact.parkingTitle', 'Fácil Acceso y Aparcamiento') }}</h4>
+                <p class="text-brand-brown/80 mt-1 text-xs sm:text-sm leading-relaxed">
+                  {{ t('contact.parkingDesc', 'Aparcamiento cómodo en las inmediaciones. A solo 10 minutos de Benidorm, Finestrat y Campello por la N-332 y AP-7.') }}
+                </p>
               </div>
             </div>
 

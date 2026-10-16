@@ -173,6 +173,9 @@ function handleGoHome() {
               <tr v-for="item in ticket.items" :key="item.id" class="text-stone-700">
                 <td class="py-3.5 pr-2 font-medium text-stone-900">
                   {{ item.title }}
+                  <p v-if="item.isCollaborator" class="text-[10px] text-stone-500 font-normal italic">
+                    Cobro por cuenta de Penélope Photograph (servicio fotográfico profesional)
+                  </p>
                 </td>
                 <td class="py-3.5 text-center text-stone-500 whitespace-nowrap">
                   {{ item.quantity }}
@@ -209,6 +212,17 @@ function handleGoHome() {
             <div class="flex justify-between text-base font-bold text-stone-900 pt-3 border-t border-stone-200">
               <span>TOTAL FACTURA:</span>
               <span class="font-mono font-bold text-brand-brown text-lg">{{ ticket.total.toFixed(2) }} €</span>
+            </div>
+
+            <div v-if="ticket.hasCollaboratorItems && ticket.thirdPartyAmount" class="pt-2 text-[10px] text-stone-500 space-y-0.5">
+              <div class="flex justify-between">
+                <span>Servicio Ecografía (EcoNane):</span>
+                <span>{{ (ticket.econaneNetRevenue || (ticket.total - ticket.thirdPartyAmount)).toFixed(2) }} €</span>
+              </div>
+              <div class="flex justify-between text-stone-600 font-medium">
+                <span>Servicio Fotografía (Penélope Photograph):</span>
+                <span>{{ ticket.thirdPartyAmount.toFixed(2) }} €</span>
+              </div>
             </div>
           </div>
         </div>

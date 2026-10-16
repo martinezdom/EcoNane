@@ -14,7 +14,10 @@ import {
   Send,
   Eye,
   AlertTriangle,
-  Trash2
+  Trash2,
+  Camera,
+  MessageCircle,
+  Share2
 } from '@lucide/vue'
 
 const emit = defineEmits<{
@@ -42,6 +45,90 @@ const ticketToCancel = ref<SaleTicket | null>(null)
 const cancellationReason = ref('')
 const isCancelling = ref(false)
 const resendingTicketId = ref<string | null>(null)
+
+// ---------------------------------------------------------------------
+// LIQUIDACIONES PENÉLOPE PHOTOGRAPH (OPCIÓN B)
+// ---------------------------------------------------------------------
+const showPenelopeSettlementModal = ref(false)
+const penelopeSettlementPeriod = ref<'this_week' | 'last_week' | 'this_month' | 'all'>('this_month')
+
+const penelopeTickets = computed(() => {
+  return salesTickets.value.filter(t => {
+    if (t.status === 'anulado') return false
+    return t.hasCollaboratorItems || t.items.some(i => i.isCollaborator || i.title.toLowerCase().includes('foto'))
+  })
+})
+
+const filteredPenelopeTickets = computed(() => {
+  const now = new Date()
+  return penelopeTickets.value.filter(t => {
+    const tDate = new Date(t.date)
+    if (penelopeSettlementPeriod.value === 'this_month') {
+      return tDate.getFullYear() === now.getFullYear() && tDate.getMonth() === now.getMonth()
+    }
+    if (penelopeSettlementPeriod.value === 'this_week') {
+      const startOfWeek = new Date(now)
+      const day = startOfWeek.getDay() || 7
+      startOfWeek.setDate(startOfWeek.getDate() - day + 1)
+      startOfWeek.setHours(0, 0, 0, 0)
+      return tDate >= startOfWeek
+    }
+    if (penelopeSettlementPeriod.value === 'last_week') {
+      const endOfLastWeek = new Date(now)
+      const day = endOfLastWeek.getDay() || 7
+      endOfLastWeek.setDate(endOfLastWeek.getDate() - day)
+      endOfLastWeek.setHours(23, 59, 59, 999)
+      const startOfLastWeek = new Date(endOfLastWeek)
+      startOfLastWeek.setDate(startOfLastWeek.getDate() - 6)
+      startOfLastWeek.setHours(0, 0, 0, 0)
+      return tDate >= startOfLastWeek && tDate <= endOfLastWeek
+    }
+    return true
+  })
+})
+
+const penelopeSettlementTotals = computed(() => {
+  let totalPhotoCharged = 0
+  let totalPenelopeShare = 0
+  let totalEconaneCommission = 0
+
+  filteredPenelopeTickets.value.forEach(t => {
+    t.items.forEach(it => {
+      if (it.isCollaborator || it.title.toLowerCase().includes('foto')) {
+        const collabShare = it.collaboratorShare ? it.collaboratorShare * it.quantity : (it.totalPrice * 0.8)
+        const agencyFee = it.agencyCommission ? it.agencyCommission * it.quantity : (it.totalPrice * 0.2)
+        totalPhotoCharged += it.totalPrice
+        totalPenelopeShare += collabShare
+        totalEconaneCommission += agencyFee
+      }
+    })
+  })
+
+  return {
+    sessionsCount: filteredPenelopeTickets.value.length,
+    totalPhotoCharged: Math.round(totalPhotoCharged * 100) / 100,
+    totalPenelopeShare: Math.round(totalPenelopeShare * 100) / 100,
+    totalEconaneCommission: Math.round(totalEconaneCommission * 100) / 100
+  }
+})
+
+function getWhatsAppPenelopeSettlementUrl() {
+  const tot = penelopeSettlementTotals.value
+  const periodLabel = penelopeSettlementPeriod.value === 'this_week'
+    ? 'esta semana'
+    : penelopeSettlementPeriod.value === 'last_week'
+      ? 'la semana pasada'
+      : 'este mes'
+  const text = encodeURIComponent(
+    `¡Hola Penélope! ❤️ Te comparto el resumen de liquidación oficial de EcoNane (${periodLabel}):\n\n` +
+    `📸 Sesiones realizadas: ${tot.sessionsCount}\n` +
+    `💶 Total recaudado en concepto fotos: ${tot.totalPhotoCharged.toFixed(2)} €\n` +
+    `💰 Tu parte neta a transferir (80%): ${tot.totalPenelopeShare.toFixed(2)} €\n` +
+    `🏷️ Comisión de intermediación EcoNane (20%): ${tot.totalEconaneCommission.toFixed(2)} €\n\n` +
+    `En breve realizamos el pago por Bizum o transferencia. ¡Muchas gracias!`
+  )
+  return `https://wa.me/?text=${text}`
+}
 
 // Modal para registrar facturas anteriores / históricas (recuperación o venta manual)
 const showManualTicketModal = ref(false)
@@ -557,6 +644,16 @@ function handlePrintDailyClose() {
       </div>
 
       <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
+        <button
+          type="button"
+          @click="showPenelopeSettlementModal = true"
+          class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-brand-pink bg-brand-pink/15 px-4 py-2.5 text-xs font-bold text-brand-brown shadow-xs transition-all hover:bg-brand-pink/25 active:scale-95"
+          title="Consultar y liquidar comisiones y suplidos de Penélope Photograph"
+        >
+          <Camera class="h-3.5 w-3.5 text-brand-pink" />
+          <span>Liquidación Penélope (Fotos)</span>
+        </button>
+
         <button
           type="button"
           @click="openManualTicketModal()"
@@ -1154,6 +1251,152 @@ function handlePrintDailyClose() {
           >
             <Check class="h-4 w-4" />
             <span>Guardar Factura</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: LIQUIDACIÓN PENÉLOPE PHOTOGRAPH         -->
+    <!-- ============================================== -->
+    <div
+      v-if="showPenelopeSettlementModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+    >
+      <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-brand-pink-light/40 space-y-6">
+        <button
+          type="button"
+          @click="showPenelopeSettlementModal = false"
+          class="absolute right-5 top-5 rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition-colors"
+        >
+          <X class="h-5 w-5" />
+        </button>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 border-b border-brand-pink-light/30 pb-4">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-pink/15 text-brand-pink">
+            <Camera class="h-6 w-6" />
+          </div>
+          <div>
+            <h3 class="font-serif text-xl font-bold text-brand-brown-dark">
+              Liquidación Penélope Photograph
+            </h3>
+            <p class="text-xs text-brand-brown/70 mt-0.5">
+              Acuerdo Opción B: Suplido por cuenta de terceros (80%) + Comisión EcoNane (20%)
+            </p>
+          </div>
+        </div>
+
+        <!-- Period Selector Filter -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-brand-brown/70 mr-1">Periodo:</span>
+          <button
+            v-for="p in [
+              { id: 'this_week', label: 'Esta Semana' },
+              { id: 'last_week', label: 'Semana Pasada' },
+              { id: 'this_month', label: 'Este Mes' },
+              { id: 'all', label: 'Todo el Histórico' }
+            ]"
+            :key="p.id"
+            type="button"
+            @click="penelopeSettlementPeriod = (p.id as any)"
+            :class="[
+              'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+              penelopeSettlementPeriod === p.id
+                ? 'bg-brand-brown text-white shadow-xs'
+                : 'bg-brand-cream/60 text-brand-brown-dark hover:bg-brand-pink-light/30 border border-brand-pink-light/40'
+            ]"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="rounded-2xl border border-brand-pink-light/30 bg-brand-cream/30 p-4">
+            <span class="text-[11px] font-bold uppercase text-brand-brown/70">Sesiones de Fotos</span>
+            <div class="mt-1 font-serif text-2xl font-bold text-brand-brown-dark">
+              {{ penelopeSettlementTotals.sessionsCount }}
+            </div>
+            <p class="text-[10px] text-brand-brown/60">En el periodo seleccionado</p>
+          </div>
+
+          <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-4">
+            <span class="text-[11px] font-bold uppercase text-emerald-800">Neto a Transferir (80%)</span>
+            <div class="mt-1 font-serif text-2xl font-extrabold text-emerald-900">
+              {{ penelopeSettlementTotals.totalPenelopeShare.toFixed(2) }} €
+            </div>
+            <p class="text-[10px] text-emerald-700 font-semibold">Suplido para Penélope</p>
+          </div>
+
+          <div class="rounded-2xl border border-brand-pink-light/30 bg-brand-cream/30 p-4">
+            <span class="text-[11px] font-bold uppercase text-brand-brown/70">Comisión EcoNane (20%)</span>
+            <div class="mt-1 font-serif text-2xl font-bold text-brand-brown-dark">
+              {{ penelopeSettlementTotals.totalEconaneCommission.toFixed(2) }} €
+            </div>
+            <p class="text-[10px] text-brand-brown/60">Intermediación / cesión espacio</p>
+          </div>
+        </div>
+
+        <!-- Tickets Detail Table -->
+        <div class="rounded-2xl border border-brand-pink-light/30 overflow-hidden">
+          <div class="bg-brand-cream/60 px-4 py-2.5 text-xs font-bold text-brand-brown-dark border-b border-brand-pink-light/30 flex justify-between items-center">
+            <span>Desglose de Tickets Incluidos</span>
+            <span class="text-[11px] text-brand-brown/70 font-normal">Total Fotos: {{ penelopeSettlementTotals.totalPhotoCharged.toFixed(2) }} €</span>
+          </div>
+
+          <div v-if="filteredPenelopeTickets.length === 0" class="p-8 text-center text-xs text-brand-brown/70">
+            No se han registrado tickets con servicios fotográficos en este periodo.
+          </div>
+
+          <div v-else class="max-h-56 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-stone-50 border-b border-stone-100 text-[10px] uppercase font-bold text-stone-500">
+                <tr>
+                  <th class="py-2 px-3">Ticket / Fecha</th>
+                  <th class="py-2 px-3">Clienta</th>
+                  <th class="py-2 px-3 text-right">Foto (€)</th>
+                  <th class="py-2 px-3 text-right text-emerald-700 font-bold">80% Penélope</th>
+                  <th class="py-2 px-3 text-right">20% EcoNane</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stone-100">
+                <tr v-for="t in filteredPenelopeTickets" :key="t.id" class="hover:bg-brand-cream/20">
+                  <td class="py-2.5 px-3">
+                    <span class="font-mono font-bold text-brand-brown-dark block">{{ t.ticketNumber }}</span>
+                    <span class="text-[10px] text-brand-brown/60">{{ t.date }}</span>
+                  </td>
+                  <td class="py-2.5 px-3 font-medium text-brand-brown-dark">{{ t.clientName }}</td>
+                  <td class="py-2.5 px-3 text-right font-mono">{{ (t.thirdPartyAmount ? t.thirdPartyAmount / 0.8 : t.total).toFixed(2) }} €</td>
+                  <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-800 bg-emerald-50/40">
+                    {{ (t.thirdPartyAmount || (t.total * 0.8)).toFixed(2) }} €
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono text-brand-brown">
+                    {{ ((t.thirdPartyAmount ? t.thirdPartyAmount / 0.8 : t.total) * 0.2).toFixed(2) }} €
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-brand-pink-light/30">
+          <a
+            :href="getWhatsAppPenelopeSettlementUrl()"
+            target="_blank"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-4 shadow-sm transition-all"
+          >
+            <MessageCircle class="h-4 w-4" />
+            <span>Compartir por WhatsApp con Penélope</span>
+          </a>
+
+          <button
+            type="button"
+            @click="showPenelopeSettlementModal = false"
+            class="w-full sm:w-auto rounded-xl px-5 py-2 text-xs font-bold text-brand-brown-dark bg-stone-100 hover:bg-stone-200 cursor-pointer"
+          >
+            Cerrar
           </button>
         </div>
       </div>

@@ -21,8 +21,8 @@ import Footer from '@/components/Footer.vue'
       <Features />
       <Experiences />
       <AboutAndGallery />
-      <FAQSection />
       <ContactSection />
+      <FAQSection />
     </main>
     <Footer />
   </div>

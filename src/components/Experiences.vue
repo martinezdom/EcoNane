@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Check, Clock, Heart, Sparkles, Gift } from '@lucide/vue'
+import { Check, Clock, Heart, Sparkles, Camera, ArrowRight } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
+import { useI18n } from '@/composables/useI18n'
 
-const { experiences, packs } = useSiteData()
+const { experiences, packs, collaboratorPacks } = useSiteData()
+const { t } = useI18n()
 
 const generalIncludes = [
   'Espacio cálido y acogedor',
@@ -26,22 +28,26 @@ const gridClasses = computed(() => {
   if (count === 3) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto gap-8 items-stretch'
   if (count === 4) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch'
   if (count === 5) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 items-stretch'
-  // 6 o más
   return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch'
 })
 
-// Columna adaptativa (en caso de 5: 3 arriba y 2 centradas abajo)
 function getCardColClass(index: number, total: number) {
   if (total === 5) {
-    if (index === 3) {
-      return 'lg:col-span-2 lg:col-start-2'
-    }
-    if (index === 4) {
-      return 'lg:col-span-2 md:col-span-2 md:max-w-md md:mx-auto lg:max-w-none w-full'
-    }
+    if (index === 3) return 'lg:col-span-2 lg:col-start-2'
+    if (index === 4) return 'lg:col-span-2 md:col-span-2 md:max-w-md md:mx-auto lg:max-w-none w-full'
     return 'lg:col-span-2'
   }
   return ''
+}
+
+function scrollToBooking(packTitle?: string) {
+  const el = document.getElementById('contacto')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (window.history.pushState) {
+      window.history.pushState(null, '', '#contacto')
+    }
+  }
 }
 </script>
 
@@ -50,16 +56,14 @@ function getCardColClass(index: number, total: number) {
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <!-- Section Header -->
       <div class="mx-auto mb-16 max-w-2xl text-center">
-        <span class="text-brand-pink text-xs font-semibold tracking-widest uppercase"
-          >Nuestras Experiencias</span
-        >
-        <h2
-          class="text-brand-brown-dark mt-3 font-serif text-3xl font-bold sm:text-4xl lg:text-5xl"
-        >
-          Vive cada latido, guarda cada emoción
+        <span class="text-brand-pink text-xs font-semibold tracking-widest uppercase">
+          {{ t('experiences.tag') }}
+        </span>
+        <h2 class="text-brand-brown-dark mt-3 font-serif text-3xl font-bold sm:text-4xl lg:text-5xl">
+          {{ t('experiences.title') }}
         </h2>
         <p class="text-brand-brown/75 mt-4 text-sm sm:text-base leading-relaxed">
-          Sesiones de ecografías 4D y 5D en Villajoyosa con la última tecnología y un entorno pensado para ti y tu familia.
+          {{ t('experiences.subtitle') }}
         </p>
       </div>
 
@@ -129,12 +133,89 @@ function getCardColClass(index: number, total: number) {
         </div>
       </div>
 
-      <!-- Packs Especiales -->
-      <div class="mt-16">
+      <!-- NUEVOS PACKS COMBINADOS ECOGRAFÍA + FOTOGRAFÍA (PENÉLOPE PHOTOGRAPH) -->
+      <div class="mt-24 pt-12 border-t border-brand-pink-light/30">
+        <div class="mb-12 text-center max-w-3xl mx-auto">
+          <div class="inline-flex items-center gap-2 rounded-full bg-brand-pink/15 px-3.5 py-1 text-xs font-bold text-brand-brown border border-brand-pink/30 mb-3">
+            <Camera class="h-3.5 w-3.5 text-brand-pink" />
+            <span>{{ t('experiences.collabBadge', 'Colaboración Especial') }}</span>
+          </div>
+          <h3 class="text-brand-brown-dark font-serif text-3xl font-bold sm:text-4xl">
+            {{ t('experiences.collabTitle', 'Packs Ecografía + Recuerdo Fotográfico') }}
+          </h3>
+          <p class="text-brand-brown/75 mt-3 text-sm sm:text-base leading-relaxed">
+            {{ t('experiences.collabSubtitle', 'En exclusiva con Penélope Photograph. La emoción de ver a tu bebé en directo combinada con un reportaje fotográfico profesional de premamá o en familia.') }}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div
+            v-for="cPack in collaboratorPacks"
+            :key="cPack.id"
+            class="rounded-3xl border border-brand-pink-light/40 bg-gradient-to-b from-brand-cream/60 to-white p-7 shadow-sm hover:shadow-xl hover:border-brand-pink/60 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group"
+          >
+            <div
+              v-if="cPack.badge"
+              class="absolute top-4 right-4 rounded-full bg-brand-pink text-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs"
+            >
+              {{ cPack.badge }}
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-brand-pink">
+                  <Camera class="h-3 w-3" />
+                  Eco + Foto
+                </span>
+                <h4 class="text-brand-brown-dark font-serif text-lg font-bold leading-snug mt-1">
+                  {{ cPack.title }}
+                </h4>
+                <p class="text-[11px] text-brand-brown/65 mt-0.5 font-medium">{{ cPack.subtitle }}</p>
+              </div>
+
+              <div class="my-4 flex items-baseline gap-1">
+                <span class="text-brand-brown-dark font-serif text-3xl font-extrabold">
+                  {{ cPack.price }}
+                </span>
+                <span class="text-xs text-brand-brown/60">/ pack completo</span>
+              </div>
+
+              <p class="text-brand-brown/80 mb-5 text-xs leading-relaxed">
+                {{ cPack.description }}
+              </p>
+
+              <ul class="mb-6 space-y-2 border-t border-brand-pink-light/30 pt-3.5 text-xs text-brand-brown-dark">
+                <li
+                  v-for="(feat, fIdx) in cPack.features"
+                  :key="fIdx"
+                  class="flex items-start gap-1.5"
+                >
+                  <Check class="h-3.5 w-3.5 shrink-0 text-brand-pink mt-0.5" />
+                  <span class="text-brand-brown/90 leading-tight">{{ feat }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pt-2">
+              <a
+                :href="cPack.link"
+                target="_blank"
+                class="btn-primary w-full text-center text-xs font-bold py-2.5 shadow-sm inline-flex items-center justify-center gap-1.5"
+              >
+                <span>{{ t('experiences.bookPack', 'Reservar este pack') }}</span>
+                <ArrowRight class="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packs Ahorro Solo Ecos -->
+      <div class="mt-20">
         <div class="mb-8 text-center">
           <span class="text-brand-pink inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase">
             <Heart class="h-3.5 w-3.5 fill-brand-pink" />
-            Packs Especiales
+            Packs Seguimiento
           </span>
           <h3 class="text-brand-brown-dark mt-1 font-serif text-2xl font-bold sm:text-3xl">
             Acompaña cada etapa de tu embarazo
@@ -173,7 +254,7 @@ function getCardColClass(index: number, total: number) {
               target="_blank"
               class="btn-secondary w-full text-center text-sm font-bold py-3"
             >
-              Reservar este pack
+              {{ t('experiences.bookPack', 'Reservar este pack') }}
             </a>
           </div>
         </div>
@@ -183,12 +264,14 @@ function getCardColClass(index: number, total: number) {
       <div class="mt-16 rounded-3xl bg-brand-cream/80 border border-brand-pink-light/30 p-8 sm:p-10 shadow-sm max-w-5xl mx-auto">
         <div class="flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="text-center md:text-left max-w-md">
-            <span class="text-brand-pink text-xs font-bold tracking-wider uppercase">Garantía EcoNane</span>
+            <span class="text-brand-pink text-xs font-bold tracking-wider uppercase">
+              {{ t('experiences.guaranteeTag', 'Garantía EcoNane') }}
+            </span>
             <h4 class="text-brand-brown-dark mt-1 font-serif text-xl sm:text-2xl font-bold">
-              Incluye en todas nuestras sesiones
+              {{ t('experiences.guaranteeTitle', 'Incluye en todas nuestras sesiones') }}
             </h4>
             <p class="text-brand-brown/75 mt-2 text-xs sm:text-sm">
-              Queremos que tu experiencia sea inolvidable desde el primer minuto.
+              {{ t('experiences.guaranteeSubtitle', 'Queremos que tu experiencia sea inolvidable desde el primer minuto.') }}
             </p>
           </div>
 
@@ -207,4 +290,3 @@ function getCardColClass(index: number, total: number) {
     </div>
   </section>
 </template>
-

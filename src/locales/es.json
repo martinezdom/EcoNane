@@ -1,0 +1,112 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "about": "Sobre Nosotros",
+    "experiences": "Ecografías",
+    "gallery": "Galería",
+    "faq": "Preguntas Frecuentes",
+    "contact": "Contacto",
+    "bookAppointment": "Pide tu cita"
+  },
+  "hero": {
+    "badge": "Ecografías Emocionales",
+    "titlePrefix": "Vive la magia de",
+    "titleHighlight": "ver a tu bebé",
+    "titleSuffix": "3D, 4D y 5D",
+    "description": "Imágenes de alta definición para que disfrutes de los primeros momentos de conexión con tu bebé en un ambiente cálido e inolvidable.",
+    "ctaBook": "Pide tu cita",
+    "ctaExperiences": "Ver Experiencias",
+    "badgeMemories": "Recuerdos",
+    "badgeForever": "que duran para siempre"
+  },
+  "features": {
+    "tag": "¿Por qué elegirnos?",
+    "title": "Una experiencia pensada con el corazón",
+    "subtitle": "Cada detalle en EcoNane está diseñado para que vivas un momento mágico, tranquilo y lleno de emoción junto a tus seres queridos.",
+    "items": {
+      "repetition": {
+        "title": "Garantía de Repetición",
+        "description": "¿Tu bebé se esconde o no se deja ver? Repetimos la sesión sin ningún coste adicional para que te vayas con el mejor recuerdo."
+      },
+      "vr": {
+        "title": "Gafas de Realidad Virtual VR",
+        "description": "Pioneros en la Marina Baixa: sumérgete en una experiencia inmersiva única sintiendo a tu bebé más cerca que nunca."
+      },
+      "companions": {
+        "title": "Acompañantes Ilimitados",
+        "description": "Sala espaciosa y acogedora para que compartas esta emoción con tu pareja, abuelos, tíos, hermanos o quien tú elijas."
+      },
+      "digital": {
+        "title": "Fotos y Vídeos al Instante",
+        "description": "Acceso a tu bóveda digital privada para descargar todas las fotos y vídeos de tu sesión en alta resolución desde el móvil."
+      }
+    }
+  },
+  "experiences": {
+    "tag": "Nuestras Experiencias",
+    "title": "Vive cada latido, guarda cada emoción",
+    "subtitle": "Sesiones de ecografías 4D y 5D en Villajoyosa con la última tecnología y un entorno pensado para ti y tu familia.",
+    "collabBadge": "Colaboración Especial",
+    "collabTitle": "Packs Ecografía + Recuerdo Fotográfico",
+    "collabSubtitle": "En exclusiva con Penélope Photograph. La emoción de ver a tu bebé en directo combinada con una sesión fotográfica profesional de premamá o familia.",
+    "bookPack": "Reservar este pack",
+    "guaranteeTag": "Garantía EcoNane",
+    "guaranteeTitle": "Incluye en todas nuestras sesiones",
+    "guaranteeSubtitle": "Queremos que tu experiencia sea inolvidable desde el primer minuto.",
+    "guaranteeList": [
+      "Espacio cálido y acogedor",
+      "Acompañantes incluidos",
+      "Fotos y vídeos digitales",
+      "Recuerdo del latido",
+      "Atención personalizada"
+    ]
+  },
+  "gallery": {
+    "tag": "Galería de Momentos",
+    "title": "La emoción que se siente",
+    "subtitle": "Sonrisas, bostezos y miradas que enamoran desde el primer instante en nuestra sala de Villajoyosa."
+  },
+  "about": {
+    "tag": "Nuestra Esencia",
+    "title": "Te acompañamos en el momento más bonito de tu vida",
+    "p1": "En EcoNane no realizamos pruebas médicas diagnósticas: creamos momentos de conexión pura y emocionante entre tú, tu bebé y tu familia.",
+    "p2": "Con la mejor tecnología 5D y unas gafas de realidad virtual pioneras en la zona, cuidamos cada segundo para que guardes en el corazón el recuerdo más dulce de tu embarazo."
+  },
+  "contact": {
+    "tag": "Dónde Estamos y Citas",
+    "title": "Pide tu cita o ven a conocernos",
+    "subtitle": "Reserva online en 2 minutos con confirmación instantánea o escríbenos directamente por WhatsApp si tienes cualquier duda.",
+    "locationTitle": "Ubicación",
+    "address": "Carrer Colón, 114, Villajoyosa (Alicante)",
+    "parkingTitle": "Fácil Acceso y Aparcamiento",
+    "parkingDesc": "Aparcamiento cómodo en las inmediaciones. A solo 10 minutos de Benidorm, Finestrat y Campello por la N-332 y AP-7.",
+    "hoursTitle": "Horario de Atención",
+    "hoursWeekdays": "Lunes a Sábado: 9:45 - 20:30",
+    "hoursSunday": "Domingos: Cerrado",
+    "phone": "+34 644 18 98 56",
+    "email": "info@econane.es",
+    "whatsappBtn": "Escríbenos por WhatsApp",
+    "viewMap": "Cómo llegar en Google Maps"
+  },
+  "faq": {
+    "tag": "Preguntas Frecuentes",
+    "title": "Resolvemos todas tus dudas",
+    "subtitle": "Todo lo que necesitas saber antes de tu sesión de ecografía emocional en EcoNane.",
+    "q1": "¿En qué semana de embarazo es mejor realizar la ecografía 5D?",
+    "a1": "Se puede realizar a partir de la semana 12 para conocer el sexo o escuchar latidos, pero las mejores semanas para apreciar la carita y facciones con gran realismo suelen ser entre la 24 y la 30.",
+    "q2": "¿Qué ocurre si mi bebé no se deja ver el día de la cita?",
+    "a2": "¡No te preocupes en absoluto! En EcoNane disponemos de Garantía de Repetición: si el bebé está de espaldas o tapándose la carita, pausamos o reprogramamos la sesión sin coste para que te lleves las mejores imágenes.",
+    "q3": "¿Pueden venir familiares o niños conmigo a la sesión?",
+    "a3": "¡Por supuesto! Nuestras instalaciones están adaptadas con pantalla gigante y sofás cómodos para que vengas acompañada de toda la familia.",
+    "q4": "¿Cómo funcionan los packs combinados de ecografía y fotografía?",
+    "a4": "En colaboración con Penélope Photograph, realizamos la ecografía y la sesión de fotos el mismo día (generalmente los viernes). Pagas cómodamente un único importe en el centro y Penélope te entrega las fotos digitales profesionales."
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados.",
+    "legal": "Aviso Legal",
+    "privacy": "Política de Privacidad",
+    "cookies": "Política de Cookies",
+    "clientAccess": "Bóveda de Fotos (Clientas)",
+    "adminAccess": "Acceso Equipo"
+  }
+}

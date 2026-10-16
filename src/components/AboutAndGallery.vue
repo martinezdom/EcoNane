@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Heart } from '@lucide/vue'
+import { useI18n } from '@/composables/useI18n'
+
+const { t } = useI18n()
 
 const galleryImages: string[] = [
   '/gallery-1.webp',
@@ -21,20 +24,21 @@ const galleryImages: string[] = [
               class="text-brand-pink mb-4 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
             >
               <Heart class="fill-brand-pink text-brand-pink h-3.5 w-3.5" />
-              Sobre Nosotros
+              {{ t('about.tag', 'Nuestra Esencia') }}
             </div>
             <h2 class="text-brand-brown-dark mb-4 font-serif text-3xl font-bold sm:text-4xl">
-              Cuidamos cada detalle para ti y tu bebé
+              {{ t('about.title', 'Te acompañamos en el momento más bonito de tu vida') }}
             </h2>
+            <p class="text-brand-brown/80 mb-4 text-sm leading-relaxed sm:text-base">
+              {{ t('about.p1', 'En EcoNane te ofrecemos una experiencia cercana, profesional y emocionante en un entorno pensado para tu comodidad y bienestar.') }}
+            </p>
             <p class="text-brand-brown/80 mb-6 text-sm leading-relaxed sm:text-base">
-              En EcoNane te ofrecemos una experiencia cercana, profesional y emocionante en un
-              entorno pensado para tu comodidad y bienestar. Contamos con tecnología de vanguardia y
-              un equipo humano que te guiará en este viaje emocional.
+              {{ t('about.p2', 'Con la mejor tecnología 5D y unas gafas de realidad virtual pioneras en la zona, cuidamos cada segundo para que guardes en el corazón el recuerdo más dulce de tu embarazo.') }}
             </p>
             <a
               href="https://wa.me/34644189856?text=Hola,%20quiero%20conocer%20más%20sobre%20EcoNane%20y%20vuestras%20instalaciones."
               target="_blank"
-              class="btn-pill-small mb-6"
+              class="btn-pill-small mb-6 inline-flex"
             >
               Conócenos
             </a>
@@ -57,13 +61,13 @@ const galleryImages: string[] = [
               class="text-brand-pink mb-4 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
             >
               <Heart class="fill-brand-pink text-brand-pink h-3.5 w-3.5" />
-              Galería
+              {{ t('gallery.tag', 'Galería de Momentos') }}
             </div>
             <h2 class="text-brand-brown-dark mb-4 font-serif text-3xl font-bold sm:text-4xl">
-              Momentos que enamoran
+              {{ t('gallery.title', 'La emoción que se siente') }}
             </h2>
             <p class="text-brand-brown/80 mb-6 text-sm leading-relaxed sm:text-base">
-              Una pequeña muestra de la ternura y nitidez que capturamos en cada sesión para que guardes el mejor recuerdo de tu bebé.
+              {{ t('gallery.subtitle', 'Sonrisas, bostezos y miradas que enamoran desde el primer instante en nuestra sala de Villajoyosa.') }}
             </p>
 
             <div class="grid grid-cols-3 gap-3.5 sm:gap-4">

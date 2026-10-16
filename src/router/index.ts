@@ -36,9 +36,27 @@ const router = createRouter({
       path: '/ticket/:ticketNumber',
       name: 'client-ticket',
       component: () => import('@/views/TicketPublicView.vue')
+    },
+    {
+      path: '/agenda',
+      name: 'collaborator-agenda',
+      component: () => import('@/views/AgendaView.vue')
     }
   ],
-  scrollBehavior() {
+  scrollBehavior(to, _from, savedPosition) {
+    if (to.hash) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            el: to.hash,
+            behavior: 'smooth'
+          })
+        }, 100)
+      })
+    }
+    if (savedPosition) {
+      return savedPosition
+    }
     return { top: 0 }
   }
 })

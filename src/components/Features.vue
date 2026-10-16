@@ -1,30 +1,32 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Sparkles, Heart, ShieldCheck, Camera } from '@lucide/vue'
-import type { Feature } from '@/types'
+import { useI18n } from '@/composables/useI18n'
 
-const features: Feature[] = [
+const { t } = useI18n()
+
+const features = computed(() => [
   {
     icon: Sparkles,
-    title: 'Imágenes de Alta Definición',
-    description: 'Tecnología avanzada 3D, 4D y 5D para ver cada detalle de tu bebé con nitidez.'
+    title: t('features.items.vr.title', 'Gafas de Realidad Virtual VR'),
+    description: t('features.items.vr.description', 'Pioneros en la Marina Baixa: sumérgete en una experiencia inmersiva única sintiendo a tu bebé más cerca que nunca.')
   },
   {
     icon: Heart,
-    title: 'Experiencia Emocional',
-    description: 'Un momento único y entrañable para compartir y conectar con tu bebé en familia.'
+    title: t('features.items.repetition.title', 'Garantía de Repetición'),
+    description: t('features.items.repetition.description', '¿Tu bebé se esconde o no se deja ver? Repetimos la sesión sin ningún coste adicional para que te vayas con el mejor recuerdo.')
   },
   {
     icon: ShieldCheck,
-    title: 'Seguridad y Confianza',
-    description:
-      'Equipos seguros con ultrasonidos homologados y personal especializado en bienestar.'
+    title: t('features.items.companions.title', 'Acompañantes Ilimitados'),
+    description: t('features.items.companions.description', 'Sala espaciosa y acogedora para que compartas esta emoción con tu pareja, abuelos, tíos, hermanos o quien tú elijas.')
   },
   {
     icon: Camera,
-    title: 'Fotos y Vídeos Incluidos',
-    description: 'Llévate recuerdos inolvidables en imágenes y vídeos digitales de alta calidad.'
+    title: t('features.items.digital.title', 'Fotos y Vídeos al Instante'),
+    description: t('features.items.digital.description', 'Acceso a tu bóveda digital privada para descargar todas las fotos y vídeos de tu sesión en alta resolución desde el móvil.')
   }
-]
+])
 </script>
 
 <template>

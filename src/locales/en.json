@@ -1,0 +1,112 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "experiences": "Ultrasounds",
+    "gallery": "Gallery",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "bookAppointment": "Book Your Scan"
+  },
+  "hero": {
+    "badge": "Emotional 4D / 5D Scans",
+    "titlePrefix": "Experience the magic of",
+    "titleHighlight": "meeting your baby",
+    "titleSuffix": "in 3D, 4D & 5D",
+    "description": "High-definition ultrasound imaging to cherish your first unforgettable moments of connection with your baby in a warm, welcoming family environment.",
+    "ctaBook": "Book Your Scan",
+    "ctaExperiences": "View Experiences",
+    "badgeMemories": "Memories",
+    "badgeForever": "that last forever"
+  },
+  "features": {
+    "tag": "Why Choose EcoNane?",
+    "title": "An experience designed from the heart",
+    "subtitle": "Every detail at EcoNane is created to offer you a magical, calming, and emotional moment alongside your loved ones.",
+    "items": {
+      "repetition": {
+        "title": "Free Rescan Guarantee",
+        "description": "Is your baby hiding or facing away? We will repeat the session at no additional cost so you leave with the best keepsake."
+      },
+      "vr": {
+        "title": "Virtual Reality VR Goggles",
+        "description": "Pioneers in the Marina Baixa: immerse yourself in an exclusive experience feeling your baby closer than ever before."
+      },
+      "companions": {
+        "title": "Unlimited Companions",
+        "description": "Spacious and cozy private room so you can share this special joy with your partner, grandparents, children, or friends."
+      },
+      "digital": {
+        "title": "Instant HD Photos & Videos",
+        "description": "Direct access to your secure digital vault to download all your high-resolution ultrasound photos and videos straight to your phone."
+      }
+    }
+  },
+  "experiences": {
+    "tag": "Our Experiences",
+    "title": "Cherish every heartbeat, save every smile",
+    "subtitle": "4D and 5D baby scans in Villajoyosa featuring advanced imaging technology and a loving atmosphere for you and your family.",
+    "collabBadge": "Special Collaboration",
+    "collabTitle": "Ultrasound + Professional Photo Keepsake Packs",
+    "collabSubtitle": "In exclusive partnership with Penélope Photograph. Combine the thrill of seeing your baby live with a professional maternity & family photoshoot.",
+    "bookPack": "Book this package",
+    "guaranteeTag": "The EcoNane Promise",
+    "guaranteeTitle": "Included with every appointment",
+    "guaranteeSubtitle": "We want your experience to be unforgettable from the very first minute.",
+    "guaranteeList": [
+      "Warm & comfortable studio",
+      "All companions welcome",
+      "Digital photos and videos",
+      "Heartbeat audio keepsake",
+      "Caring, personalized attention"
+    ]
+  },
+  "gallery": {
+    "tag": "Moments Gallery",
+    "title": "The emotion you can feel",
+    "subtitle": "Smiles, yawns, and tiny hands that steal your heart from the first second at our Villajoyosa studio."
+  },
+  "about": {
+    "tag": "Our Philosophy",
+    "title": "Guiding you through life's most precious journey",
+    "p1": "At EcoNane, we do not perform diagnostic medical procedures: we create pure, emotional bonding moments between you, your baby, and your family.",
+    "p2": "Equipped with state-of-the-art 5D technology and immersive VR goggles, we cherish every second to give you the sweetest memory of your pregnancy."
+  },
+  "contact": {
+    "tag": "Location & Bookings",
+    "title": "Book your appointment or visit us",
+    "subtitle": "Book online in just 2 minutes with instant confirmation, or message us directly on WhatsApp if you have any questions.",
+    "locationTitle": "Location",
+    "address": "Carrer Colón, 114, Villajoyosa (Alicante)",
+    "parkingTitle": "Easy Access & Convenient Parking",
+    "parkingDesc": "Comfortable nearby street parking. Just 10 minutes from Benidorm, Finestrat, and El Campello via N-332 and AP-7.",
+    "hoursTitle": "Opening Hours",
+    "hoursWeekdays": "Monday to Saturday: 9:45 AM - 8:30 PM",
+    "hoursSunday": "Sunday: Closed",
+    "phone": "+34 644 18 98 56",
+    "email": "info@econane.es",
+    "whatsappBtn": "Chat on WhatsApp",
+    "viewMap": "Get Directions on Google Maps"
+  },
+  "faq": {
+    "tag": "Frequently Asked Questions",
+    "title": "Answers to your questions",
+    "subtitle": "Everything you need to know before your emotional baby scan at EcoNane.",
+    "q1": "What is the best week for a 4D/5D baby scan?",
+    "a1": "You can visit from week 12 for gender reveals or listening to heartbeats, but the best weeks to see clear, realistic facial features are between week 24 and week 30.",
+    "q2": "What happens if my baby won't show their face?",
+    "a2": "Don't worry at all! EcoNane includes a Free Rescan Guarantee: if baby is turned away or covering their face, we will pause or reschedule your session at no cost to ensure you get wonderful photos.",
+    "q3": "Can my family or children join the scan?",
+    "a3": "Absolutely! Our studio is equipped with comfortable seating and a large cinema display so the entire family can share this experience together.",
+    "q4": "How do the combined Ultrasound + Photography packages work?",
+    "a4": "Together with Penélope Photograph, we perform the ultrasound and professional photoshoot on the same day (usually on Fridays). You pay conveniently once at the clinic, and Penélope delivers your digital photos directly to you."
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "legal": "Legal Notice",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "clientAccess": "Client Photo Vault",
+    "adminAccess": "Team Portal"
+  }
+}

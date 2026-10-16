@@ -33,6 +33,26 @@ export type Pack = {
   link: string
 }
 
+export type CollaboratorPack = {
+  id: string
+  title: string
+  subtitle: string
+  ecoTitle: string
+  photoTitle: string
+  price: string
+  ecoPrice: number
+  photoPrice: number
+  econaneCommissionPercent: number
+  penelopeShare: number
+  econaneShare: number
+  duration: string
+  badge?: string
+  description: string
+  features: string[]
+  active?: boolean
+  link?: string
+}
+
 export type Product = {
   id: string
   title: string
@@ -76,6 +96,11 @@ export type TicketItem = {
   unitPrice: number
   totalPrice: number
   ivaPercent: number
+  isCollaborator?: boolean
+  collaboratorName?: string
+  collaboratorShare?: number
+  agencyCommission?: number
+  ecoShare?: number
 }
 
 export type SaleTicket = {
@@ -106,6 +131,9 @@ export type SaleTicket = {
   notes?: string
   emailSent?: boolean
   viewToken: string
+  hasCollaboratorItems?: boolean
+  thirdPartyAmount?: number
+  econaneNetRevenue?: number
 }
 
 export type BusinessInfo = {

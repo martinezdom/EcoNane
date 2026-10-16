@@ -3,6 +3,7 @@ import type {
   Promotion,
   Experience,
   Pack,
+  CollaboratorPack,
   Product,
   ClientSession,
   SaleTicket,
@@ -19,9 +20,11 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 const STORAGE_KEY_PROMO = 'econane_promotion'
 const STORAGE_KEY_EXPERIENCES = 'econane_experiences'
 const STORAGE_KEY_PACKS = 'econane_packs'
+const STORAGE_KEY_COLLAB_PACKS = 'econane_collab_packs'
 const STORAGE_KEY_PRODUCTS = 'econane_products'
 const STORAGE_KEY_SESSIONS = 'econane_client_sessions'
 const STORAGE_KEY_AUTH = 'econane_admin_auth'
+const STORAGE_KEY_COLLAB_AUTH = 'econane_collab_auth'
 const STORAGE_KEY_PIN = 'econane_admin_pin'
 const STORAGE_KEY_TICKETS = 'econane_sales_tickets'
 const STORAGE_KEY_BIZ = 'econane_business_info'
@@ -162,6 +165,109 @@ const defaultPacks: Pack[] = [
     save: 'Ahorra 20€',
     description: '3 momentos únicos para recordar la evolución completa para siempre.',
     link: formatPackWhatsAppLink('Pack 3 Ecos')
+  }
+]
+
+const defaultCollaboratorPacks: CollaboratorPack[] = [
+  {
+    id: 'collab-1',
+    title: 'Latidos que llenan + La gran noticia',
+    subtitle: 'Eco Básica 4D/5D + 5 Fotos Digitales',
+    ecoTitle: 'Latidos que llenan (Eco Básica)',
+    photoTitle: 'La gran noticia (Sesión Fotográfica)',
+    price: '58€',
+    ecoPrice: 20,
+    photoPrice: 38,
+    econaneCommissionPercent: 20,
+    penelopeShare: 30.40,
+    econaneShare: 27.60,
+    duration: '15 min',
+    badge: 'Novedad',
+    description: 'Sesión para escuchar el latido de tu bebé y disfrutar de un reportaje fotográfico profesional de 5 fotos.',
+    features: [
+      'Ecografía 4D/5D de 15 min',
+      'Escucha y grabación del latido',
+      'Reportaje fotográfico profesional (5 fotos en HD)',
+      'Entrega directa por Penélope Photograph',
+      'Acompañantes ilimitados'
+    ],
+    active: true,
+    link: formatPackWhatsAppLink('Pack Latidos que llenan + La gran noticia')
+  },
+  {
+    id: 'collab-2',
+    title: 'Eco Revelación de Sexo + Niño o niña',
+    subtitle: 'Eco Especial Familia + Revelación Fotográfica',
+    ecoTitle: 'Eco + Revelación de Sexo',
+    photoTitle: 'Niño o niña (Sesión Fotográfica)',
+    price: '128€',
+    ecoPrice: 70,
+    photoPrice: 58,
+    econaneCommissionPercent: 20,
+    penelopeShare: 46.40,
+    econaneShare: 81.60,
+    duration: '15 min',
+    badge: 'Más Popular',
+    description: 'Descubre si es niño o niña con revelación en globo y una sesión fotográfica profesional de 5 fotos.',
+    features: [
+      'Eco 4D/5D con revelación en globo',
+      'Pequeño regalo sorpresa',
+      'Sesión de fotos profesional (5 fotos en HD)',
+      'Vestuario de estudio disponible',
+      'Fotos y vídeos digitales de la eco'
+    ],
+    active: true,
+    link: formatPackWhatsAppLink('Pack Eco Revelación + Niño o niña')
+  },
+  {
+    id: 'collab-3',
+    title: 'Experiencia Gafas VR + A punto de conocerte',
+    subtitle: 'Eco Inmersiva VR 4D/5D + Sesión Fotográfica Premamá',
+    ecoTitle: 'Experiencia Gafas Virtuales VR + Eco 4D/5D',
+    photoTitle: 'A punto de conocerte (Sesión Fotográfica)',
+    price: '143€',
+    ecoPrice: 75,
+    photoPrice: 68,
+    econaneCommissionPercent: 20,
+    penelopeShare: 54.40,
+    econaneShare: 88.60,
+    duration: '25 min',
+    badge: 'Experiencia VIP',
+    description: 'La máxima inmersión con gafas VR sintiendo a tu bebé más cerca, con sesión de fotos y 1 cambio de vestuario incluido.',
+    features: [
+      'Experiencia inmersiva con Gafas VR',
+      'Eco 4D/5D completa (25 min)',
+      'Sesión de fotos profesional (5 fotos en HD)',
+      '1 cambio de vestuario incluido',
+      'Todas las fotos y vídeos digitales'
+    ],
+    active: true,
+    link: formatPackWhatsAppLink('Pack Experiencia VR + A punto de conocerte')
+  },
+  {
+    id: 'collab-4',
+    title: 'Seguimiento Completo: 3 Ecos + 3 Momentos Especiales',
+    subtitle: 'Seguimiento Trimestral + 3 Sesiones Fotográficas',
+    ecoTitle: 'Pack 3 Ecos (Evolución Completa)',
+    photoTitle: '3 Momentos Especiales (3 Sesiones Fotos)',
+    price: '249€',
+    ecoPrice: 115,
+    photoPrice: 134,
+    econaneCommissionPercent: 20,
+    penelopeShare: 107.20,
+    econaneShare: 141.80,
+    duration: '3 Sesiones',
+    badge: 'Ahorro 30€',
+    description: 'El recuerdo definitivo de tu embarazo en 3 etapas únicas con un descuento especial de 30€ ya aplicado.',
+    features: [
+      '3 Sesiones completas de ecografía 4D/5D',
+      '3 Sesiones de fotos profesionales (15 fotos en HD)',
+      '30€ de descuento ya aplicado en el total',
+      'Seguimiento de la evolución de tu bebé',
+      'Prioridad de reserva en viernes'
+    ],
+    active: true,
+    link: formatPackWhatsAppLink('Pack Seguimiento 3 Ecos + 3 Momentos Especiales')
   }
 ]
 
@@ -391,6 +497,9 @@ const experiences = ref<Experience[]>(
 const packs = ref<Pack[]>(
   sanitizePackLinks(loadFromStorage(STORAGE_KEY_PACKS, defaultPacks))
 )
+const collaboratorPacks = ref<CollaboratorPack[]>(
+  loadFromStorage(STORAGE_KEY_COLLAB_PACKS, defaultCollaboratorPacks)
+)
 const products = ref<Product[]>(loadFromStorage(STORAGE_KEY_PRODUCTS, defaultProducts))
 const sessions = ref<ClientSession[]>(loadFromStorage(STORAGE_KEY_SESSIONS, defaultDemoSessions))
 const businessInfo = ref<BusinessInfo>(loadFromStorage(STORAGE_KEY_BIZ, defaultBusinessInfo))
@@ -399,6 +508,7 @@ const appointments = ref<Appointment[]>(getInitialAppointments())
 const bookingSettings = ref<BookingSettings>(loadFromStorage(STORAGE_KEY_BOOKING_SETTINGS, defaultBookingSettings))
 const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
 const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
+const isCollaboratorLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_COLLAB_AUTH) === 'true')
 const isCloudSynced = ref<boolean>(false)
 
 // Entorno y Aislamiento de Base de Datos Local vs Producción
@@ -447,6 +557,7 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 watch(promotion, (val) => localStorage.setItem(STORAGE_KEY_PROMO, JSON.stringify(val)), { deep: true })
 watch(experiences, (val) => localStorage.setItem(STORAGE_KEY_EXPERIENCES, JSON.stringify(val)), { deep: true })
 watch(packs, (val) => localStorage.setItem(STORAGE_KEY_PACKS, JSON.stringify(val)), { deep: true })
+watch(collaboratorPacks, (val) => localStorage.setItem(STORAGE_KEY_COLLAB_PACKS, JSON.stringify(val)), { deep: true })
 watch(products, (val) => localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(val)), { deep: true })
 watch(sessions, (val) => localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(val)), { deep: true })
 watch(businessInfo, (val) => localStorage.setItem(STORAGE_KEY_BIZ, JSON.stringify(val)), { deep: true })
@@ -883,6 +994,21 @@ export function useSiteData() {
     sessionStorage.removeItem(STORAGE_KEY_AUTH)
   }
 
+  function loginCollaborator(enteredPin: string): boolean {
+    const clean = enteredPin.trim().toLowerCase()
+    if (clean === 'agenda2026' || clean === 'foto2026' || clean === 'penelope2026' || clean === 'econane2026') {
+      isCollaboratorLoggedIn.value = true
+      sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
+      return true
+    }
+    return false
+  }
+
+  function logoutCollaborator() {
+    isCollaboratorLoggedIn.value = false
+    sessionStorage.removeItem(STORAGE_KEY_COLLAB_AUTH)
+  }
+
   async function setAdminPin(newPin: string) {
     const hashed = await hashString(newPin.trim())
     adminPinHash.value = hashed
@@ -972,6 +1098,14 @@ export function useSiteData() {
     const subtotal = Math.round((total / (1 + (ivaRate / 100))) * 100) / 100
     const ivaAmount = Math.round((total - subtotal) * 100) / 100
 
+    const hasCollaboratorItems = payload.items.some(it => it.isCollaborator)
+    const thirdPartyAmount = Math.round(
+      payload.items
+        .filter(it => it.isCollaborator)
+        .reduce((sum, it) => sum + ((it.collaboratorShare || 0) * it.quantity), 0) * 100
+    ) / 100
+    const econaneNetRevenue = Math.max(0, Math.round((total - thirdPartyAmount) * 100) / 100)
+
     const newTicket: SaleTicket = {
       id,
       ticketNumber,
@@ -997,7 +1131,10 @@ export function useSiteData() {
       status: 'valido',
       notes: payload.notes || '',
       emailSent: false,
-      viewToken
+      viewToken,
+      hasCollaboratorItems,
+      thirdPartyAmount,
+      econaneNetRevenue
     }
 
     salesTickets.value.unshift(newTicket)
@@ -1625,6 +1762,10 @@ export function useSiteData() {
     formatExperienceWhatsAppLink,
     formatPackWhatsAppLink,
     getAvailableSlots,
+    collaboratorPacks,
+    isCollaboratorLoggedIn,
+    loginCollaborator,
+    logoutCollaborator,
     createAppointment,
     updateAppointmentStatus,
     updateAppointment,

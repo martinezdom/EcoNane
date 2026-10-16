@@ -6,7 +6,8 @@ import type {
   TicketItem,
   PaymentMethod,
   Appointment,
-  ClientSession
+  ClientSession,
+  CollaboratorPack
 } from '@/types'
 import {
   Plus,
@@ -24,7 +25,8 @@ import {
   Send,
   Star,
   ExternalLink,
-  Coins
+  Coins,
+  Camera
 } from '@lucide/vue'
 
 const props = defineProps<{
@@ -39,6 +41,7 @@ const emit = defineEmits<{
 const {
   experiences,
   packs,
+  collaboratorPacks,
   products,
   businessInfo,
   appointments,
@@ -60,6 +63,11 @@ interface CartItem {
   unitPrice: number
   quantity: number
   ivaPercent: number
+  isCollaborator?: boolean
+  collaboratorName?: string
+  collaboratorShare?: number
+  agencyCommission?: number
+  ecoShare?: number
 }
 
 const tpvCart = ref<CartItem[]>([])
@@ -78,7 +86,7 @@ const isSubmittingSale = ref(false)
 const cashReceived = ref<number | null>(null)
 
 // TPV Category Navigation Filter
-const tpvCategoryFilter = ref<'all' | 'experiences' | 'packs' | 'products'>('all')
+const tpvCategoryFilter = ref<'all' | 'experiences' | 'packs' | 'collab' | 'products'>('all')
 
 // TPV Discounts Engine
 const tpvDiscountType = ref<'none' | 'percent' | 'fixed'>('none')
@@ -162,6 +170,27 @@ function clearCart() {
   cashReceived.value = null
 }
 
+function addCollaboratorPackToCart(cPack: CollaboratorPack) {
+  const existing = tpvCart.value.find(i => i.title.toLowerCase() === cPack.title.toLowerCase())
+  if (existing) {
+    existing.quantity++
+  } else {
+    tpvCart.value.push({
+      id: 'cart-' + Date.now() + '-' + Math.random().toString(36).substring(2, 5),
+      title: `[Eco+Foto] ${cPack.title}`,
+      unitPrice: typeof cPack.price === 'number' ? cPack.price : parseFloat(cPack.price.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+      quantity: 1,
+      ivaPercent: businessInfo.value.defaultIva || 21,
+      isCollaborator: true,
+      collaboratorName: 'Penélope Photograph',
+      collaboratorShare: cPack.penelopeShare,
+      agencyCommission: Math.round((cPack.econaneShare - cPack.ecoPrice) * 100) / 100,
+      ecoShare: cPack.ecoPrice
+    })
+  }
+  showFeedback(`Pack de Fotografía añadido: ${cPack.title}`)
+}
+
 function addCustomItem() {
   if (!customItemTitle.value.trim() || customItemPrice.value === null || customItemPrice.value < 0) return
   addToCart(customItemTitle.value.trim(), customItemPrice.value)
@@ -220,6 +249,19 @@ const tpvSubtotal = computed(() => {
 
 const tpvIvaAmount = computed(() => {
   return Math.round((tpvTotal.value - tpvSubtotal.value) * 100) / 100
+})
+
+// Opción B: Suplidos recaudados por cuenta de terceros (Penélope Photograph)
+const tpvThirdPartySuplidoTotal = computed(() => {
+  return Math.round(
+    tpvCart.value
+      .filter(i => i.isCollaborator)
+      .reduce((sum, item) => sum + ((item.collaboratorShare || 0) * item.quantity), 0) * 100
+  ) / 100
+})
+
+const tpvEconaneNetRevenue = computed(() => {
+  return Math.max(0, Math.round((tpvTotal.value - tpvThirdPartySuplidoTotal.value) * 100) / 100)
 })
 
 // Cash change calculation
@@ -335,7 +377,12 @@ async function handleProcessSale() {
       quantity: it.quantity,
       unitPrice: it.unitPrice,
       totalPrice: Math.round(it.unitPrice * it.quantity * 100) / 100,
-      ivaPercent: it.ivaPercent
+      ivaPercent: it.ivaPercent,
+      isCollaborator: it.isCollaborator,
+      collaboratorName: it.collaboratorName,
+      collaboratorShare: it.collaboratorShare,
+      agencyCommission: it.agencyCommission,
+      ecoShare: it.ecoShare
     }))
 
     const isNominativeInvoice = tpvIsNominative.value || Boolean(tpvClientAddress.value.trim() || tpvClientNif.value.trim())
@@ -639,6 +686,18 @@ function getWhatsAppReviewShareUrl(ticket?: SaleTicket | null) {
           </button>
           <button
             type="button"
+            @click="tpvCategoryFilter = 'collab'"
+            :class="[
+              'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
+              tpvCategoryFilter === 'collab'
+                ? 'bg-brand-brown text-white shadow-xs'
+                : 'bg-brand-cream/60 text-brand-brown-dark hover:bg-brand-pink-light/30'
+            ]"
+          >
+            📷 Eco + Fotos (Penélope)
+          </button>
+          <button
+            type="button"
             @click="tpvCategoryFilter = 'products'"
             :class="[
               'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap',
@@ -737,6 +796,55 @@ function getWhatsAppReviewShareUrl(ticket?: SaleTicket | null) {
 
               <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-2">
                 <span class="font-serif text-lg font-bold text-brand-brown-dark">{{ p.price }}</span>
+                <span class="flex items-center gap-1 text-xs font-semibold text-brand-brown group-hover:underline">
+                  <Plus class="h-3.5 w-3.5" /> Añadir
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collaborator Packs Section (Eco + Foto) -->
+        <div
+          v-show="tpvCategoryFilter === 'all' || tpvCategoryFilter === 'collab'"
+          class="rounded-3xl border border-brand-pink-light/40 bg-white p-6 shadow-xs"
+        >
+          <div class="flex items-center justify-between border-b border-brand-pink-light/20 pb-4">
+            <div class="flex items-center gap-2">
+              <Camera class="h-5 w-5 text-brand-pink" />
+              <div>
+                <h4 class="font-serif text-lg font-bold text-brand-brown-dark">Packs Eco + Recuerdo Fotográfico</h4>
+                <p class="text-xs text-brand-brown/70">En colaboración con Penélope Photograph (Desglose automático 80/20 Opción B)</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div
+              v-for="cp in collaboratorPacks"
+              :key="cp.id"
+              @click="addCollaboratorPackToCart(cp)"
+              class="group flex cursor-pointer flex-col justify-between rounded-2xl border border-brand-pink-light/40 bg-gradient-to-b from-brand-pink/5 to-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-pink hover:shadow-md"
+            >
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <span class="font-serif text-sm font-bold text-brand-brown-dark group-hover:text-brand-brown">
+                    {{ cp.title }}
+                  </span>
+                  <span v-if="cp.badge" class="rounded-full bg-brand-pink text-white px-2 py-0.5 text-[10px] font-bold">
+                    {{ cp.badge }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs text-brand-brown/70 line-clamp-1">{{ cp.subtitle }}</p>
+                <div class="mt-2 flex items-center gap-2 text-[10px] text-brand-brown/60">
+                  <span>Eco: {{ cp.ecoPrice }}€</span>
+                  <span>·</span>
+                  <span>Fotos: {{ cp.photoPrice }}€ (80%: {{ cp.penelopeShare.toFixed(2) }}€)</span>
+                </div>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-2">
+                <span class="font-serif text-lg font-bold text-brand-brown-dark">{{ cp.price }}</span>
                 <span class="flex items-center gap-1 text-xs font-semibold text-brand-brown group-hover:underline">
                   <Plus class="h-3.5 w-3.5" /> Añadir
                 </span>
@@ -930,6 +1038,10 @@ function getWhatsAppReviewShareUrl(ticket?: SaleTicket | null) {
                 <div class="flex-1 min-w-0 pr-2">
                   <div class="font-medium text-xs text-brand-brown-dark truncate">{{ item.title }}</div>
                   <div class="text-[11px] text-brand-brown/70">{{ item.unitPrice.toFixed(2) }} €/ud</div>
+                  <div v-if="item.isCollaborator" class="mt-0.5 inline-flex items-center gap-1 rounded bg-brand-pink/20 px-1.5 py-0.5 text-[9px] font-bold text-brand-brown">
+                    <Camera class="h-2.5 w-2.5 text-brand-pink" />
+                    <span>Penélope (Suplido 80%: {{ ((item.collaboratorShare || 0) * item.quantity).toFixed(2) }}€)</span>
+                  </div>
                 </div>
 
                 <div class="flex items-center gap-1.5">
@@ -1233,6 +1345,25 @@ function getWhatsAppReviewShareUrl(ticket?: SaleTicket | null) {
             <div class="border-t border-brand-pink-light/30 pt-2 flex justify-between items-baseline">
               <span class="font-serif text-sm font-bold text-brand-brown-dark">TOTAL A COBRAR:</span>
               <span class="font-serif text-2xl font-bold text-brand-brown-dark">{{ tpvTotal.toFixed(2) }} €</span>
+            </div>
+
+            <!-- Opción B: Desglose Colaborador Penélope Photograph -->
+            <div
+              v-if="tpvThirdPartySuplidoTotal > 0"
+              class="mt-3 pt-3 border-t border-brand-pink-light/30 bg-brand-pink/10 -mx-4 -mb-4 p-3 rounded-b-2xl space-y-1.5"
+            >
+              <div class="flex items-center gap-1.5 text-[11px] font-bold text-brand-brown-dark">
+                <Camera class="h-3.5 w-3.5 text-brand-pink" />
+                <span>Desglose Legal (Opción B - Colaboradora):</span>
+              </div>
+              <div class="flex justify-between text-[11px] text-brand-brown/85">
+                <span>Cobro por cta. Penélope (80% Fotos - Suplido):</span>
+                <span class="font-mono font-bold text-emerald-800">{{ tpvThirdPartySuplidoTotal.toFixed(2) }} €</span>
+              </div>
+              <div class="flex justify-between text-[11px] text-brand-brown/85">
+                <span>Ingreso Neto EcoNane (Eco + 20% Comisión):</span>
+                <span class="font-mono font-bold text-brand-brown-dark">{{ tpvEconaneNetRevenue.toFixed(2) }} €</span>
+              </div>
             </div>
           </div>
 

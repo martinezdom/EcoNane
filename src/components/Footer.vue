@@ -1,10 +1,30 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { MapPin, Calendar, Gift, Sparkles } from '@lucide/vue'
+import { useI18n } from '@/composables/useI18n'
 import type { Benefit } from '@/types'
+
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
 
 const isAvisoOpen = ref(false)
 const isPrivacidadOpen = ref(false)
+
+function navigateToSection(href: string) {
+  if (route.path !== '/') {
+    router.push('/' + href)
+    return
+  }
+  const el = document.getElementById(href.replace(/^#/, ''))
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (window.history.pushState) {
+      window.history.pushState(null, '', href)
+    }
+  }
+}
 
 const benefits: Benefit[] = [
   {
@@ -77,36 +97,42 @@ const benefits: Benefit[] = [
         </div>
 
         <div class="flex flex-wrap justify-center gap-6 sm:gap-10 md:col-span-7 md:justify-end">
-          <div class="flex gap-6">
+          <div class="flex flex-wrap gap-4 sm:gap-6">
             <a
               href="#inicio"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >Inicio</a
+              @click.prevent="navigateToSection('#inicio')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.home') }}</a
             >
             <a
               href="#sobre-nosotros"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >Sobre Nosotros</a
+              @click.prevent="navigateToSection('#sobre-nosotros')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.about') }}</a
             >
             <a
               href="#ecografias"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >Ecografías</a
+              @click.prevent="navigateToSection('#ecografias')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.experiences') }}</a
             >
             <a
               href="#galeria"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >Galería</a
+              @click.prevent="navigateToSection('#galeria')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.gallery') }}</a
             >
             <a
               href="#faq"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >FAQ</a
+              @click.prevent="navigateToSection('#faq')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.faq') }}</a
             >
             <a
               href="#contacto"
-              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors"
-              >Contacto</a
+              @click.prevent="navigateToSection('#contacto')"
+              class="text-brand-pink-light/80 hover:text-brand-cream text-xs transition-colors cursor-pointer"
+              >{{ t('nav.contact') }}</a
             >
           </div>
         </div>
@@ -116,7 +142,7 @@ const benefits: Benefit[] = [
         class="text-brand-pink-light/50 flex flex-col items-center justify-between gap-4 pt-8 text-xs sm:flex-row"
       >
         <p>
-          © 2026 EcoNane. Todos los derechos reservados. Creado por
+          © 2026 EcoNane. {{ t('footer.rights') }} Creado por
           <a
             href="https://martinezdom.github.io/"
             target="_blank"
@@ -125,21 +151,24 @@ const benefits: Benefit[] = [
             >martinezdom</a
           >.
         </p>
-        <div class="flex gap-4">
+        <div class="flex flex-wrap items-center gap-4">
           <button
             @click="isAvisoOpen = true"
             class="hover:text-brand-cream cursor-pointer transition-colors"
           >
-            Aviso Legal
+            {{ t('footer.legal') }}
           </button>
           <button
             @click="isPrivacidadOpen = true"
             class="hover:text-brand-cream cursor-pointer transition-colors"
           >
-            Política de Privacidad
+            {{ t('footer.privacy') }}
           </button>
+          <router-link to="/agenda" class="hover:text-brand-cream transition-colors text-brand-pink-light/80 hover:text-brand-pink">
+            Agenda Colaborador
+          </router-link>
           <router-link to="/admin" class="hover:text-brand-cream transition-colors opacity-75 hover:opacity-100">
-            Acceso Panel
+            {{ t('footer.adminAccess') }}
           </router-link>
         </div>
       </div>

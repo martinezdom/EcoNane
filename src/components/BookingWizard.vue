@@ -25,6 +25,7 @@ import type { Appointment } from '@/types'
 const {
   experiences,
   packs,
+  collaboratorPacks,
   getAvailableSlots,
   createAppointment,
   generateGoogleCalendarUrl,
@@ -79,6 +80,19 @@ const serviceOptions = computed<ServiceOption[]>(() => {
       price: p.price,
       badge: p.save ? `Ahorras ${p.save}` : undefined,
       description: p.description,
+      type: 'pack'
+    })
+  })
+
+  // Packs Colaborador (Eco + Fotografía)
+  collaboratorPacks.value.forEach((cp, idx) => {
+    list.push({
+      id: `collab-${idx}`,
+      title: `[Eco + Foto] ${cp.title}`,
+      duration: 50,
+      price: cp.price,
+      badge: cp.badge || 'Eco + Foto',
+      description: `${cp.subtitle} (Penélope Photograph)`,
       type: 'pack'
     })
   })

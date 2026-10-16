@@ -1,5 +1,19 @@
 <script setup lang="ts">
 import { Heart } from '@lucide/vue'
+import { useI18n } from '@/composables/useI18n'
+
+const { t } = useI18n()
+
+function scrollToSection(href: string) {
+  const targetId = href.replace(/^#/, '')
+  const el = document.getElementById(targetId)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (window.history.pushState) {
+      window.history.pushState(null, '', href)
+    }
+  }
+}
 </script>
 
 <template>
@@ -13,34 +27,35 @@ import { Heart } from '@lucide/vue'
             class="bg-brand-pink-light/35 border-brand-pink/20 text-brand-brown-dark mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wider uppercase"
           >
             <Heart class="fill-brand-pink text-brand-pink h-3 w-3" />
-            Ecografías Emocionales
+            {{ t('hero.badge') }}
           </div>
 
           <h1
             class="text-brand-brown-dark mb-6 font-serif text-4xl leading-tight font-bold tracking-tight sm:text-5xl lg:text-6xl"
           >
-            Vive la magia de <br class="hidden sm:inline" />
-            ver a tu bebé
-            <span class="text-brand-pink mt-2 block font-serif font-light italic">3D, 4D y 5D</span>
+            {{ t('hero.titlePrefix') }} <br class="hidden sm:inline" />
+            {{ t('hero.titleHighlight') }}
+            <span class="text-brand-pink mt-2 block font-serif font-light italic">{{ t('hero.titleSuffix') }}</span>
           </h1>
 
           <p class="text-brand-brown/80 mb-8 max-w-xl text-base leading-relaxed sm:text-lg">
-            Imágenes de alta definición para que disfrutes de los primeros momentos de conexión con
-            tu bebé en un ambiente cálido e inolvidable.
+            {{ t('hero.description') }}
           </p>
 
           <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
             <a
               href="#contacto"
-              class="btn-primary flex items-center justify-center text-center"
+              @click.prevent="scrollToSection('#contacto')"
+              class="btn-primary flex items-center justify-center text-center cursor-pointer"
             >
-              Pide tu cita
+              {{ t('hero.ctaBook') }}
             </a>
             <a
               href="#ecografias"
-              class="btn-secondary flex items-center justify-center text-center"
+              @click.prevent="scrollToSection('#ecografias')"
+              class="btn-secondary flex items-center justify-center text-center cursor-pointer"
             >
-              Ver Experiencias
+              {{ t('hero.ctaExperiences') }}
             </a>
           </div>
         </div>
@@ -72,10 +87,10 @@ import { Heart } from '@lucide/vue'
             >
               <span
                 class="text-brand-brown text-[10px] leading-none font-bold tracking-wider uppercase"
-                >Recuerdos</span
+                >{{ t('hero.badgeMemories') }}</span
               >
               <span class="text-brand-brown-dark mt-1 text-[8px] leading-none font-medium"
-                >que duran para siempre</span
+                >{{ t('hero.badgeForever') }}</span
               >
             </div>
           </div>
