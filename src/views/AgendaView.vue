@@ -61,8 +61,50 @@ function handleLogout() {
 // Active Tab
 const activeTab = ref<'calendar' | 'sessions' | 'settlement'>('calendar')
 
+// Date helpers (timezone-safe, without UTC shift)
+function parseLocalDate(dateStr: string): Date {
+  const parts = (dateStr || '').split('-').map(Number)
+  const y = parts[0] || 2026
+  const m = parts[1] || 1
+  const d = parts[2] || 1
+  return new Date(y, m - 1, d, 12, 0, 0)
+}
+
+function formatToIsoDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function formatDateSpanish(dateStr?: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length === 3) {
+    const [y, m, d] = parts
+    return `${d}/${m}/${y}`
+  }
+  return dateStr
+}
+
+function formatDateLongSpanish(dateStr?: string): string {
+  if (!dateStr) return ''
+  const d = parseLocalDate(dateStr)
+  const formatted = d.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
+
+function getTodayIsoString(): string {
+  return formatToIsoDate(new Date())
+}
+
 // Calendar Date Selection
-const todayStr = new Date().toISOString().slice(0, 10)
+const todayStr = getTodayIsoString()
 const selectedDate = ref(todayStr)
 
 // Filter Photo Sessions for Penélope
@@ -97,30 +139,24 @@ const daySlots = computed(() => {
 // Check if selected date is a Friday
 const isFriday = computed(() => {
   if (!selectedDate.value) return false
-  const parts = selectedDate.value.split('-').map(Number)
-  const y = parts[0] ?? 2026
-  const m = parts[1] ?? 1
-  const d = parts[2] ?? 1
-  const dateObj = new Date(y, m - 1, d)
+  const dateObj = parseLocalDate(selectedDate.value)
   return dateObj.getDay() === 5
 })
 
-// Quick Date Navigation
+// Quick Date Navigation (supports backward AND forward smoothly)
 function shiftDate(days: number) {
-  const parts = selectedDate.value.split('-').map(Number)
-  const y = parts[0] ?? 2026
-  const m = parts[1] ?? 1
-  const d = parts[2] ?? 1
-  const dateObj = new Date(y, m - 1, d + days)
-  selectedDate.value = dateObj.toISOString().slice(0, 10)
+  const dateObj = parseLocalDate(selectedDate.value)
+  dateObj.setDate(dateObj.getDate() + days)
+  selectedDate.value = formatToIsoDate(dateObj)
 }
 
 function jumpToNextFriday() {
   const d = new Date()
+  d.setHours(12, 0, 0, 0)
   const day = d.getDay()
   const diff = (5 - day + 7) % 7 || 7
   d.setDate(d.getDate() + diff)
-  selectedDate.value = d.toISOString().slice(0, 10)
+  selectedDate.value = formatToIsoDate(d)
 }
 
 // ---------------------------------------------------------------------
@@ -268,7 +304,7 @@ const settlementSummary = computed(() => {
             <img src="/logo.webp" alt="EcoNane" class="h-10 w-10 rounded-full border border-brand-pink/30 object-cover" />
             <div>
               <span class="block font-serif text-base font-bold leading-none text-brand-brown-dark">ECONANE</span>
-              <span class="text-[9px] font-semibold uppercase tracking-widest text-brand-pink">Portal Agenda Colaborador</span>
+              <span class="text-[9px] font-semibold uppercase tracking-widest text-brand-pink">Agenda</span>
             </div>
           </router-link>
           <div class="hidden sm:flex items-center gap-1.5 rounded-full bg-brand-pink/15 px-3 py-1 text-xs font-bold text-brand-brown">
@@ -418,7 +454,7 @@ const settlementSummary = computed(() => {
             <button
               @click="shiftDate(-1)"
               type="button"
-              class="p-2 rounded-lg border border-brand-pink-light/40 hover:bg-brand-pink-light/20 text-brand-brown"
+              class="p-2 rounded-lg border border-brand-pink-light/40 hover:bg-brand-pink-light/20 text-brand-brown cursor-pointer transition-colors active:scale-95"
               title="Día anterior"
             >
               <ChevronLeft class="h-5 w-5" />
@@ -428,7 +464,7 @@ const settlementSummary = computed(() => {
               <input
                 v-model="selectedDate"
                 type="date"
-                class="form-input py-1.5 px-3 text-sm font-bold text-brand-brown-dark"
+                class="form-input py-1.5 px-3 text-sm font-bold text-brand-brown-dark cursor-pointer"
               />
               <span
                 v-if="isFriday"
@@ -442,11 +478,15 @@ const settlementSummary = computed(() => {
             <button
               @click="shiftDate(1)"
               type="button"
-              class="p-2 rounded-lg border border-brand-pink-light/40 hover:bg-brand-pink-light/20 text-brand-brown"
+              class="p-2 rounded-lg border border-brand-pink-light/40 hover:bg-brand-pink-light/20 text-brand-brown cursor-pointer transition-colors active:scale-95"
               title="Día siguiente"
             >
               <ChevronRight class="h-5 w-5" />
             </button>
+          </div>
+
+          <div class="text-xs sm:text-sm font-bold text-brand-brown/85">
+            {{ formatDateLongSpanish(selectedDate) }}
           </div>
 
           <div class="flex items-center gap-2 w-full md:w-auto justify-end">
@@ -508,7 +548,7 @@ const settlementSummary = computed(() => {
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-brand-pink-light/20">
               <h2 class="font-serif text-lg font-bold text-brand-brown-dark flex items-center gap-2">
                 <CalendarCheck class="h-5 w-5 text-brand-brown" />
-                <span>Citas del Día ({{ selectedDate }})</span>
+                <span>Citas del Día ({{ formatDateSpanish(selectedDate) }})</span>
               </h2>
               <span class="text-xs font-bold text-brand-brown/80">
                 {{ dayAppointments.length }} reservas en clínica
@@ -615,7 +655,7 @@ const settlementSummary = computed(() => {
               <div class="flex items-center justify-between mb-3">
                 <span class="inline-flex items-center gap-1 rounded-full bg-brand-pink/15 px-2.5 py-1 text-[11px] font-bold text-brand-brown">
                   <Calendar class="h-3 w-3 text-brand-pink" />
-                  {{ appt.date }} - {{ appt.time }}
+                  {{ formatDateSpanish(appt.date) }} - {{ appt.time }}
                 </span>
                 <span class="font-mono text-xs text-brand-brown/60">#{{ appt.bookingCode }}</span>
               </div>
@@ -751,7 +791,7 @@ const settlementSummary = computed(() => {
           </div>
           <h4 class="font-serif text-xl font-bold text-brand-brown-dark">¡Cita agendada con éxito!</h4>
           <p class="text-xs sm:text-sm text-brand-brown/80 max-w-md mx-auto">
-            La cita para <strong>{{ bookingSuccess.clientName }}</strong> ha quedado confirmada el <strong>{{ bookingSuccess.date }} a las {{ bookingSuccess.time }}</strong>.
+            La cita para <strong>{{ bookingSuccess.clientName }}</strong> ha quedado confirmada el <strong>{{ formatDateSpanish(bookingSuccess.date) }} a las {{ bookingSuccess.time }}</strong>.
           </p>
           <div class="inline-block bg-brand-cream border border-brand-pink-light/40 rounded-2xl p-4 font-mono text-sm font-bold text-brand-brown">
             Código: #{{ bookingSuccess.code }}

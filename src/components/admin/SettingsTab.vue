@@ -57,7 +57,7 @@ const scheduleDays = computed(() => {
     label: weekDayLabels[dayIndex] || '',
     data: settingsForm.value.schedule[dayIndex] || {
       isOpen: false,
-      morningStart: '10:00',
+      morningStart: '09:45',
       morningEnd: '14:00',
       afternoonStart: '16:30',
       afternoonEnd: '20:30'

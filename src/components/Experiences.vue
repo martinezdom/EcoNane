@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { Check, Clock, Heart, Sparkles, Camera, ArrowRight } from '@lucide/vue'
 import { useSiteData } from '@/composables/useSiteData'
 import { useI18n } from '@/composables/useI18n'
 
 const { experiences, packs, collaboratorPacks } = useSiteData()
 const { t } = useI18n()
+
+const activeCategory = ref<'ecos' | 'packs' | 'collab'>('ecos')
 
 const generalIncludes = [
   'Espacio cálido y acogedor',
@@ -19,43 +21,13 @@ const generalIncludes = [
 const activeExperiences = computed(() => {
   return experiences.value.filter((exp) => exp.active !== false)
 })
-
-// Layout adaptativo según la cantidad de experiencias activas
-const gridClasses = computed(() => {
-  const count = activeExperiences.value.length
-  if (count <= 1) return 'grid grid-cols-1 max-w-md mx-auto gap-8 items-stretch'
-  if (count === 2) return 'grid grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto gap-8 items-stretch'
-  if (count === 3) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto gap-8 items-stretch'
-  if (count === 4) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch'
-  if (count === 5) return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 items-stretch'
-  return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch'
-})
-
-function getCardColClass(index: number, total: number) {
-  if (total === 5) {
-    if (index === 3) return 'lg:col-span-2 lg:col-start-2'
-    if (index === 4) return 'lg:col-span-2 md:col-span-2 md:max-w-md md:mx-auto lg:max-w-none w-full'
-    return 'lg:col-span-2'
-  }
-  return ''
-}
-
-function scrollToBooking(packTitle?: string) {
-  const el = document.getElementById('contacto')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    if (window.history.pushState) {
-      window.history.pushState(null, '', '#contacto')
-    }
-  }
-}
 </script>
 
 <template>
   <section id="ecografias" class="bg-white py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <!-- Section Header -->
-      <div class="mx-auto mb-16 max-w-2xl text-center">
+      <div class="mx-auto mb-10 max-w-2xl text-center">
         <span class="text-brand-pink text-xs font-semibold tracking-widest uppercase">
           {{ t('experiences.tag') }}
         </span>
@@ -67,88 +39,202 @@ function scrollToBooking(packTitle?: string) {
         </p>
       </div>
 
-      <!-- Experiences Grid -->
-      <div :class="gridClasses">
-        <div
-          v-for="(exp, idx) in activeExperiences"
-          :key="exp.title + idx"
-          :class="[
-            'bg-brand-cream/40 border-brand-pink-light/30 group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-brand-pink/50',
-            getCardColClass(idx, activeExperiences.length)
-          ]"
-        >
-          <div
-            v-if="exp.badge"
-            class="bg-brand-pink text-brand-cream absolute top-4 right-4 rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase shadow-sm"
+      <!-- Segmented Category Filter Tabs -->
+      <div class="flex justify-center mb-12">
+        <div class="inline-flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl sm:rounded-full bg-brand-cream border border-brand-pink-light/40 shadow-xs">
+          <button
+            @click="activeCategory = 'ecos'"
+            type="button"
+            :class="[
+              'px-5 py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer flex items-center gap-2',
+              activeCategory === 'ecos'
+                ? 'bg-brand-brown text-white shadow-sm'
+                : 'text-brand-brown-dark/75 hover:text-brand-brown hover:bg-brand-pink-light/20'
+            ]"
           >
-            {{ exp.badge }}
-          </div>
-
-          <div>
-            <div class="mb-4">
-              <span
-                v-if="exp.duration"
-                class="text-brand-pink inline-flex items-center gap-1.5 text-xs font-semibold"
-              >
-                <Clock class="h-3.5 w-3.5" />
-                {{ exp.duration }}
-              </span>
-              <h3 class="text-brand-brown-dark mt-1 font-serif text-xl font-bold leading-tight">
-                {{ exp.title }}
-              </h3>
-            </div>
-
-            <div class="mb-5 flex items-baseline gap-1">
-              <span class="text-brand-brown-dark font-serif text-4xl font-extrabold tracking-tight">
-                {{ exp.price }}
-              </span>
-            </div>
-
-            <p class="text-brand-brown/80 mb-6 text-xs leading-relaxed sm:text-sm">
-              {{ exp.description }}
-            </p>
-
-            <!-- Features List -->
-            <ul class="mb-6 space-y-2.5 border-t border-brand-pink-light/30 pt-4 text-xs sm:text-sm text-brand-brown-dark">
-              <li
-                v-for="(feat, fIdx) in exp.features"
-                :key="fIdx"
-                class="flex items-center gap-2"
-              >
-                <Check class="h-4 w-4 shrink-0 text-brand-pink" />
-                <span class="text-brand-brown/90">{{ feat }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="pt-2">
-            <a
-              :href="exp.link"
-              target="_blank"
-              class="btn-primary w-full text-center text-xs sm:text-sm font-bold py-3"
+            <Sparkles class="h-4 w-4" />
+            <span>{{ t('experiences.tabEcos', 'Ecografías 4D/5D') }}</span>
+            <span
+              :class="[
+                'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                activeCategory === 'ecos' ? 'bg-white/20 text-white' : 'bg-brand-pink-light/30 text-brand-brown'
+              ]"
             >
-              Pedir cita
+              {{ activeExperiences.length }}
+            </span>
+          </button>
+
+          <button
+            @click="activeCategory = 'packs'"
+            type="button"
+            :class="[
+              'px-5 py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer flex items-center gap-2',
+              activeCategory === 'packs'
+                ? 'bg-brand-brown text-white shadow-sm'
+                : 'text-brand-brown-dark/75 hover:text-brand-brown hover:bg-brand-pink-light/20'
+            ]"
+          >
+            <Heart class="h-4 w-4" />
+            <span>{{ t('experiences.tabPacks', 'Packs Ecografías') }}</span>
+            <span
+              :class="[
+                'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                activeCategory === 'packs' ? 'bg-white/20 text-white' : 'bg-brand-pink-light/30 text-brand-brown'
+              ]"
+            >
+              {{ packs.length }}
+            </span>
+          </button>
+
+          <button
+            @click="activeCategory = 'collab'"
+            type="button"
+            :class="[
+              'px-5 py-2.5 rounded-xl sm:rounded-full text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer flex items-center gap-2 relative',
+              activeCategory === 'collab'
+                ? 'bg-brand-pink text-white shadow-sm'
+                : 'text-brand-brown-dark/75 hover:text-brand-brown hover:bg-brand-pink-light/20'
+            ]"
+          >
+            <Camera class="h-4 w-4" />
+            <span>{{ t('experiences.tabCollab', 'Packs Eco + Fotos') }}</span>
+            <span class="rounded-full bg-white/25 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
+              {{ t('experiences.tabCollabBadge', 'Novedad') }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 1: ECOGRAFÍAS 4D/5D INDIVIDUALES -->
+      <div v-show="activeCategory === 'ecos'">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+          <div
+            v-for="(exp, idx) in activeExperiences"
+            :key="exp.title + idx"
+            class="bg-brand-cream/40 border-brand-pink-light/30 group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-brand-pink/50"
+          >
+            <div
+              v-if="exp.badge"
+              class="bg-brand-pink text-brand-cream absolute top-4 right-4 rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase shadow-sm"
+            >
+              {{ exp.badge }}
+            </div>
+
+            <div>
+              <div class="mb-4">
+                <span
+                  v-if="exp.duration"
+                  class="text-brand-pink inline-flex items-center gap-1.5 text-xs font-semibold"
+                >
+                  <Clock class="h-3.5 w-3.5" />
+                  {{ exp.duration }}
+                </span>
+                <h3 class="text-brand-brown-dark mt-1 font-serif text-xl font-bold leading-tight">
+                  {{ exp.title }}
+                </h3>
+              </div>
+
+              <div class="mb-5 flex items-baseline gap-1">
+                <span class="text-brand-brown-dark font-serif text-4xl font-extrabold tracking-tight">
+                  {{ exp.price }}
+                </span>
+              </div>
+
+              <p class="text-brand-brown/80 mb-6 text-xs leading-relaxed sm:text-sm">
+                {{ exp.description }}
+              </p>
+
+              <!-- Features List -->
+              <ul class="mb-6 space-y-2.5 border-t border-brand-pink-light/30 pt-4 text-xs sm:text-sm text-brand-brown-dark">
+                <li
+                  v-for="(feat, fIdx) in exp.features"
+                  :key="fIdx"
+                  class="flex items-center gap-2"
+                >
+                  <Check class="h-4 w-4 shrink-0 text-brand-pink" />
+                  <span class="text-brand-brown/90">{{ feat }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pt-2">
+              <a
+                :href="exp.link"
+                target="_blank"
+                class="btn-primary w-full text-center text-xs sm:text-sm font-bold py-3"
+              >
+                Pedir cita
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: PACKS SEGUIMIENTO (SOLO ECOS) -->
+      <div v-show="activeCategory === 'packs'">
+        <div class="mb-10 text-center max-w-2xl mx-auto">
+          <h3 class="text-brand-brown-dark font-serif text-2xl font-bold sm:text-3xl">
+            Acompaña cada etapa de tu embarazo
+          </h3>
+          <p class="text-brand-brown/75 mt-2 text-xs sm:text-sm">
+            {{ t('experiences.packsSubtitle', 'Sesiones combinadas a lo largo de los trimestres con precio cerrado reducido.') }}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8 items-stretch">
+          <div
+            v-for="pack in packs"
+            :key="pack.title"
+            class="card-container relative flex flex-col justify-between p-8 border-brand-pink-light/40 bg-brand-cream/30 hover:border-brand-pink/60 transition-all duration-300 shadow-sm hover:shadow-lg rounded-3xl"
+          >
+            <div class="bg-brand-pink/15 text-brand-brown-dark border border-brand-pink/30 absolute top-5 right-5 rounded-full px-3 py-1 text-xs font-bold uppercase">
+              {{ pack.save }}
+            </div>
+
+            <div>
+              <span class="text-brand-pink text-xs font-semibold uppercase tracking-wider">Pack Ahorro</span>
+              <h4 class="text-brand-brown-dark mt-1 font-serif text-2xl font-bold">
+                {{ pack.title }}
+              </h4>
+
+              <div class="my-4 flex items-baseline gap-1">
+                <span class="text-brand-brown-dark font-serif text-4xl font-extrabold">
+                  {{ pack.price }}
+                </span>
+              </div>
+
+              <p class="text-brand-brown/80 mb-6 text-sm leading-relaxed">
+                {{ pack.description }}
+              </p>
+            </div>
+
+            <a
+              :href="pack.link"
+              target="_blank"
+              class="btn-secondary w-full text-center text-sm font-bold py-3"
+            >
+              {{ t('experiences.bookPack', 'Reservar este pack') }}
             </a>
           </div>
         </div>
       </div>
 
-      <!-- NUEVOS PACKS COMBINADOS ECOGRAFÍA + FOTOGRAFÍA (PENÉLOPE PHOTOGRAPH) -->
-      <div class="mt-24 pt-12 border-t border-brand-pink-light/30">
-        <div class="mb-12 text-center max-w-3xl mx-auto">
+      <!-- VIEW 3: PACKS COMBINADOS ECO + FOTOGRAFÍA (PENÉLOPE) -->
+      <div v-show="activeCategory === 'collab'">
+        <div class="mb-10 text-center max-w-3xl mx-auto">
           <div class="inline-flex items-center gap-2 rounded-full bg-brand-pink/15 px-3.5 py-1 text-xs font-bold text-brand-brown border border-brand-pink/30 mb-3">
             <Camera class="h-3.5 w-3.5 text-brand-pink" />
             <span>{{ t('experiences.collabBadge', 'Colaboración Especial') }}</span>
           </div>
-          <h3 class="text-brand-brown-dark font-serif text-3xl font-bold sm:text-4xl">
+          <h3 class="text-brand-brown-dark font-serif text-2xl sm:text-3xl lg:text-4xl font-bold">
             {{ t('experiences.collabTitle', 'Packs Ecografía + Recuerdo Fotográfico') }}
           </h3>
-          <p class="text-brand-brown/75 mt-3 text-sm sm:text-base leading-relaxed">
+          <p class="text-brand-brown/75 mt-3 text-xs sm:text-sm sm:leading-relaxed">
             {{ t('experiences.collabSubtitle', 'En exclusiva con Penélope Photograph. La emoción de ver a tu bebé en directo combinada con un reportaje fotográfico profesional de premamá o en familia.') }}
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
           <div
             v-for="cPack in collaboratorPacks"
             :key="cPack.id"
@@ -210,58 +296,8 @@ function scrollToBooking(packTitle?: string) {
         </div>
       </div>
 
-      <!-- Packs Ahorro Solo Ecos -->
-      <div class="mt-20">
-        <div class="mb-8 text-center">
-          <span class="text-brand-pink inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase">
-            <Heart class="h-3.5 w-3.5 fill-brand-pink" />
-            Packs Seguimiento
-          </span>
-          <h3 class="text-brand-brown-dark mt-1 font-serif text-2xl font-bold sm:text-3xl">
-            Acompaña cada etapa de tu embarazo
-          </h3>
-        </div>
-
-        <div class="grid grid-cols-1 gap-8 md:grid-cols-2 max-w-4xl mx-auto">
-          <div
-            v-for="pack in packs"
-            :key="pack.title"
-            class="card-container relative flex flex-col justify-between p-8 border-brand-pink-light/40 bg-brand-cream/30 hover:border-brand-pink/60 transition-all duration-300 shadow-sm hover:shadow-lg"
-          >
-            <div class="bg-brand-pink/15 text-brand-brown-dark border border-brand-pink/30 absolute top-5 right-5 rounded-full px-3 py-1 text-xs font-bold uppercase">
-              {{ pack.save }}
-            </div>
-
-            <div>
-              <span class="text-brand-pink text-xs font-semibold uppercase tracking-wider">Pack Ahorro</span>
-              <h4 class="text-brand-brown-dark mt-1 font-serif text-2xl font-bold">
-                {{ pack.title }}
-              </h4>
-
-              <div class="my-4 flex items-baseline gap-1">
-                <span class="text-brand-brown-dark font-serif text-4xl font-extrabold">
-                  {{ pack.price }}
-                </span>
-              </div>
-
-              <p class="text-brand-brown/80 mb-6 text-sm leading-relaxed">
-                {{ pack.description }}
-              </p>
-            </div>
-
-            <a
-              :href="pack.link"
-              target="_blank"
-              class="btn-secondary w-full text-center text-sm font-bold py-3"
-            >
-              {{ t('experiences.bookPack', 'Reservar este pack') }}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Qué incluye siempre -->
-      <div class="mt-16 rounded-3xl bg-brand-cream/80 border border-brand-pink-light/30 p-8 sm:p-10 shadow-sm max-w-5xl mx-auto">
+      <!-- QUÉ INCLUYE SIEMPRE (GARANTÍA ECONANE) -->
+      <div class="mt-20 rounded-3xl bg-brand-cream/80 border border-brand-pink-light/30 p-8 sm:p-10 shadow-sm max-w-5xl mx-auto">
         <div class="flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="text-center md:text-left max-w-md">
             <span class="text-brand-pink text-xs font-bold tracking-wider uppercase">
