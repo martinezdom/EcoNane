@@ -219,7 +219,7 @@ const benefits: Benefit[] = [
     <!-- Modal: Aviso Legal -->
     <div v-if="isAvisoOpen" class="modal-overlay" @click.self="isAvisoOpen = false">
       <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-brand-cream z-10">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
           <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Aviso Legal</h3>
           <button
             @click="isAvisoOpen = false"
@@ -260,7 +260,7 @@ const benefits: Benefit[] = [
     <!-- Modal: Política de Privacidad -->
     <div v-if="isPrivacidadOpen" class="modal-overlay" @click.self="isPrivacidadOpen = false">
       <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-white z-10">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
           <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Política de Privacidad</h3>
           <button
             @click="isPrivacidadOpen = false"
@@ -326,8 +326,8 @@ const benefits: Benefit[] = [
     <!-- Modal: Política de Cookies -->
     <div v-if="isCookiesOpen" class="modal-overlay" @click.self="isCookiesOpen = false">
       <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-white z-10">
-          <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Política de Cookies y Analítica Web</h3>
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
+          <h3 class="text-brand-brown-dark font-serif text-xl font-bold">{{ t('cookieModal.title', 'Política de Cookies y Analítica Web') }}</h3>
           <button
             @click="isCookiesOpen = false"
             class="text-brand-brown hover:text-brand-brown-dark cursor-pointer p-1 text-lg font-bold"
@@ -337,60 +337,60 @@ const benefits: Benefit[] = [
         </div>
         <div class="space-y-4 text-xs sm:text-sm leading-relaxed text-brand-brown/90">
           <p>
-            En cumplimiento del artículo 22.2 de la Ley 34/2002 (LSSI-CE) y del Reglamento General de Protección de Datos (RGPD), en <strong>EcoNane</strong> te informamos con total claridad sobre las cookies y tecnologías de almacenamiento local utilizadas en nuestra web.
+            {{ t('cookieModal.intro') }}
           </p>
 
-          <h4 class="font-bold text-brand-brown-dark text-sm">1. ¿Qué son las cookies?</h4>
+          <h4 class="font-bold text-brand-brown-dark text-sm">{{ t('cookieModal.sec1Title') }}</h4>
           <p>
-            Una cookie es un pequeño archivo que se almacena en tu navegador. Nos permite garantizar el correcto funcionamiento del portal, recordar tus preferencias (como el idioma seleccionado) y, solo con tu consentimiento expreso, obtener estadísticas anónimas sobre las visitas recibidas para mejorar el servicio.
+            {{ t('cookieModal.sec1Desc') }}
           </p>
 
-          <h4 class="font-bold text-brand-brown-dark text-sm">2. Google Consent Mode v2 (Privacidad por Defecto)</h4>
+          <h4 class="font-bold text-brand-brown-dark text-sm">{{ t('cookieModal.sec2Title') }}</h4>
           <p>
-            Siguiendo las directrices oficiales de la Agencia Española de Protección de Datos (AEPD), nuestro sitio web funciona con <strong>Google Consent Mode v2</strong>:
+            {{ t('cookieModal.sec2Desc') }}
           </p>
           <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Por defecto, las cookies analíticas están totalmente desactivadas.</strong> No se activa ninguna cookie de seguimiento hasta que pulses conscientemente «Aceptar analítica».</li>
-            <li>Si seleccionas «Solo necesarias» o ignoras el banner, tu navegación será completamente anónima y no se instalará ninguna cookie de análisis o publicidad.</li>
+            <li><strong>{{ t('cookieModal.sec2Item1') }}</strong></li>
+            <li>{{ t('cookieModal.sec2Item2') }}</li>
           </ul>
 
-          <h4 class="font-bold text-brand-brown-dark text-sm">3. Cookies y Almacenamiento Utilizados</h4>
+          <h4 class="font-bold text-brand-brown-dark text-sm">{{ t('cookieModal.sec3Title') }}</h4>
           <div class="overflow-x-auto rounded-xl border border-brand-pink-light/30 text-xs">
-            <table class="w-full text-left">
+            <table class="w-full text-center border-collapse">
               <thead class="bg-brand-cream/80 text-brand-brown-dark font-bold border-b border-brand-pink-light/30">
                 <tr>
-                  <th class="p-2.5">Identificador</th>
-                  <th class="p-2.5">Tipo y Titular</th>
-                  <th class="p-2.5">Finalidad</th>
-                  <th class="p-2.5">Caducidad</th>
+                  <th class="p-2.5 text-center">{{ t('cookieModal.thName') }}</th>
+                  <th class="p-2.5 text-center">{{ t('cookieModal.thType') }}</th>
+                  <th class="p-2.5 text-center">{{ t('cookieModal.thPurpose') }}</th>
+                  <th class="p-2.5 text-center">{{ t('cookieModal.thExpiry') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-brand-pink-light/20">
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold">econane_cookie_consent</td>
-                  <td class="p-2.5">Técnica (Propia)</td>
-                  <td class="p-2.5">Almacena la preferencia de consentimiento (aceptada o rechazada).</td>
-                  <td class="p-2.5">Persistente (LocalStorage)</td>
+                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie1Name') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Type') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Purpose') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Expiry') }}</td>
                 </tr>
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold">econane_lang</td>
-                  <td class="p-2.5">Preferencia (Propia)</td>
-                  <td class="p-2.5">Recuerda el idioma de navegación (ES, VAL, EN).</td>
-                  <td class="p-2.5">Persistente (LocalStorage)</td>
+                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie2Name') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Type') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Purpose') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Expiry') }}</td>
                 </tr>
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold">_ga, _ga_*</td>
-                  <td class="p-2.5">Analítica (Google Ireland Ltd.)</td>
-                  <td class="p-2.5">Medición agregada y anónima de visitas mediante Google Analytics 4. Solo se instala si das tu consentimiento previo.</td>
-                  <td class="p-2.5">2 años / sesión</td>
+                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie3Name') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Type') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Purpose') }}</td>
+                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Expiry') }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h4 class="font-bold text-brand-brown-dark text-sm">4. ¿Cómo cambiar o revocar tu consentimiento?</h4>
+          <h4 class="font-bold text-brand-brown-dark text-sm">{{ t('cookieModal.sec4Title') }}</h4>
           <p>
-            Puedes cambiar de opinión en cualquier momento y revocar o renovar tu consentimiento de analítica pulsando el siguiente botón:
+            {{ t('cookieModal.sec4Desc') }}
           </p>
           <div class="pt-1">
             <button
@@ -398,15 +398,15 @@ const benefits: Benefit[] = [
               type="button"
               class="btn-pink text-xs font-bold px-4 py-2 rounded-full cursor-pointer shadow-xs"
             >
-              Cambiar mis preferencias de cookies
+              {{ t('cookieModal.btnChange') }}
             </button>
           </div>
           <p class="text-xs text-brand-brown/75">
-            También puedes bloquear o eliminar las cookies en cualquier momento a través de la configuración de tu navegador (Google Chrome, Mozilla Firefox, Apple Safari o Microsoft Edge).
+            {{ t('cookieModal.sec4Browser') }}
           </p>
         </div>
         <div class="mt-4 flex justify-end border-t border-brand-pink-light/30 pt-3">
-          <button @click="isCookiesOpen = false" class="btn-pill-small">Cerrar</button>
+          <button @click="isCookiesOpen = false" class="btn-pill-small">{{ t('cookieModal.btnClose', 'Cerrar') }}</button>
         </div>
       </div>
     </div>
