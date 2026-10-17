@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ChevronDown, MessageCircle, Calendar } from '@lucide/vue'
+import { ChevronDown, MessageCircle, Calendar, Mail } from '@lucide/vue'
 import { useI18n } from '@/composables/useI18n'
 
 const { t } = useI18n()
@@ -87,14 +87,21 @@ function scrollToBooking() {
           <h4 class="font-bold text-sm text-brand-brown-dark">¿Tienes alguna pregunta especial?</h4>
           <p class="text-xs text-brand-brown/70 mt-0.5">Estamos encantados de atenderte y resolver cualquier duda.</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2.5">
           <a
             href="https://wa.me/34644189856"
             target="_blank"
-            class="btn-secondary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5"
+            class="btn-secondary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
           >
             <MessageCircle class="h-4 w-4 text-emerald-600" />
-            WhatsApp
+            <span>WhatsApp</span>
+          </a>
+          <a
+            href="mailto:info@econane.es"
+            class="btn-secondary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Mail class="h-4 w-4 text-brand-pink" />
+            <span>info@econane.es</span>
           </a>
           <button
             @click="scrollToBooking"
@@ -102,7 +109,7 @@ function scrollToBooking() {
             class="btn-primary py-2.5 px-4 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Calendar class="h-4 w-4" />
-            Pide tu cita
+            <span>Pide tu cita</span>
           </button>
         </div>
       </div>

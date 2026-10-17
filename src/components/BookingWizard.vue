@@ -37,9 +37,7 @@ const {
 // Steps: 1: Service, 2: Date & Time, 3: Client Details, 4: Confirmed
 const currentStep = ref<1 | 2 | 3 | 4>(1)
 
-// Step 1: Selected Service & Categories
-type ServiceCategory = 'all' | 'experience' | 'pack' | 'collab'
-
+// Step 1: Selected Service & Grouped Containers
 type ServiceOption = {
   id: string
   title: string
@@ -50,8 +48,6 @@ type ServiceOption = {
   category: 'experience' | 'pack' | 'collab'
   type: 'experience' | 'pack'
 }
-
-const activeBookingCategory = ref<ServiceCategory>('all')
 
 const serviceOptions = computed<ServiceOption[]>(() => {
   const list: ServiceOption[] = []
@@ -109,16 +105,17 @@ const serviceOptions = computed<ServiceOption[]>(() => {
   return list
 })
 
-const categoryTabs = computed(() => [
-  { id: 'all' as ServiceCategory, label: 'Todas', count: serviceOptions.value.length },
-  { id: 'experience' as ServiceCategory, label: 'Ecografías', count: experiences.value.filter(e => e.active !== false).length, icon: Sparkles },
-  { id: 'pack' as ServiceCategory, label: 'Packs Ecografías', count: packs.value.length, icon: Heart },
-  { id: 'collab' as ServiceCategory, label: 'Eco + Fotos', count: collaboratorPacks.value.length, icon: Camera, badge: 'Penélope' }
-])
+// Grouped services for separate container blocks
+const individualExperiences = computed(() => {
+  return serviceOptions.value.filter(s => s.category === 'experience')
+})
 
-const filteredServiceOptions = computed(() => {
-  if (activeBookingCategory.value === 'all') return serviceOptions.value
-  return serviceOptions.value.filter(s => s.category === activeBookingCategory.value)
+const packExperiences = computed(() => {
+  return serviceOptions.value.filter(s => s.category === 'pack')
+})
+
+const collabExperiences = computed(() => {
+  return serviceOptions.value.filter(s => s.category === 'collab')
 })
 
 const selectedService = ref<ServiceOption | null>(null)
@@ -472,91 +469,220 @@ function resetWizard() {
     </div>
 
     <!-- ============================================== -->
-    <!-- STEP 1: SELECT EXPERIENCE / PACK               -->
+    <!-- STEP 1: SELECT EXPERIENCE / PACK (DIVIDIDO EN BLOQUES) -->
     <!-- ============================================== -->
-    <div v-if="currentStep === 1" class="space-y-5 animate-in fade-in">
-      <!-- Category Filter Pills -->
-      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pb-1 border-b border-brand-pink-light/30">
-        <button
-          v-for="cat in categoryTabs"
-          :key="cat.id"
-          type="button"
-          @click="activeBookingCategory = cat.id"
-          :class="[
-            'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5',
-            activeBookingCategory === cat.id
-              ? 'bg-brand-brown text-white shadow-xs'
-              : 'bg-brand-cream/80 text-brand-brown hover:bg-brand-pink-light/30 border border-brand-pink-light/40'
-          ]"
-        >
-          <component :is="cat.icon" v-if="cat.icon" class="h-3.5 w-3.5" />
-          <span>{{ cat.label }}</span>
-          <span
+    <div v-if="currentStep === 1" class="space-y-6 animate-in fade-in">
+      <!-- BLOQUE 1: ECOGRAFÍAS 4D/5D INDIVIDUALES -->
+      <div class="rounded-3xl border border-brand-pink-light/40 bg-brand-cream/25 p-4 sm:p-6 space-y-4 shadow-2xs">
+        <div class="flex items-center justify-between pb-3 border-b border-brand-pink-light/30">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-xl bg-brand-pink/15 text-brand-pink flex items-center justify-center">
+              <Sparkles class="h-4 w-4" />
+            </div>
+            <div>
+              <h3 class="font-serif text-base sm:text-lg font-bold text-brand-brown-dark leading-tight">
+                Ecografías 4D / 5D
+              </h3>
+              <p class="text-[11px] sm:text-xs text-brand-brown/70">Sesiones individuales para conocer y conectar con tu bebé.</p>
+            </div>
+          </div>
+          <span class="text-[11px] font-bold text-brand-brown/70 bg-white px-2.5 py-1 rounded-full border border-brand-pink-light/40 shrink-0">
+            {{ individualExperiences.length }} opciones
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div
+            v-for="service in individualExperiences"
+            :key="service.id"
+            @click="selectedService = service"
             :class="[
-              'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
-              activeBookingCategory === cat.id ? 'bg-white/20 text-white' : 'bg-brand-pink-light/50 text-brand-brown'
+              'relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all duration-200',
+              selectedService?.id === service.id
+                ? 'border-brand-brown bg-brand-cream/70 shadow-md ring-2 ring-brand-brown/20'
+                : 'border-brand-pink-light/40 bg-white hover:border-brand-pink hover:bg-brand-cream/20'
             ]"
           >
-            {{ cat.count }}
-          </span>
-          <span
-            v-if="cat.badge"
-            class="hidden sm:inline-block rounded-full bg-brand-pink px-1.5 py-0.2 text-[9px] font-extrabold uppercase text-white tracking-wider"
-          >
-            {{ cat.badge }}
-          </span>
-        </button>
-      </div>
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <span class="font-serif text-base font-bold text-brand-brown-dark">
+                  {{ service.title }}
+                </span>
+                <span
+                  v-if="service.badge"
+                  class="rounded-full bg-brand-pink/20 px-2.5 py-0.5 text-[10px] font-bold text-brand-brown-dark shrink-0"
+                >
+                  {{ service.badge }}
+                </span>
+              </div>
 
-      <!-- Services Grid -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div
-          v-for="service in filteredServiceOptions"
-          :key="service.id"
-          @click="selectedService = service"
-          :class="[
-            'relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all duration-200',
-            selectedService?.id === service.id
-              ? 'border-brand-brown bg-brand-cream/50 shadow-md ring-2 ring-brand-brown/20'
-              : 'border-brand-pink-light/40 bg-white hover:border-brand-pink hover:bg-brand-cream/20'
-          ]"
-        >
-          <div>
-            <div class="flex items-start justify-between gap-2">
+              <p class="mt-1 text-xs text-brand-brown/80 line-clamp-2 leading-relaxed">
+                {{ service.description || 'Sesión de ecografía emocional de alta definición.' }}
+              </p>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-3">
+              <div class="flex items-center gap-1.5 text-xs text-brand-brown/70 font-medium">
+                <Clock class="h-3.5 w-3.5" />
+                <span>{{ service.duration }} min aprox.</span>
+              </div>
               <span class="font-serif text-base font-bold text-brand-brown-dark">
-                {{ service.title }}
-              </span>
-              <span
-                v-if="service.badge"
-                class="rounded-full bg-brand-pink/20 px-2.5 py-0.5 text-[10px] font-bold text-brand-brown-dark shrink-0"
-              >
-                {{ service.badge }}
+                {{ service.price }}
               </span>
             </div>
-
-            <p class="mt-1 text-xs text-brand-brown/80 line-clamp-2 leading-relaxed">
-              {{ service.description || 'Sesión de ecografía emocional de alta definición.' }}
-            </p>
-          </div>
-
-          <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-3">
-            <div class="flex items-center gap-1.5 text-xs text-brand-brown/70 font-medium">
-              <Clock class="h-3.5 w-3.5" />
-              <span>{{ service.duration }} min aprox.</span>
-            </div>
-            <span class="font-serif text-base font-bold text-brand-brown-dark">
-              {{ service.price }}
-            </span>
           </div>
         </div>
       </div>
 
-      <div class="flex justify-end pt-4">
+      <!-- BLOQUE 2: PACKS ECOGRAFÍAS (SEGUIMIENTO) -->
+      <div class="rounded-3xl border border-brand-pink-light/40 bg-brand-cream/25 p-4 sm:p-6 space-y-4 shadow-2xs">
+        <div class="flex items-center justify-between pb-3 border-b border-brand-pink-light/30">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-xl bg-brand-pink/15 text-brand-pink flex items-center justify-center">
+              <Heart class="h-4 w-4" />
+            </div>
+            <div>
+              <h3 class="font-serif text-base sm:text-lg font-bold text-brand-brown-dark leading-tight">
+                Packs Ecografías (Seguimiento)
+              </h3>
+              <p class="text-[11px] sm:text-xs text-brand-brown/70">Acompaña la evolución de tu embarazo en varios trimestres con descuento.</p>
+            </div>
+          </div>
+          <span class="text-[11px] font-bold text-brand-brown/70 bg-white px-2.5 py-1 rounded-full border border-brand-pink-light/40 shrink-0">
+            {{ packExperiences.length }} packs
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div
+            v-for="service in packExperiences"
+            :key="service.id"
+            @click="selectedService = service"
+            :class="[
+              'relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all duration-200',
+              selectedService?.id === service.id
+                ? 'border-brand-brown bg-brand-cream/70 shadow-md ring-2 ring-brand-brown/20'
+                : 'border-brand-pink-light/40 bg-white hover:border-brand-pink hover:bg-brand-cream/20'
+            ]"
+          >
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <span class="font-serif text-base font-bold text-brand-brown-dark">
+                  {{ service.title }}
+                </span>
+                <span
+                  v-if="service.badge"
+                  class="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold shrink-0"
+                >
+                  {{ service.badge }}
+                </span>
+              </div>
+
+              <p class="mt-1 text-xs text-brand-brown/80 line-clamp-2 leading-relaxed">
+                {{ service.description || 'Packs combinados de ecografías en diferentes trimestres.' }}
+              </p>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-3">
+              <div class="flex items-center gap-1.5 text-xs text-brand-brown/70 font-medium">
+                <Clock class="h-3.5 w-3.5" />
+                <span>{{ service.duration }} min aprox.</span>
+              </div>
+              <span class="font-serif text-base font-bold text-brand-brown-dark">
+                {{ service.price }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOQUE 3: PACKS ECOGRAFÍA + FOTOGRAFÍA (PENÉLOPE PHOTOGRAPH) -->
+      <div class="rounded-3xl border border-brand-pink/30 bg-gradient-to-b from-brand-pink/5 to-white p-4 sm:p-6 space-y-4 shadow-2xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-brand-pink-light/30">
+          <div class="flex items-center gap-2.5">
+            <div class="h-8 w-8 rounded-xl bg-brand-pink text-white flex items-center justify-center shadow-xs">
+              <Camera class="h-4 w-4" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-serif text-base sm:text-lg font-bold text-brand-brown-dark leading-tight">
+                  Packs Ecografía + Recuerdo Fotográfico
+                </h3>
+                <span class="rounded-full bg-brand-pink/20 px-2 py-0.5 text-[10px] font-bold text-brand-brown-dark">
+                  Penélope
+                </span>
+              </div>
+              <p class="text-[11px] sm:text-xs text-brand-brown/70">Ecografía 4D/5D en clínica + sesión fotográfica profesional de premamá o familia.</p>
+            </div>
+          </div>
+          <span class="text-[11px] font-bold text-brand-brown/70 bg-white px-2.5 py-1 rounded-full border border-brand-pink-light/40 shrink-0">
+            {{ collabExperiences.length }} packs
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div
+            v-for="service in collabExperiences"
+            :key="service.id"
+            @click="selectedService = service"
+            :class="[
+              'relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all duration-200',
+              selectedService?.id === service.id
+                ? 'border-brand-brown bg-brand-cream/70 shadow-md ring-2 ring-brand-brown/20'
+                : 'border-brand-pink-light/40 bg-white hover:border-brand-pink hover:bg-brand-cream/20'
+            ]"
+          >
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <span class="font-serif text-base font-bold text-brand-brown-dark">
+                  {{ service.title }}
+                </span>
+                <span
+                  v-if="service.badge"
+                  class="rounded-full bg-brand-pink text-white px-2.5 py-0.5 text-[10px] font-bold shrink-0 shadow-2xs"
+                >
+                  {{ service.badge }}
+                </span>
+              </div>
+
+              <p class="mt-1 text-xs text-brand-brown/80 line-clamp-2 leading-relaxed">
+                {{ service.description }}
+              </p>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between border-t border-brand-pink-light/20 pt-3">
+              <div class="flex items-center gap-1.5 text-xs text-brand-brown/70 font-medium">
+                <Clock class="h-3.5 w-3.5" />
+                <span>{{ service.duration }} min aprox.</span>
+              </div>
+              <div class="text-right">
+                <span class="font-serif text-base font-bold text-brand-brown-dark">
+                  {{ service.price }}
+                </span>
+                <span class="block text-[10px] text-brand-brown/60 font-medium leading-none">pack completo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Bar with Selection Feedback -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-brand-pink-light/30">
+        <div v-if="selectedService" class="text-xs text-brand-brown-dark flex items-center gap-2">
+          <span class="font-bold">Seleccionado:</span>
+          <span class="bg-brand-pink/15 text-brand-brown-dark font-semibold px-3 py-1 rounded-full border border-brand-pink/30">
+            {{ selectedService.title }} ({{ selectedService.price }})
+          </span>
+        </div>
+        <div v-else class="text-xs text-brand-brown/60 italic">
+          Selecciona un servicio para continuar
+        </div>
+
         <button
           type="button"
           @click="goToStep2"
           :disabled="!selectedService"
-          class="flex cursor-pointer items-center gap-2 rounded-2xl bg-brand-brown px-7 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-brand-brown-dark active:scale-95 disabled:opacity-50"
+          class="w-full sm:w-auto flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-brand-brown px-7 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-brand-brown-dark active:scale-95 disabled:opacity-50"
         >
           <span>Elegir Día y Hora</span>
           <ArrowRight class="h-4 w-4" />

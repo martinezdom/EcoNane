@@ -213,19 +213,6 @@ const sendByEmail = async () => {
               </div>
             </div>
 
-            <!-- Parking & Easy Access Card -->
-            <div class="flex items-start gap-4">
-              <div class="bg-brand-pink-light/40 text-brand-brown flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-                <Navigation class="h-5 w-5" />
-              </div>
-              <div>
-                <h4 class="text-brand-brown-dark text-sm font-semibold">{{ t('contact.parkingTitle', 'Fácil Acceso y Aparcamiento') }}</h4>
-                <p class="text-brand-brown/80 mt-1 text-xs sm:text-sm leading-relaxed">
-                  {{ t('contact.parkingDesc', 'Aparcamiento cómodo en las inmediaciones. A solo 10 minutos de Benidorm, Finestrat y Campello por la N-332 y AP-7.') }}
-                </p>
-              </div>
-            </div>
-
             <div class="flex items-start gap-4">
               <div class="bg-brand-pink-light/40 text-brand-brown flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
                 <Phone class="h-5 w-5" />
