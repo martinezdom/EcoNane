@@ -1110,11 +1110,11 @@ export function useSiteData() {
     await syncFromSupabase()
   }
 
-  async function loginCollaborator(enteredPasswordOrPin: string, enteredEmail = 'agenda@econane.es'): Promise<boolean> {
+  async function loginCollaborator(enteredPasswordOrPin: string, enteredEmail = ''): Promise<boolean> {
     const cleanPassword = (enteredPasswordOrPin || '').trim()
-    const cleanEmail = (enteredEmail || 'agenda@econane.es').trim()
+    const cleanEmail = (enteredEmail || '').trim()
 
-    if (!cleanPassword) return false
+    if (!cleanPassword || !cleanEmail) return false
 
     // 1. En producción con Supabase activo: autenticación obligatoria en Supabase Auth
     if (supabase && isSupabaseConfigured && isCloudActive()) {

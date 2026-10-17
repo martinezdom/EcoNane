@@ -21,7 +21,9 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from '@lucide/vue'
 
 const router = useRouter()
@@ -37,23 +39,53 @@ const {
 } = useSiteData()
 
 // Auth State
+const email = ref('')
 const enteredPin = ref('')
+const showPassword = ref(false)
 const pinError = ref('')
 const isLoading = ref(false)
+const failedAttempts = ref(0)
+const lockoutUntil = ref<number | null>(null)
 
 async function handleLogin() {
   pinError.value = ''
-  if (!enteredPin.value.trim()) {
-    pinError.value = 'Introduce la clave de acceso.'
+
+  if (lockoutUntil.value && Date.now() < lockoutUntil.value) {
+    const remainingSecs = Math.ceil((lockoutUntil.value - Date.now()) / 1000)
+    pinError.value = `Demasiados intentos fallidos. Por seguridad, espera ${remainingSecs} segundos.`
     return
   }
+
+  if (!email.value.trim()) {
+    pinError.value = 'Por favor, introduce tu correo electrónico.'
+    return
+  }
+  if (!enteredPin.value) {
+    pinError.value = 'Por favor, introduce la contraseña de acceso.'
+    return
+  }
+
   isLoading.value = true
-  const success = await loginCollaborator(enteredPin.value)
-  isLoading.value = false
-  if (!success) {
-    pinError.value = 'Clave incorrecta. Solicítala a la dirección de EcoNane.'
-  } else {
-    enteredPin.value = ''
+  try {
+    const success = await loginCollaborator(enteredPin.value, email.value)
+    isLoading.value = false
+
+    if (success) {
+      failedAttempts.value = 0
+      lockoutUntil.value = null
+      enteredPin.value = ''
+    } else {
+      failedAttempts.value++
+      if (failedAttempts.value >= 5) {
+        lockoutUntil.value = Date.now() + 2 * 60 * 1000
+        pinError.value = 'Has superado el límite de intentos permitidos. Espera 2 minutos.'
+      } else {
+        pinError.value = 'Credenciales no válidas. Comprueba tu correo y contraseña.'
+      }
+    }
+  } catch (err) {
+    isLoading.value = false
+    pinError.value = 'Error al verificar las credenciales.'
   }
 }
 
@@ -339,49 +371,99 @@ const settlementSummary = computed(() => {
       </div>
     </header>
 
-    <!-- IF NOT LOGGED IN: PIN ACCESS FORM -->
+    <!-- IF NOT LOGGED IN: COLLABORATOR AUTH FORM -->
     <main v-if="!isCollaboratorLoggedIn" class="mx-auto flex min-h-[80vh] max-w-md items-center justify-center px-4 py-12">
-      <div class="card-container w-full max-w-sm text-center bg-white shadow-xl border border-brand-pink-light/40 p-8 rounded-3xl">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-pink-light/40 text-brand-brown">
-          <Camera class="h-8 w-8 text-brand-pink" />
+      <div class="w-full max-w-md">
+        <!-- Back link -->
+        <div class="mb-6">
+          <router-link
+            to="/"
+            class="inline-flex items-center gap-2 text-sm font-medium text-brand-brown transition-colors hover:text-brand-brown-dark"
+          >
+            <ChevronLeft class="h-4 w-4" />
+            Volver a la web pública
+          </router-link>
         </div>
 
-        <h1 class="font-serif text-2xl font-bold text-brand-brown-dark">Agenda Penélope Photograph</h1>
-        <p class="mt-2 text-xs sm:text-sm text-brand-brown/75 leading-relaxed">
-          Acceso exclusivo para consultar disponibilidad, agendar packs de ecografía + fotografía y gestionar tus sesiones.
-        </p>
-
-        <form @submit.prevent="handleLogin" class="mt-6 space-y-4">
-          <div class="text-left">
-            <label class="block text-xs font-bold uppercase tracking-wider text-brand-brown-dark mb-1">
-              Clave de Acceso
-            </label>
-            <div class="relative">
-              <input
-                v-model="enteredPin"
-                type="password"
-                placeholder="••••••••"
-                autofocus
-                class="form-input text-center text-lg tracking-widest font-mono"
-              />
-              <Lock class="absolute right-3.5 top-3.5 h-4 w-4 text-brand-pink pointer-events-none" />
+        <!-- Login Card -->
+        <div class="overflow-hidden rounded-3xl border border-brand-pink-light/50 bg-white p-8 shadow-xl shadow-brand-brown/5">
+          <!-- Logo & Header -->
+          <div class="mb-8 text-center">
+            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-pink/20 text-brand-brown shadow-inner">
+              <Camera class="h-8 w-8 text-brand-brown" />
             </div>
-            <p v-if="pinError" class="mt-1.5 text-xs text-red-600 font-medium flex items-center gap-1">
-              <AlertCircle class="h-3.5 w-3.5 shrink-0" />
-              {{ pinError }}
-            </p>
+            <h1 class="font-serif text-2xl font-bold text-brand-brown-dark">Portal Colaborador</h1>
+            <p class="mt-1 text-sm text-brand-brown/80">Acceso a la agenda para Penélope Photograph</p>
           </div>
 
-          <button type="submit" :disabled="isLoading" class="btn-primary w-full py-3 text-sm font-bold shadow-md disabled:opacity-50">
-            <span v-if="isLoading">Verificando acceso...</span>
-            <span v-else>Entrar a la Agenda</span>
-          </button>
-        </form>
+          <!-- Form -->
+          <form @submit.prevent="handleLogin" class="space-y-5">
+            <div>
+              <label for="collab-email" class="block text-sm font-medium text-brand-brown-dark">
+                Correo Electrónico
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  id="collab-email"
+                  v-model="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="ejemplo@dominio.com"
+                  autofocus
+                  class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
+                />
+              </div>
+            </div>
 
-        <div class="mt-6 pt-6 border-t border-brand-pink-light/30 text-center">
-          <router-link to="/" class="text-xs text-brand-brown/70 hover:text-brand-brown font-medium">
-            ← Volver a la página principal
-          </router-link>
+            <div>
+              <label for="collab-pin" class="block text-sm font-medium text-brand-brown-dark">
+                Contraseña de Acceso
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  id="collab-pin"
+                  v-model="enteredPin"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  placeholder="Introduce tu contraseña..."
+                  class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 pr-12 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
+                />
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-brown/60 transition-colors hover:text-brand-brown-dark cursor-pointer"
+                  title="Mostrar u ocultar contraseña"
+                >
+                  <EyeOff v-if="showPassword" class="h-5 w-5" />
+                  <Eye v-else class="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Error Alert -->
+            <div
+              v-if="pinError"
+              class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-sm font-medium text-rose-700 animate-in fade-in"
+            >
+              {{ pinError }}
+            </div>
+
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="w-full cursor-pointer rounded-2xl bg-brand-brown py-3.5 text-center font-semibold text-white shadow-md transition-all hover:bg-brand-brown-dark active:scale-[0.99] disabled:opacity-50"
+            >
+              <span v-if="isLoading">Verificando...</span>
+              <span v-else>Entrar a la Agenda</span>
+            </button>
+          </form>
+
+          <div class="mt-8 border-t border-brand-pink-light/30 pt-6 text-center">
+            <div class="flex items-center justify-center gap-2 text-xs text-brand-brown/70">
+              <ShieldCheck class="h-4 w-4 text-emerald-600" />
+              <span>Acceso seguro protegido por Supabase Auth</span>
+            </div>
+          </div>
         </div>
       </div>
     </main>
