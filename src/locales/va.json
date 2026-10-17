@@ -130,5 +130,12 @@
     "cookies": "Política de Cookies",
     "clientAccess": "Volta de Fotos (Clientes)",
     "adminAccess": "Accés Equip"
+  },
+  "cookieBanner": {
+    "title": "Avís de Galetes i Analítica",
+    "description": "Utilitzem galetes analítiques opcionals per a conéixer de manera anònima quantes famílies ens visiten i millorar la web. Pots acceptar o continuar només amb les necessàries.",
+    "accept": "Acceptar analítica",
+    "reject": "Només necessàries",
+    "moreInfo": "Veure política"
   }
 }

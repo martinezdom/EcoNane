@@ -130,5 +130,12 @@
     "cookies": "Política de Cookies",
     "clientAccess": "Bóveda de Fotos (Clientas)",
     "adminAccess": "Acceso Equipo"
+  },
+  "cookieBanner": {
+    "title": "Aviso de Cookies y Analítica",
+    "description": "Utilizamos cookies analíticas opcionales para conocer de forma anónima cuántas familias nos visitan y mejorar la web. Puedes aceptar o continuar solo con las necesarias.",
+    "accept": "Aceptar analítica",
+    "reject": "Solo necesarias",
+    "moreInfo": "Ver política"
   }
 }

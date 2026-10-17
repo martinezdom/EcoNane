@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MapPin, Calendar, Gift, Sparkles } from '@lucide/vue'
 import { useI18n } from '@/composables/useI18n'
@@ -11,6 +11,18 @@ const { t } = useI18n()
 
 const isAvisoOpen = ref(false)
 const isPrivacidadOpen = ref(false)
+
+function handleOpenCookiesModal() {
+  isPrivacidadOpen.value = true
+}
+
+onMounted(() => {
+  window.addEventListener('open-cookies-modal', handleOpenCookiesModal)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('open-cookies-modal', handleOpenCookiesModal)
+})
 
 function navigateToSection(href: string) {
   if (route.path !== '/') {
@@ -276,9 +288,9 @@ const benefits: Benefit[] = [
             Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, supresión (derecho al olvido) y limitación del tratamiento enviando un correo a <a href="mailto:info@econane.es" class="text-brand-pink underline">info@econane.es</a> indicando tu solicitud.
           </p>
 
-          <h4 class="font-bold text-brand-brown-dark text-sm">6. Uso de Cookies</h4>
+          <h4 class="font-bold text-brand-brown-dark text-sm">6. Uso de Cookies y Analítica</h4>
           <p>
-            Este sitio web no utiliza cookies publicitarias, de rastreo de terceros ni herramientas de analítica invasiva. Únicamente se emplea almacenamiento técnico indispensable (como la memoria local de sesión) para garantizar el funcionamiento seguro del portal privado de ecografías y el acceso al panel de administración. Por esta razón, conforme a la normativa vigente (LSSI-CE y RGPD), no es necesaria la instalación de un banner de consentimiento de cookies.
+            Este sitio web utiliza Google Tag Manager / Google Analytics bajo el estándar <strong>Google Consent Mode v2</strong>. Por defecto, todas las cookies analíticas están desactivadas hasta que la usuaria decida aceptarlas libremente mediante el banner inferior. Si se rechazan, no se almacena ninguna cookie de seguimiento ni se realiza rastreo publicitario, manteniéndose únicamente el almacenamiento técnico imprescindible para el funcionamiento seguro de la web y el portal de citas.
           </p>
         </div>
         <div class="mt-4 flex justify-end border-t border-brand-pink-light/30 pt-3">

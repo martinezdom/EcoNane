@@ -130,5 +130,12 @@
     "cookies": "Cookie Policy",
     "clientAccess": "Client Photo Vault",
     "adminAccess": "Team Portal"
+  },
+  "cookieBanner": {
+    "title": "Cookies & Analytics Notice",
+    "description": "We use optional anonymous analytics cookies to know how many families visit us and improve our website. You can accept or proceed with essential cookies only.",
+    "accept": "Accept analytics",
+    "reject": "Essential only",
+    "moreInfo": "View policy"
   }
 }
