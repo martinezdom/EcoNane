@@ -734,13 +734,20 @@ async function syncFromSupabase() {
 
       // Descargar ÚNICAMENTE los slots ocupados anónimos (id, date, time, duration_minutes, status) para calcular el calendario
       try {
-        const { data: apptData, error: apptError } = await supabase
-          .from('appointments')
-          .select('id, date, time, duration_minutes, status')
-          .eq('status', 'confirmed')
-          .order('date', { ascending: true })
+        let apptData: any[] | null = null
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_public_occupied_slots')
+        if (!rpcError && rpcData) {
+          apptData = rpcData
+        } else {
+          const { data, error } = await supabase
+            .from('appointments')
+            .select('id, date, time, duration_minutes, status')
+            .eq('status', 'confirmed')
+            .order('date', { ascending: true })
+          if (!error && data) apptData = data
+        }
 
-        if (!apptError && apptData) {
+        if (apptData) {
           appointments.value = apptData.map((row: any) => ({
             id: row.id,
             bookingCode: '',
@@ -772,6 +779,17 @@ async function syncFromSupabase() {
 // Auto-run cloud sync if cloud mode is active
 if (isCloudActive()) {
   syncFromSupabase()
+}
+
+// Comprobar si existe una sesión activa de Supabase Auth al cargar
+if (supabase && isSupabaseConfigured && typeof window !== 'undefined') {
+  supabase.auth.getSession().then(({ data }) => {
+    if (data?.session) {
+      isAdminLoggedIn.value = true
+      sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+      syncAdminDataFromSupabase()
+    }
+  }).catch(() => {})
 }
 
 export function useSiteData() {
@@ -990,13 +1008,16 @@ export function useSiteData() {
       return { session: null, isExpired: false }
     }
     try {
-      const { data, error } = await supabase
-        .from('client_sessions')
-        .select('*')
-        .eq('code', code.trim())
-        .single()
+      let data: any = null
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_public_session', { p_code: code.trim() })
+      if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+        data = rpcData[0]
+      } else {
+        const res = await supabase.from('client_sessions').select('*').eq('code', code.trim()).single()
+        data = res.data
+      }
 
-      if (error || !data) return { session: null, isExpired: false }
+      if (!data) return { session: null, isExpired: false }
 
       const session: ClientSession = {
         id: data.id,
@@ -1032,19 +1053,46 @@ export function useSiteData() {
     return last4Registered === last4Input || cleanRegistered.endsWith(cleanInput) || cleanInput.endsWith(cleanRegistered)
   }
 
-  async function loginAdmin(enteredPin: string): Promise<boolean> {
-    const inputHash = await hashString(enteredPin.trim())
-    // Match hashed PIN or fallback to plain default
-    if (inputHash === adminPinHash.value || enteredPin.trim() === 'econane2026') {
+  async function loginAdmin(enteredPasswordOrPin: string, enteredEmail = 'admin@econane.es'): Promise<boolean> {
+    const cleanPassword = enteredPasswordOrPin.trim()
+    const cleanEmail = (enteredEmail || 'admin@econane.es').trim()
+
+    // 1. Si Supabase está activo, intentar autenticación oficial con Supabase Auth
+    if (supabase && isSupabaseConfigured && isCloudActive()) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword
+        })
+        if (!error && data?.session) {
+          isAdminLoggedIn.value = true
+          sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+          await syncAdminDataFromSupabase()
+          return true
+        }
+      } catch (e) {
+        console.warn('Supabase Auth error:', e)
+      }
+    }
+
+    // 2. Fallback a PIN hash tradicional si no hay Supabase Auth o es desarrollo local
+    const inputHash = await hashString(cleanPassword)
+    if (inputHash === adminPinHash.value || cleanPassword === 'econane2026') {
       isAdminLoggedIn.value = true
       sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
       await syncAdminDataFromSupabase()
       return true
     }
+
     return false
   }
 
-  function logoutAdmin() {
+  async function logoutAdmin() {
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut()
+      } catch (e) {}
+    }
     isAdminLoggedIn.value = false
     sessionStorage.removeItem(STORAGE_KEY_AUTH)
     sessions.value = []
@@ -1253,14 +1301,19 @@ export function useSiteData() {
   async function fetchTicketByToken(ticketNumber: string, token: string): Promise<SaleTicket | null> {
     if (!ticketNumber || !token || !supabase || !isSupabaseConfigured || !isCloudActive()) return null
     try {
-      const { data, error } = await supabase
-        .from('sales_tickets')
-        .select('*')
-        .eq('ticket_number', ticketNumber.trim().toUpperCase())
-        .eq('view_token', token.trim())
-        .single()
+      let data: any = null
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_public_ticket', {
+        p_ticket_number: ticketNumber.trim().toUpperCase(),
+        p_token: token.trim()
+      })
+      if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+        data = rpcData[0]
+      } else {
+        const res = await supabase.from('sales_tickets').select('*').eq('ticket_number', ticketNumber.trim().toUpperCase()).eq('view_token', token.trim()).single()
+        data = res.data
+      }
 
-      if (error || !data) return null
+      if (!data) return null
 
       return {
         id: data.id,

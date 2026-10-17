@@ -2,11 +2,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteData } from '@/composables/useSiteData'
-import { Lock, Eye, EyeOff, ArrowLeft, ShieldCheck } from '@lucide/vue'
+import { Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, Mail } from '@lucide/vue'
 
 const router = useRouter()
 const { loginAdmin, isAdminLoggedIn } = useSiteData()
 
+const email = ref('admin@econane.es')
 const pin = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
@@ -19,23 +20,23 @@ if (isAdminLoggedIn.value) {
 async function handleLogin() {
   errorMessage.value = ''
   if (!pin.value) {
-    errorMessage.value = 'Por favor, introduce la clave de acceso.'
+    errorMessage.value = 'Por favor, introduce la contraseña de acceso.'
     return
   }
 
   isLoading.value = true
   try {
-    const success = await loginAdmin(pin.value)
+    const success = await loginAdmin(pin.value, email.value)
     isLoading.value = false
 
     if (success) {
       router.push('/admin')
     } else {
-      errorMessage.value = 'Clave incorrecta. Inténtalo de nuevo.'
+      errorMessage.value = 'Credenciales o clave incorrecta. Inténtalo de nuevo.'
     }
   } catch (err) {
     isLoading.value = false
-    errorMessage.value = 'Error al verificar la clave.'
+    errorMessage.value = 'Error al verificar las credenciales.'
   }
 }
 </script>
@@ -62,28 +63,46 @@ async function handleLogin() {
             <Lock class="h-8 w-8" />
           </div>
           <h1 class="font-serif text-2xl font-bold text-brand-brown-dark">Panel EcoNane</h1>
-          <p class="mt-1 text-sm text-brand-brown/80">Acceso exclusivo para Mireia y Ezan</p>
+          <p class="mt-1 text-sm text-brand-brown/80">Acceso exclusivo de administración</p>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleLogin" class="space-y-6">
+        <form @submit.prevent="handleLogin" class="space-y-5">
+          <div>
+            <label for="email" class="block text-sm font-medium text-brand-brown-dark">
+              Correo Electrónico
+            </label>
+            <div class="relative mt-1.5">
+              <input
+                id="email"
+                v-model="email"
+                type="email"
+                autocomplete="email"
+                placeholder="admin@econane.es"
+                class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
+              />
+            </div>
+          </div>
+
           <div>
             <label for="pin" class="block text-sm font-medium text-brand-brown-dark">
-              Clave de Acceso / PIN
+              Contraseña de Acceso
             </label>
-            <div class="relative mt-2">
+            <div class="relative mt-1.5">
               <input
                 id="pin"
                 v-model="pin"
                 :type="showPassword ? 'text' : 'password'"
-                placeholder="Introduce tu clave..."
+                autocomplete="current-password"
+                placeholder="Introduce tu contraseña..."
                 autofocus
-                class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3.5 pr-12 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20"
+                class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 pr-12 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
                 class="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-brown/60 transition-colors hover:text-brand-brown-dark cursor-pointer"
+                title="Mostrar u ocultar contraseña"
               >
                 <EyeOff v-if="showPassword" class="h-5 w-5" />
                 <Eye v-else class="h-5 w-5" />
