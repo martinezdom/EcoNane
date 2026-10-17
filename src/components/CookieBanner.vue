@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ShieldCheck } from '@lucide/vue'
 import { useI18n } from '@/composables/useI18n'
 
 const { t } = useI18n()
 const isVisible = ref(false)
+
+function handleShowBanner() {
+  isVisible.value = true
+}
 
 onMounted(() => {
   try {
@@ -17,6 +21,12 @@ onMounted(() => {
   } catch (e) {
     // LocalStorage inaccessible
   }
+
+  window.addEventListener('show-cookie-banner', handleShowBanner)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('show-cookie-banner', handleShowBanner)
 })
 
 function acceptAll() {

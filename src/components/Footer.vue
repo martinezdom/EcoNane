@@ -11,17 +11,29 @@ const { t } = useI18n()
 
 const isAvisoOpen = ref(false)
 const isPrivacidadOpen = ref(false)
+const isCookiesOpen = ref(false)
 
 function handleOpenCookiesModal() {
+  isCookiesOpen.value = true
+}
+
+function handleOpenPrivacyModal() {
   isPrivacidadOpen.value = true
+}
+
+function reopenCookieBanner() {
+  isCookiesOpen.value = false
+  window.dispatchEvent(new CustomEvent('show-cookie-banner'))
 }
 
 onMounted(() => {
   window.addEventListener('open-cookies-modal', handleOpenCookiesModal)
+  window.addEventListener('open-privacy-modal', handleOpenPrivacyModal)
 })
 
 onUnmounted(() => {
   window.removeEventListener('open-cookies-modal', handleOpenCookiesModal)
+  window.removeEventListener('open-privacy-modal', handleOpenPrivacyModal)
 })
 
 function navigateToSection(href: string) {
@@ -182,6 +194,18 @@ const benefits: Benefit[] = [
           >
             {{ t('footer.privacy') }}
           </button>
+          <button
+            @click="isCookiesOpen = true"
+            class="hover:text-brand-cream cursor-pointer transition-colors"
+          >
+            {{ t('footer.cookies') }}
+          </button>
+          <button
+            @click="reopenCookieBanner"
+            class="hover:text-brand-cream cursor-pointer transition-colors text-brand-pink-light/75 hover:text-brand-pink underline"
+          >
+            {{ t('footer.cookieSettings', 'Configurar cookies') }}
+          </button>
           <router-link to="/agenda" class="hover:text-brand-cream transition-colors text-brand-pink-light/80 hover:text-brand-pink">
             Agenda Colaborador
           </router-link>
@@ -295,6 +319,94 @@ const benefits: Benefit[] = [
         </div>
         <div class="mt-4 flex justify-end border-t border-brand-pink-light/30 pt-3">
           <button @click="isPrivacidadOpen = false" class="btn-pill-small">Entendido y Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Política de Cookies -->
+    <div v-if="isCookiesOpen" class="modal-overlay" @click.self="isCookiesOpen = false">
+      <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+        <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4 sticky top-0 bg-white z-10">
+          <h3 class="text-brand-brown-dark font-serif text-xl font-bold">Política de Cookies y Analítica Web</h3>
+          <button
+            @click="isCookiesOpen = false"
+            class="text-brand-brown hover:text-brand-brown-dark cursor-pointer p-1 text-lg font-bold"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="space-y-4 text-xs sm:text-sm leading-relaxed text-brand-brown/90">
+          <p>
+            En cumplimiento del artículo 22.2 de la Ley 34/2002 (LSSI-CE) y del Reglamento General de Protección de Datos (RGPD), en <strong>EcoNane</strong> te informamos con total claridad sobre las cookies y tecnologías de almacenamiento local utilizadas en nuestra web.
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">1. ¿Qué son las cookies?</h4>
+          <p>
+            Una cookie es un pequeño archivo que se almacena en tu navegador. Nos permite garantizar el correcto funcionamiento del portal, recordar tus preferencias (como el idioma seleccionado) y, solo con tu consentimiento expreso, obtener estadísticas anónimas sobre las visitas recibidas para mejorar el servicio.
+          </p>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">2. Google Consent Mode v2 (Privacidad por Defecto)</h4>
+          <p>
+            Siguiendo las directrices oficiales de la Agencia Española de Protección de Datos (AEPD), nuestro sitio web funciona con <strong>Google Consent Mode v2</strong>:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Por defecto, las cookies analíticas están totalmente desactivadas.</strong> No se activa ninguna cookie de seguimiento hasta que pulses conscientemente «Aceptar analítica».</li>
+            <li>Si seleccionas «Solo necesarias» o ignoras el banner, tu navegación será completamente anónima y no se instalará ninguna cookie de análisis o publicidad.</li>
+          </ul>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">3. Cookies y Almacenamiento Utilizados</h4>
+          <div class="overflow-x-auto rounded-xl border border-brand-pink-light/30 text-xs">
+            <table class="w-full text-left">
+              <thead class="bg-brand-cream/80 text-brand-brown-dark font-bold border-b border-brand-pink-light/30">
+                <tr>
+                  <th class="p-2.5">Identificador</th>
+                  <th class="p-2.5">Tipo y Titular</th>
+                  <th class="p-2.5">Finalidad</th>
+                  <th class="p-2.5">Caducidad</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-pink-light/20">
+                <tr>
+                  <td class="p-2.5 font-mono font-semibold">econane_cookie_consent</td>
+                  <td class="p-2.5">Técnica (Propia)</td>
+                  <td class="p-2.5">Almacena la preferencia de consentimiento (aceptada o rechazada).</td>
+                  <td class="p-2.5">Persistente (LocalStorage)</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-mono font-semibold">econane_lang</td>
+                  <td class="p-2.5">Preferencia (Propia)</td>
+                  <td class="p-2.5">Recuerda el idioma de navegación (ES, VAL, EN).</td>
+                  <td class="p-2.5">Persistente (LocalStorage)</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-mono font-semibold">_ga, _ga_*</td>
+                  <td class="p-2.5">Analítica (Google Ireland Ltd.)</td>
+                  <td class="p-2.5">Medición agregada y anónima de visitas mediante Google Analytics 4. Solo se instala si das tu consentimiento previo.</td>
+                  <td class="p-2.5">2 años / sesión</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 class="font-bold text-brand-brown-dark text-sm">4. ¿Cómo cambiar o revocar tu consentimiento?</h4>
+          <p>
+            Puedes cambiar de opinión en cualquier momento y revocar o renovar tu consentimiento de analítica pulsando el siguiente botón:
+          </p>
+          <div class="pt-1">
+            <button
+              @click="reopenCookieBanner"
+              type="button"
+              class="btn-pink text-xs font-bold px-4 py-2 rounded-full cursor-pointer shadow-xs"
+            >
+              Cambiar mis preferencias de cookies
+            </button>
+          </div>
+          <p class="text-xs text-brand-brown/75">
+            También puedes bloquear o eliminar las cookies en cualquier momento a través de la configuración de tu navegador (Google Chrome, Mozilla Firefox, Apple Safari o Microsoft Edge).
+          </p>
+        </div>
+        <div class="mt-4 flex justify-end border-t border-brand-pink-light/30 pt-3">
+          <button @click="isCookiesOpen = false" class="btn-pill-small">Cerrar</button>
         </div>
       </div>
     </div>

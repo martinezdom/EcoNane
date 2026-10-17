@@ -37,6 +37,10 @@ const {
 // Steps: 1: Service, 2: Date & Time, 3: Client Details, 4: Confirmed
 const currentStep = ref<1 | 2 | 3 | 4>(1)
 
+function openPrivacyModal() {
+  window.dispatchEvent(new CustomEvent('open-privacy-modal'))
+}
+
 // Step 1: Selected Service & Grouped Containers
 type ServiceOption = {
   id: string
@@ -992,7 +996,7 @@ function resetWizard() {
               class="rounded text-brand-brown focus:ring-brand-pink mt-0.5 cursor-pointer"
             />
             <span>
-              Acepto la <a href="#privacidad" class="text-brand-pink underline font-medium">política de privacidad</a> y el tratamiento de mis datos para la coordinación de la cita en EcoNane.
+              Acepto la <a href="#privacidad" @click.prevent="openPrivacyModal" class="text-brand-pink underline font-medium cursor-pointer">política de privacidad</a> y el tratamiento de mis datos para la coordinación de la cita en EcoNane.
             </span>
           </label>
           <p v-if="errors.terms" class="mt-1 text-[11px] text-rose-600 font-semibold">{{ errors.terms }}</p>
