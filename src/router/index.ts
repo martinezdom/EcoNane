@@ -74,4 +74,17 @@ router.beforeEach((to, _from, next) => {
   next()
 })
 
+router.afterEach((to, from) => {
+  if (from.name && to.path !== from.path) {
+    const win = window as any
+    if (typeof win.gtag === 'function') {
+      win.gtag('event', 'page_view', {
+        page_title: document.title,
+        page_location: window.location.href,
+        page_path: to.fullPath
+      })
+    }
+  }
+})
+
 export default router
