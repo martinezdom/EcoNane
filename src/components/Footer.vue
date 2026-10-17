@@ -116,7 +116,7 @@ const benefits: Benefit[] = [
             <span class="font-serif text-xl leading-none font-bold tracking-wider">ECONANE</span>
           </div>
           <p class="text-brand-pink-light/70 max-w-sm text-xs leading-relaxed">
-            Tu clínica de confianza en ecografías 4D y 5D en Villajoyosa. Vive una experiencia única conectando emocionalmente con tu bebé antes de su llegada.
+            {{ t('footer.desc', 'Tu clínica de confianza en ecografías 4D y 5D en Villajoyosa. Vive una experiencia única conectando emocionalmente con tu bebé antes de su llegada.') }}
           </p>
         </div>
 

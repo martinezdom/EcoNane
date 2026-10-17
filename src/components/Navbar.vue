@@ -72,7 +72,7 @@ function cycleLanguage() {
               >
               <span
                 class="text-brand-pink mt-1 text-[9px] leading-none font-semibold tracking-widest uppercase"
-                >Ecografías Emocionales</span
+                >{{ t('nav.subtitle', 'Ecografías Emocionales') }}</span
               >
             </div>
           </a>

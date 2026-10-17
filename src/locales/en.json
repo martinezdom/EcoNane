@@ -6,7 +6,8 @@
     "gallery": "Gallery",
     "faq": "FAQ",
     "contact": "Contact",
-    "bookAppointment": "Book Your Scan"
+    "bookAppointment": "Book Your Scan",
+    "subtitle": "Emotional Ultrasounds"
   },
   "hero": {
     "badge": "Emotional 4D / 5D Scans",
@@ -130,7 +131,8 @@
     "cookies": "Cookie Policy",
     "cookieSettings": "Cookie settings",
     "clientAccess": "Client Photo Vault",
-    "adminAccess": "Team Portal"
+    "adminAccess": "Team Portal",
+    "desc": "Your trusted 4D & 5D baby scan studio in Villajoyosa. Experience an unforgettable bond connecting with your baby before arrival."
   },
   "cookieBanner": {
     "title": "COOKIES",

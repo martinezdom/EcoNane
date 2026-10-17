@@ -6,7 +6,8 @@
     "gallery": "Galería",
     "faq": "Preguntas Frecuentes",
     "contact": "Contacto",
-    "bookAppointment": "Pide tu cita"
+    "bookAppointment": "Pide tu cita",
+    "subtitle": "Ecografías Emocionales"
   },
   "hero": {
     "badge": "Ecografías Emocionales",
@@ -130,7 +131,8 @@
     "cookies": "Política de Cookies",
     "cookieSettings": "Configurar cookies",
     "clientAccess": "Bóveda de Fotos (Clientas)",
-    "adminAccess": "Acceso Equipo"
+    "adminAccess": "Acceso Equipo",
+    "desc": "Tu clínica de confianza en ecografías 4D y 5D en Villajoyosa. Vive una experiencia única conectando emocionalmente con tu bebé antes de su llegada."
   },
   "cookieBanner": {
     "title": "COOKIES",

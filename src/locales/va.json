@@ -6,7 +6,8 @@
     "gallery": "Galeria",
     "faq": "Preguntes Freqüents",
     "contact": "Contacte",
-    "bookAppointment": "Demana la teua cita"
+    "bookAppointment": "Demana la teua cita",
+    "subtitle": "Ecografies Emocionals"
   },
   "hero": {
     "badge": "Ecografies Emocionals",
@@ -130,7 +131,8 @@
     "cookies": "Política de Cookies",
     "cookieSettings": "Configurar galetes",
     "clientAccess": "Volta de Fotos (Clientes)",
-    "adminAccess": "Accés Equip"
+    "adminAccess": "Accés Equip",
+    "desc": "La teua clínica de confiança en ecografies 4D i 5D a la Vila Joiosa. Viu una experiència única connectant emocionalment amb el teu bebé abans de la seua arribada."
   },
   "cookieBanner": {
     "title": "GALETES",
