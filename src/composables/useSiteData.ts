@@ -1094,10 +1094,14 @@ export function useSiteData() {
     sessionStorage.removeItem(STORAGE_KEY_AUTH)
     sessions.value = []
     salesTickets.value = []
+    appointments.value = []
     try {
       localStorage.removeItem(STORAGE_KEY_SESSIONS)
       localStorage.removeItem(STORAGE_KEY_TICKETS)
+      localStorage.removeItem(STORAGE_KEY_APPOINTMENTS)
+      localStorage.removeItem(STORAGE_KEY_PIN)
     } catch (e) {}
+    await syncFromSupabase()
   }
 
   async function loginCollaborator(enteredPin: string): Promise<boolean> {
