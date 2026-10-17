@@ -7,11 +7,13 @@ import { Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, Mail } from '@lucide/vue'
 const router = useRouter()
 const { loginAdmin, isAdminLoggedIn } = useSiteData()
 
-const email = ref('admin@econane.es')
+const email = ref('')
 const pin = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
 const isLoading = ref(false)
+const failedAttempts = ref(0)
+const lockoutUntil = ref<number | null>(null)
 
 if (isAdminLoggedIn.value) {
   router.push('/admin')
@@ -19,6 +21,17 @@ if (isAdminLoggedIn.value) {
 
 async function handleLogin() {
   errorMessage.value = ''
+
+  if (lockoutUntil.value && Date.now() < lockoutUntil.value) {
+    const remainingSecs = Math.ceil((lockoutUntil.value - Date.now()) / 1000)
+    errorMessage.value = `Demasiados intentos fallidos. Por seguridad, espera ${remainingSecs} segundos.`
+    return
+  }
+
+  if (!email.value.trim()) {
+    errorMessage.value = 'Por favor, introduce tu correo electrónico.'
+    return
+  }
   if (!pin.value) {
     errorMessage.value = 'Por favor, introduce la contraseña de acceso.'
     return
@@ -30,9 +43,17 @@ async function handleLogin() {
     isLoading.value = false
 
     if (success) {
+      failedAttempts.value = 0
+      lockoutUntil.value = null
       router.push('/admin')
     } else {
-      errorMessage.value = 'Credenciales o clave incorrecta. Inténtalo de nuevo.'
+      failedAttempts.value++
+      if (failedAttempts.value >= 5) {
+        lockoutUntil.value = Date.now() + 2 * 60 * 1000
+        errorMessage.value = 'Has superado el límite de intentos permitidos. Espera 2 minutos.'
+      } else {
+        errorMessage.value = 'Credenciales no válidas. Comprueba tu correo y contraseña.'
+      }
     }
   } catch (err) {
     isLoading.value = false
@@ -62,8 +83,8 @@ async function handleLogin() {
           <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-pink/20 text-brand-brown shadow-inner">
             <Lock class="h-8 w-8" />
           </div>
-          <h1 class="font-serif text-2xl font-bold text-brand-brown-dark">Panel EcoNane</h1>
-          <p class="mt-1 text-sm text-brand-brown/80">Acceso exclusivo de administración</p>
+          <h1 class="font-serif text-2xl font-bold text-brand-brown-dark">Panel de Gestión</h1>
+          <p class="mt-1 text-sm text-brand-brown/80">Acceso restringido para el equipo de EcoNane</p>
         </div>
 
         <!-- Form -->
@@ -78,7 +99,8 @@ async function handleLogin() {
                 v-model="email"
                 type="email"
                 autocomplete="email"
-                placeholder="admin@econane.es"
+                placeholder="ejemplo@dominio.com"
+                autofocus
                 class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
               />
             </div>
@@ -95,7 +117,6 @@ async function handleLogin() {
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
                 placeholder="Introduce tu contraseña..."
-                autofocus
                 class="w-full rounded-2xl border border-brand-pink-light/60 bg-brand-cream/30 px-4 py-3 pr-12 text-brand-brown-dark placeholder-brand-brown/40 transition-all focus:border-brand-pink focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-pink/20 text-sm"
               />
               <button

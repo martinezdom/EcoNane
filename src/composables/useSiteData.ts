@@ -693,10 +693,10 @@ async function syncFromSupabase() {
   if (!supabase || !isSupabaseConfigured || !isCloudActive()) return
 
   try {
-    // 1. Fetch Site Settings (Catálogo, Precios, Packs, Promoción, Horarios)
+    // 1. Fetch Site Settings (Catálogo, Precios, Packs, Promoción, Horarios) - Solo datos públicos
     const { data: settingsData } = await supabase
       .from('site_settings')
-      .select('*')
+      .select('promotion, experiences, packs, products, business_info, booking_settings')
       .eq('id', 'main')
       .single()
 
@@ -708,18 +708,9 @@ async function syncFromSupabase() {
       if (settingsData.business_info && Object.keys(settingsData.business_info).length > 0) {
         businessInfo.value = { ...defaultBusinessInfo, ...settingsData.business_info }
       }
-      if (settingsData.admin_pin) {
-        if (settingsData.admin_pin.length === 64) {
-          adminPinHash.value = settingsData.admin_pin
-        } else {
-          const hashed = await hashString(settingsData.admin_pin)
-          adminPinHash.value = hashed
-        }
+      if (settingsData.booking_settings) {
+        bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
       }
-    }
-
-    if (settingsData && settingsData.booking_settings) {
-      bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
     }
 
     // 2. Si es administrador o colaboradora autenticada, cargar datos operativos completos
@@ -1053,11 +1044,13 @@ export function useSiteData() {
     return last4Registered === last4Input || cleanRegistered.endsWith(cleanInput) || cleanInput.endsWith(cleanRegistered)
   }
 
-  async function loginAdmin(enteredPasswordOrPin: string, enteredEmail = 'admin@econane.es'): Promise<boolean> {
-    const cleanPassword = enteredPasswordOrPin.trim()
-    const cleanEmail = (enteredEmail || 'admin@econane.es').trim()
+  async function loginAdmin(enteredPasswordOrPin: string, enteredEmail = ''): Promise<boolean> {
+    const cleanPassword = (enteredPasswordOrPin || '').trim()
+    const cleanEmail = (enteredEmail || '').trim()
 
-    // 1. Si Supabase está activo, intentar autenticación oficial con Supabase Auth
+    if (!cleanEmail || !cleanPassword) return false
+
+    // 1. En producción con Supabase activo: autenticación obligatoria y estricta en el servidor de Supabase Auth
     if (supabase && isSupabaseConfigured && isCloudActive()) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -1070,18 +1063,22 @@ export function useSiteData() {
           await syncAdminDataFromSupabase()
           return true
         }
+        // Si Supabase Auth rechaza las credenciales, NUNCA permitir acceso
+        return false
       } catch (e) {
         console.warn('Supabase Auth error:', e)
+        return false
       }
     }
 
-    // 2. Fallback a PIN hash tradicional si no hay Supabase Auth o es desarrollo local
-    const inputHash = await hashString(cleanPassword)
-    if (inputHash === adminPinHash.value || cleanPassword === 'econane2026') {
-      isAdminLoggedIn.value = true
-      sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
-      await syncAdminDataFromSupabase()
-      return true
+    // 2. Solo para entorno local de desarrollo totalmente offline (sin Supabase conectado)
+    if (isDevEnvironment && !isCloudActive() && !isSupabaseConfigured) {
+      const inputHash = await hashString(cleanPassword)
+      if (inputHash === adminPinHash.value) {
+        isAdminLoggedIn.value = true
+        sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+        return true
+      }
     }
 
     return false
