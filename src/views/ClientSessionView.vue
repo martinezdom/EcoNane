@@ -28,7 +28,7 @@ import {
 } from '@lucide/vue'
 
 const route = useRoute()
-const { getSessionByCode, verifySessionPhone, sessions, isCloudSynced, isCloudActive } = useSiteData()
+const { getSessionByCode, fetchSessionByCode, verifySessionPhone, sessions, isCloudSynced, isCloudActive } = useSiteData()
 
 const code = computed(() => (route.params.code as string) || '')
 const sessionData = ref<ClientSession | null>(null)
@@ -142,9 +142,12 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
-function loadSession() {
+async function loadSession() {
   if (code.value) {
-    const result = getSessionByCode(code.value)
+    let result = getSessionByCode(code.value)
+    if (!result.session && isCloudActive()) {
+      result = await fetchSessionByCode(code.value)
+    }
     if (result.session) {
       sessionData.value = result.session
       isExpired.value = result.isExpired

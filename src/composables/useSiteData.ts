@@ -466,27 +466,31 @@ const defaultAppointments: Appointment[] = [
   }
 ]
 
+export const isAdminLoggedIn = ref<boolean>(
+  typeof window !== 'undefined' && sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true'
+)
+export const isCollaboratorLoggedIn = ref<boolean>(
+  typeof window !== 'undefined' && sessionStorage.getItem(STORAGE_KEY_COLLAB_AUTH) === 'true'
+)
+export const isCloudSynced = ref<boolean>(false)
+
 function getInitialAppointments(): Appointment[] {
+  if (!isAdminLoggedIn.value && !isCollaboratorLoggedIn.value) {
+    return defaultAppointments.map(a => ({
+      ...a,
+      bookingCode: '',
+      clientName: 'Reservado',
+      clientPhone: '',
+      clientEmail: '',
+      gestationWeek: '',
+      notes: ''
+    }))
+  }
   const stored = loadFromStorage<Appointment[]>(STORAGE_KEY_APPOINTMENTS, [])
   if (!stored || stored.length === 0) {
     return defaultAppointments
   }
-  const updatedStored = stored.map(s => {
-    if (s.clientName === 'Reserva WhatsApp (Tata)') {
-      return {
-        ...s,
-        clientName: 'Reserva WhatsApp',
-        notes: s.notes ? s.notes.replace(' (Tata)', '').replace('Anotada por Tata', 'Reserva por WhatsApp') : s.notes
-      }
-    }
-    return s
-  })
-  const existingIds = new Set(updatedStored.map(a => a.id))
-  const missing = defaultAppointments.filter(d => !existingIds.has(d.id))
-  if (missing.length > 0) {
-    return [...updatedStored, ...missing]
-  }
-  return updatedStored
+  return stored
 }
 
 // Global Reactive Singletons
@@ -501,15 +505,16 @@ const collaboratorPacks = ref<CollaboratorPack[]>(
   loadFromStorage(STORAGE_KEY_COLLAB_PACKS, defaultCollaboratorPacks)
 )
 const products = ref<Product[]>(loadFromStorage(STORAGE_KEY_PRODUCTS, defaultProducts))
-const sessions = ref<ClientSession[]>(loadFromStorage(STORAGE_KEY_SESSIONS, defaultDemoSessions))
+const sessions = ref<ClientSession[]>(
+  isAdminLoggedIn.value ? loadFromStorage(STORAGE_KEY_SESSIONS, []) : []
+)
 const businessInfo = ref<BusinessInfo>(loadFromStorage(STORAGE_KEY_BIZ, defaultBusinessInfo))
-const salesTickets = ref<SaleTicket[]>(loadFromStorage(STORAGE_KEY_TICKETS, defaultDemoTickets))
+const salesTickets = ref<SaleTicket[]>(
+  isAdminLoggedIn.value ? loadFromStorage(STORAGE_KEY_TICKETS, []) : []
+)
 const appointments = ref<Appointment[]>(getInitialAppointments())
 const bookingSettings = ref<BookingSettings>(loadFromStorage(STORAGE_KEY_BOOKING_SETTINGS, defaultBookingSettings))
 const adminPinHash = ref<string>(loadFromStorage(STORAGE_KEY_PIN, DEFAULT_HASH))
-const isAdminLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true')
-const isCollaboratorLoggedIn = ref<boolean>(sessionStorage.getItem(STORAGE_KEY_COLLAB_AUTH) === 'true')
-const isCloudSynced = ref<boolean>(false)
 
 // Entorno y Aislamiento de Base de Datos Local vs Producción
 export const isDevEnvironment = typeof window !== 'undefined' && (
@@ -519,8 +524,6 @@ export const isDevEnvironment = typeof window !== 'undefined' && (
 )
 
 // Modo de Datos: 'local' (pruebas aisladas en localStorage) o 'cloud' (Supabase producción)
-// En localhost arranca en 'local' para que ninguna prueba contamine la clínica.
-// En producción (web publicada) siempre está en 'cloud'.
 const savedDataSource = typeof window !== 'undefined'
   ? (localStorage.getItem('econane_data_source_mode') as 'local' | 'cloud')
   : null
@@ -559,57 +562,31 @@ watch(experiences, (val) => localStorage.setItem(STORAGE_KEY_EXPERIENCES, JSON.s
 watch(packs, (val) => localStorage.setItem(STORAGE_KEY_PACKS, JSON.stringify(val)), { deep: true })
 watch(collaboratorPacks, (val) => localStorage.setItem(STORAGE_KEY_COLLAB_PACKS, JSON.stringify(val)), { deep: true })
 watch(products, (val) => localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(val)), { deep: true })
-watch(sessions, (val) => localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(val)), { deep: true })
+watch(sessions, (val) => {
+  if (isAdminLoggedIn.value) {
+    localStorage.setItem(STORAGE_KEY_SESSIONS, JSON.stringify(val))
+  }
+}, { deep: true })
 watch(businessInfo, (val) => localStorage.setItem(STORAGE_KEY_BIZ, JSON.stringify(val)), { deep: true })
-watch(salesTickets, (val) => localStorage.setItem(STORAGE_KEY_TICKETS, JSON.stringify(val)), { deep: true })
-watch(appointments, (val) => localStorage.setItem(STORAGE_KEY_APPOINTMENTS, JSON.stringify(val)), { deep: true })
+watch(salesTickets, (val) => {
+  if (isAdminLoggedIn.value) {
+    localStorage.setItem(STORAGE_KEY_TICKETS, JSON.stringify(val))
+  }
+}, { deep: true })
+watch(appointments, (val) => {
+  if (isAdminLoggedIn.value || isCollaboratorLoggedIn.value) {
+    localStorage.setItem(STORAGE_KEY_APPOINTMENTS, JSON.stringify(val))
+  }
+}, { deep: true })
 watch(bookingSettings, (val) => localStorage.setItem(STORAGE_KEY_BOOKING_SETTINGS, JSON.stringify(val)), { deep: true })
 watch(adminPinHash, (val) => localStorage.setItem(STORAGE_KEY_PIN, JSON.stringify(val)))
 
-// Supabase Cloud Sync Engine
-async function syncFromSupabase() {
+// Sincronización completa exclusiva para administradores autenticados
+async function syncAdminDataFromSupabase() {
   if (!supabase || !isSupabaseConfigured || !isCloudActive()) return
 
   try {
-    // 1. Fetch Site Settings (Promo, Prices, Packs, PIN Hash, Business Info)
-    const { data: settingsData } = await supabase
-      .from('site_settings')
-      .select('*')
-      .eq('id', 'main')
-      .single()
-
-    if (settingsData) {
-      if (settingsData.promotion) promotion.value = settingsData.promotion
-      if (settingsData.experiences) experiences.value = sanitizeExperienceLinks(settingsData.experiences)
-      if (settingsData.packs) packs.value = sanitizePackLinks(settingsData.packs)
-      if (settingsData.products && settingsData.products.length > 0) products.value = settingsData.products
-      if (settingsData.business_info && Object.keys(settingsData.business_info).length > 0) {
-        businessInfo.value = { ...defaultBusinessInfo, ...settingsData.business_info }
-      }
-      if (settingsData.admin_pin) {
-        if (settingsData.admin_pin.length === 64) {
-          adminPinHash.value = settingsData.admin_pin
-        } else {
-          const hashed = await hashString(settingsData.admin_pin)
-          adminPinHash.value = hashed
-        }
-      }
-    } else {
-      // First time initialization in Supabase with secure hash
-      const hash = await hashString('econane2026')
-      adminPinHash.value = hash
-      await supabase.from('site_settings').upsert({
-        id: 'main',
-        promotion: promotion.value,
-        experiences: experiences.value,
-        packs: packs.value,
-        products: products.value,
-        business_info: businessInfo.value,
-        admin_pin: hash
-      })
-    }
-
-    // 2. Fetch Client Sessions with safe bidirectional merge
+    // 1. Fetch Client Sessions
     const { data: sessionsData, error: sessionsError } = await supabase
       .from('client_sessions')
       .select('*')
@@ -629,37 +606,12 @@ async function syncFromSupabase() {
         photos: row.photos || [],
         zipUrl: row.zip_url || ''
       }))
-
-      if (cloudSessions.length > 0) {
-        sessions.value = cloudSessions.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-      } else {
-        // Initial setup only: If cloud is completely empty, seed initial sessions
-        if (sessions.value.length > 0) {
-          try {
-            const rowsToInsert = sessions.value.map(s => ({
-              id: s.id,
-              code: s.code,
-              client_name: s.clientName,
-              client_phone: s.clientPhone,
-              session_date: s.sessionDate,
-              service_type: s.serviceType,
-              expiry_days: s.expiryDays,
-              note: s.note,
-              photos: s.photos,
-              zip_url: s.zipUrl,
-              created_at: s.createdAt
-            }))
-            await supabase.from('client_sessions').upsert(rowsToInsert)
-          } catch (e) {
-            console.warn('Could not auto-seed sessions to Supabase:', e)
-          }
-        }
-      }
+      sessions.value = cloudSessions.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
     }
 
-    // 3. Fetch Sales Tickets (TPV / Facturación) from Cloud
+    // 2. Fetch Sales Tickets (TPV / Facturación)
     const { data: ticketsData, error: ticketsError } = await supabase
       .from('sales_tickets')
       .select('*')
@@ -695,12 +647,74 @@ async function syncFromSupabase() {
         emailSent: Boolean(row.email_sent),
         viewToken: row.view_token || ''
       }))
+      salesTickets.value = cloudTickets.sort((a, b) => {
+        if (b.year !== a.year) return b.year - a.year
+        return (b.sequence || 0) - (a.sequence || 0)
+      })
+    }
 
-      if (cloudTickets.length > 0) {
-        salesTickets.value = cloudTickets.sort((a, b) => {
-          if (b.year !== a.year) return b.year - a.year
-          return (b.sequence || 0) - (a.sequence || 0)
-        })
+    // 3. Fetch Full Appointments (con datos de contacto para la agenda de gestión)
+    const { data: apptData, error: apptError } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('date', { ascending: true })
+
+    if (!apptError && apptData) {
+      const cloudAppts: Appointment[] = apptData.map((row: any) => ({
+        id: row.id,
+        bookingCode: row.booking_code,
+        clientName: row.client_name,
+        clientPhone: row.client_phone,
+        clientEmail: row.client_email || '',
+        gestationWeek: row.gestation_week || '',
+        serviceTitle: row.service_title,
+        serviceDuration: Number(row.duration_minutes) || 45,
+        servicePrice: row.service_price || '',
+        date: row.date,
+        time: row.time,
+        notes: row.notes || '',
+        status: (row.status as AppointmentStatus) || 'confirmed',
+        createdAt: row.created_at,
+        cancelledReason: row.cancelled_reason || '',
+        reminderSent: Boolean(row.reminder_sent)
+      }))
+      appointments.value = cloudAppts.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date)
+        return a.time.localeCompare(b.time)
+      })
+    }
+  } catch (e) {
+    console.warn('Error al sincronizar datos de administración:', e)
+  }
+}
+
+// Sincronización para visitantes públicos (solo catálogo y slots ocupados sin datos personales)
+async function syncFromSupabase() {
+  if (!supabase || !isSupabaseConfigured || !isCloudActive()) return
+
+  try {
+    // 1. Fetch Site Settings (Catálogo, Precios, Packs, Promoción, Horarios)
+    const { data: settingsData } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('id', 'main')
+      .single()
+
+    if (settingsData) {
+      if (settingsData.promotion) promotion.value = settingsData.promotion
+      if (settingsData.experiences) experiences.value = sanitizeExperienceLinks(settingsData.experiences)
+      if (settingsData.packs) packs.value = sanitizePackLinks(settingsData.packs)
+      if (settingsData.products && settingsData.products.length > 0) products.value = settingsData.products
+      if (settingsData.business_info && Object.keys(settingsData.business_info).length > 0) {
+        businessInfo.value = { ...defaultBusinessInfo, ...settingsData.business_info }
+      }
+      if (settingsData.admin_pin) {
+        if (settingsData.admin_pin.length === 64) {
+          adminPinHash.value = settingsData.admin_pin
+        } else {
+          const hashed = await hashString(settingsData.admin_pin)
+          adminPinHash.value = hashed
+        }
       }
     }
 
@@ -708,43 +722,45 @@ async function syncFromSupabase() {
       bookingSettings.value = { ...defaultBookingSettings, ...settingsData.booking_settings }
     }
 
-    // 4. Fetch Appointments (Agenda de Citas) from Cloud
-    try {
-      const { data: apptData, error: apptError } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('date', { ascending: true })
+    // 2. Si es administrador o colaboradora autenticada, cargar datos operativos completos
+    if (isAdminLoggedIn.value || isCollaboratorLoggedIn.value) {
+      await syncAdminDataFromSupabase()
+    } else {
+      // Visitante anónimo: Limpiar posibles restos de sesiones o tickets en localStorage por seguridad
+      try {
+        localStorage.removeItem(STORAGE_KEY_SESSIONS)
+        localStorage.removeItem(STORAGE_KEY_TICKETS)
+      } catch (e) {}
 
-      if (!apptError && apptData) {
-        const cloudAppts: Appointment[] = apptData.map((row: any) => ({
-          id: row.id,
-          bookingCode: row.booking_code,
-          clientName: row.client_name,
-          clientPhone: row.client_phone,
-          clientEmail: row.client_email || '',
-          gestationWeek: row.gestation_week || '',
-          serviceTitle: row.service_title,
-          serviceDuration: Number(row.duration_minutes) || 45,
-          servicePrice: row.service_price || '',
-          date: row.date,
-          time: row.time,
-          notes: row.notes || '',
-          status: (row.status as AppointmentStatus) || 'confirmed',
-          createdAt: row.created_at,
-          cancelledReason: row.cancelled_reason || '',
-          reminderSent: Boolean(row.reminder_sent)
-        }))
+      // Descargar ÚNICAMENTE los slots ocupados anónimos (id, date, time, duration_minutes, status) para calcular el calendario
+      try {
+        const { data: apptData, error: apptError } = await supabase
+          .from('appointments')
+          .select('id, date, time, duration_minutes, status')
+          .eq('status', 'confirmed')
+          .order('date', { ascending: true })
 
-        if (cloudAppts.length > 0) {
-          // Cloud has canonical appointments (including the 9 real production ones)
-          appointments.value = cloudAppts.sort((a, b) => {
-            if (a.date !== b.date) return a.date.localeCompare(b.date)
-            return a.time.localeCompare(b.time)
-          })
+        if (!apptError && apptData) {
+          appointments.value = apptData.map((row: any) => ({
+            id: row.id,
+            bookingCode: '',
+            clientName: 'Reservado',
+            clientPhone: '',
+            clientEmail: '',
+            gestationWeek: '',
+            serviceTitle: '',
+            serviceDuration: Number(row.duration_minutes) || 45,
+            servicePrice: '',
+            date: row.date,
+            time: row.time,
+            notes: '',
+            status: 'confirmed',
+            createdAt: '',
+            cancelledReason: '',
+            reminderSent: false
+          }))
         }
-      }
-    } catch (e) {
-      // Fallback si la tabla aún no se ha creado
+      } catch (e) {}
     }
 
     isCloudSynced.value = true
@@ -969,6 +985,44 @@ export function useSiteData() {
     return { session: found, isExpired }
   }
 
+  async function fetchSessionByCode(code: string): Promise<{ session: ClientSession | null; isExpired: boolean }> {
+    if (!code || !supabase || !isSupabaseConfigured || !isCloudActive()) {
+      return { session: null, isExpired: false }
+    }
+    try {
+      const { data, error } = await supabase
+        .from('client_sessions')
+        .select('*')
+        .eq('code', code.trim())
+        .single()
+
+      if (error || !data) return { session: null, isExpired: false }
+
+      const session: ClientSession = {
+        id: data.id,
+        code: data.code,
+        clientName: data.client_name,
+        clientPhone: data.client_phone,
+        sessionDate: data.session_date,
+        serviceType: data.service_type,
+        expiryDays: data.expiry_days,
+        createdAt: data.created_at,
+        note: data.note || '',
+        photos: data.photos || [],
+        zipUrl: data.zip_url || ''
+      }
+
+      const created = new Date(session.createdAt).getTime()
+      const now = Date.now()
+      const maxAgeMs = (session.expiryDays || 120) * 24 * 60 * 60 * 1000
+      const isExpired = now - created > maxAgeMs
+
+      return { session, isExpired }
+    } catch (e) {
+      return { session: null, isExpired: false }
+    }
+  }
+
   function verifySessionPhone(session: ClientSession, inputDigits: string): boolean {
     const cleanRegistered = session.clientPhone.replace(/\D/g, '')
     const cleanInput = inputDigits.replace(/\D/g, '')
@@ -984,6 +1038,7 @@ export function useSiteData() {
     if (inputHash === adminPinHash.value || enteredPin.trim() === 'econane2026') {
       isAdminLoggedIn.value = true
       sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+      await syncAdminDataFromSupabase()
       return true
     }
     return false
@@ -992,13 +1047,20 @@ export function useSiteData() {
   function logoutAdmin() {
     isAdminLoggedIn.value = false
     sessionStorage.removeItem(STORAGE_KEY_AUTH)
+    sessions.value = []
+    salesTickets.value = []
+    try {
+      localStorage.removeItem(STORAGE_KEY_SESSIONS)
+      localStorage.removeItem(STORAGE_KEY_TICKETS)
+    } catch (e) {}
   }
 
-  function loginCollaborator(enteredPin: string): boolean {
+  async function loginCollaborator(enteredPin: string): Promise<boolean> {
     const clean = enteredPin.trim().toLowerCase()
     if (clean === 'agenda2026' || clean === 'foto2026' || clean === 'penelope2026' || clean === 'econane2026') {
       isCollaboratorLoggedIn.value = true
       sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
+      await syncAdminDataFromSupabase()
       return true
     }
     return false
@@ -1186,6 +1248,52 @@ export function useSiteData() {
       t.viewToken === cleanToken
     )
     return found || null
+  }
+
+  async function fetchTicketByToken(ticketNumber: string, token: string): Promise<SaleTicket | null> {
+    if (!ticketNumber || !token || !supabase || !isSupabaseConfigured || !isCloudActive()) return null
+    try {
+      const { data, error } = await supabase
+        .from('sales_tickets')
+        .select('*')
+        .eq('ticket_number', ticketNumber.trim().toUpperCase())
+        .eq('view_token', token.trim())
+        .single()
+
+      if (error || !data) return null
+
+      return {
+        id: data.id,
+        ticketNumber: data.ticket_number,
+        sequence: Number(data.sequence) || 1,
+        year: Number(data.year) || new Date().getFullYear(),
+        date: data.date,
+        time: data.time,
+        createdAt: data.created_at,
+        clientName: data.client_name,
+        clientEmail: data.client_email || '',
+        clientPhone: data.client_phone || '',
+        clientNif: data.client_nif || '',
+        clientAddress: data.client_address || '',
+        isNominative: Boolean(data.is_nominative),
+        items: data.items || [],
+        subtotal: Number(data.subtotal) || 0,
+        ivaRate: Number(data.iva_rate) || 21,
+        ivaAmount: Number(data.iva_amount) || 0,
+        discountAmount: Number(data.discount_amount) || 0,
+        discountNote: data.discount_note || '',
+        total: Number(data.total) || 0,
+        paymentMethod: data.payment_method || 'efectivo',
+        status: data.status || 'valido',
+        cancelledReason: data.cancelled_reason || '',
+        cancelledAt: data.cancelled_at || '',
+        notes: data.notes || '',
+        emailSent: Boolean(data.email_sent),
+        viewToken: data.view_token || ''
+      }
+    } catch (e) {
+      return null
+    }
   }
 
   async function cancelSaleTicket(ticketId: string, reason: string): Promise<boolean> {
@@ -1742,6 +1850,7 @@ export function useSiteData() {
     createSession,
     deleteSession,
     getSessionByCode,
+    fetchSessionByCode,
     verifySessionPhone,
     loginAdmin,
     logoutAdmin,
@@ -1756,9 +1865,11 @@ export function useSiteData() {
     sendTicketEmail,
     getWhatsAppTicketShareUrl,
     getTicketByToken,
+    fetchTicketByToken,
     exportTicketsToCSV,
     exportAppointmentsToCSV,
     syncFromSupabase,
+    syncAdminDataFromSupabase,
     formatExperienceWhatsAppLink,
     formatPackWhatsAppLink,
     getAvailableSlots,

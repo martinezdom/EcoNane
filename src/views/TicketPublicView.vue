@@ -15,19 +15,37 @@ import {
   Loader2
 } from '@lucide/vue'
 
+import type { SaleTicket } from '@/types'
+
 const route = useRoute()
 const router = useRouter()
-const { getTicketByToken, businessInfo, isCloudSynced, isCloudActive } = useSiteData()
+const { getTicketByToken, fetchTicketByToken, businessInfo, isCloudSynced, isCloudActive } = useSiteData()
 
 const ticketNumber = computed(() => (route.params.ticketNumber as string) || '')
 const token = computed(() => (route.query.token as string) || '')
 
-const ticket = computed(() => {
-  if (!ticketNumber.value || !token.value) return null
-  return getTicketByToken(ticketNumber.value, token.value)
+const ticket = ref<SaleTicket | null>(null)
+const isFetching = ref(false)
+
+async function loadTicket() {
+  if (!ticketNumber.value || !token.value) {
+    ticket.value = null
+    return
+  }
+  let found = getTicketByToken(ticketNumber.value, token.value)
+  if (!found && isCloudActive()) {
+    isFetching.value = true
+    found = await fetchTicketByToken(ticketNumber.value, token.value)
+    isFetching.value = false
+  }
+  ticket.value = found
+}
+
+onMounted(() => {
+  loadTicket()
 })
 
-const isLoading = computed(() => isCloudActive() && !isCloudSynced.value && !ticket.value)
+const isLoading = computed(() => (isCloudActive() && !isCloudSynced.value && !ticket.value) || isFetching.value)
 const isAuthorized = computed(() => Boolean(ticket.value))
 
 function handlePrint() {
