@@ -133,10 +133,10 @@
     "adminAccess": "Accés Equip"
   },
   "cookieBanner": {
-    "title": "Avís de Galetes i Analítica",
-    "description": "Utilitzem galetes analítiques opcionals per a conéixer de manera anònima quantes famílies ens visiten i millorar la web. Pots acceptar o continuar només amb les necessàries.",
-    "accept": "Acceptar analítica",
-    "reject": "Només necessàries",
-    "moreInfo": "Veure política"
+    "title": "GALETES",
+    "description": "utilitza galetes pròpies per a garantir una navegació segura i personalitzar el contingut segons les teues necessitats. També utilitzem galetes de tercers per a analitzar els teus hàbits de navegació en la web (per exemple, pàgines visitades).",
+    "moreInfo": "Més informació en la nostra Política de galetes.",
+    "accept": "Acceptar totes",
+    "reject": "Només necessàries"
   }
 }

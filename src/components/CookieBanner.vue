@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ShieldCheck } from '@lucide/vue'
+import { Cookie } from '@lucide/vue'
 import { useI18n } from '@/composables/useI18n'
 
 const { t } = useI18n()
@@ -84,20 +84,22 @@ function openPolicy() {
     >
       <div class="flex items-start gap-3">
         <div class="rounded-xl bg-brand-pink-light/30 p-2 text-brand-pink shrink-0">
-          <ShieldCheck class="h-5 w-5" />
+          <Cookie class="h-5 w-5" />
         </div>
         <div class="flex-1">
-          <h4 class="font-serif text-sm font-bold text-brand-brown-dark">
-            {{ t('cookieBanner.title', 'Aviso de Cookies y Analítica') }}
+          <h4 class="font-serif text-sm font-bold text-brand-brown-dark flex items-center gap-1.5">
+            {{ t('cookieBanner.title', 'COOKIES') }}
           </h4>
           <p class="mt-1.5 text-xs leading-relaxed text-brand-brown/85">
-            {{ t('cookieBanner.description', 'Utilizamos cookies analíticas opcionales para conocer de forma anónima cuántas familias nos visitan y mejorar la web.') }}
+            <strong class="font-bold text-brand-brown-dark">EcoNane</strong>
+            {{ ' ' }}
+            {{ t('cookieBanner.description', 'utiliza cookies propias para garantizar una navegación segura y personalizar el contenido según tus necesidades. También utilizamos cookies de terceros para analizar tus hábitos de navegación en la web (por ejemplo, páginas visitadas).') }}
             <button
               @click="openPolicy"
               type="button"
               class="text-brand-pink font-semibold underline hover:text-brand-brown ml-1 cursor-pointer"
             >
-              {{ t('cookieBanner.moreInfo', 'Ver política') }}
+              {{ t('cookieBanner.moreInfo', 'Más información en nuestra Política de cookies.') }}
             </button>
           </p>
 
@@ -107,7 +109,7 @@ function openPolicy() {
               type="button"
               class="btn-pink px-4 py-2 text-xs font-bold rounded-full cursor-pointer shadow-xs"
             >
-              {{ t('cookieBanner.accept', 'Aceptar analítica') }}
+              {{ t('cookieBanner.accept', 'Aceptar todas') }}
             </button>
             <button
               @click="rejectNonEssential"
