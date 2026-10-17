@@ -1,8 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import AdminLoginView from '@/views/AdminLoginView.vue'
-import AdminDashboardView from '@/views/AdminDashboardView.vue'
-import ClientSessionView from '@/views/ClientSessionView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,22 +12,22 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'admin',
-      component: AdminDashboardView
+      component: () => import('@/views/AdminDashboardView.vue')
     },
     {
       path: '/admin/login',
       name: 'admin-login',
-      component: AdminLoginView
+      component: () => import('@/views/AdminLoginView.vue')
     },
     {
       path: '/sesion/:code',
       name: 'client-session',
-      component: ClientSessionView
+      component: () => import('@/views/ClientSessionView.vue')
     },
     {
       path: '/descarga/:code',
       name: 'client-download',
-      component: ClientSessionView
+      component: () => import('@/views/ClientSessionView.vue')
     },
     {
       path: '/ticket/:ticketNumber',
