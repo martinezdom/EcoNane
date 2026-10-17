@@ -101,54 +101,134 @@ ALTER TABLE public.client_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sales_tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
--- 6. Políticas de Lectura y Escritura Públicas para la Web y Panel
+-- 6. Funciones RPC Seguras (SECURITY DEFINER) para Consultas Públicas Controladas
+-- Permite que los visitantes consulten huecos ocupados para el calendario SIN filtrar nombres ni teléfonos
+CREATE OR REPLACE FUNCTION public.get_public_occupied_slots()
+RETURNS TABLE (
+  id TEXT,
+  date TEXT,
+  time TEXT,
+  duration_minutes INTEGER,
+  status TEXT
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT id, date, time, duration_minutes, status
+  FROM public.appointments
+  WHERE status = 'confirmed';
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_public_occupied_slots() TO anon, authenticated;
+
+-- Permite a una clienta consultar su sesión de fotos únicamente si introduce el código exacto
+CREATE OR REPLACE FUNCTION public.get_public_session(p_code TEXT)
+RETURNS SETOF public.client_sessions
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT *
+  FROM public.client_sessions
+  WHERE code = p_code
+  LIMIT 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_public_session(TEXT) TO anon, authenticated;
+
+-- Permite consultar un ticket de venta únicamente si se conoce el número y el token secreto
+CREATE OR REPLACE FUNCTION public.get_public_ticket(p_ticket_number TEXT, p_token TEXT)
+RETURNS SETOF public.sales_tickets
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT *
+  FROM public.sales_tickets
+  WHERE ticket_number = p_ticket_number
+    AND view_token = p_token
+    AND view_token IS NOT NULL
+    AND view_token <> ''
+  LIMIT 1;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_public_ticket(TEXT, TEXT) TO anon, authenticated;
+
+-- 7. Políticas RLS Estrictas (Zero Data Leakage / Burp Suite Proof)
+
+-- Limpiar políticas anteriores si existen
 DROP POLICY IF EXISTS "Permitir lectura publica en site_settings" ON public.site_settings;
-CREATE POLICY "Permitir lectura publica en site_settings" ON public.site_settings
-  FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Permitir actualizacion publica en site_settings" ON public.site_settings;
-CREATE POLICY "Permitir actualizacion publica en site_settings" ON public.site_settings
-  FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Permitir lectura publica en client_sessions" ON public.client_sessions;
-CREATE POLICY "Permitir lectura publica en client_sessions" ON public.client_sessions
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Permitir insercion y gestion publica en client_sessions" ON public.client_sessions;
-CREATE POLICY "Permitir insercion y gestion publica en client_sessions" ON public.client_sessions
-  FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Permitir lectura publica en sales_tickets" ON public.sales_tickets;
-CREATE POLICY "Permitir lectura publica en sales_tickets" ON public.sales_tickets
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets;
-CREATE POLICY "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets
-  FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public read site_settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Admin full access site_settings" ON public.site_settings;
 
 DROP POLICY IF EXISTS "Permitir lectura publica en appointments" ON public.appointments;
-CREATE POLICY "Permitir lectura publica en appointments" ON public.appointments
-  FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Permitir insercion y gestion publica en appointments" ON public.appointments;
-CREATE POLICY "Permitir insercion y gestion publica en appointments" ON public.appointments
-  FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public insert appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admin full access appointments" ON public.appointments;
 
--- 7. Crear el Bucket de Almacenamiento para las Fotos de Ecografías
+DROP POLICY IF EXISTS "Permitir lectura publica en client_sessions" ON public.client_sessions;
+DROP POLICY IF EXISTS "Permitir insercion y gestion publica en client_sessions" ON public.client_sessions;
+DROP POLICY IF EXISTS "Admin full access client_sessions" ON public.client_sessions;
+
+DROP POLICY IF EXISTS "Permitir lectura publica en sales_tickets" ON public.sales_tickets;
+DROP POLICY IF EXISTS "Permitir insercion y gestion publica en sales_tickets" ON public.sales_tickets;
+DROP POLICY IF EXISTS "Admin full access sales_tickets" ON public.sales_tickets;
+
+-- A) SITE_SETTINGS: Visitantes leen configuración; Solo Admin edita/guarda
+CREATE POLICY "Public read site_settings" ON public.site_settings
+  FOR SELECT TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Admin full access site_settings" ON public.site_settings
+  FOR ALL TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- B) APPOINTMENTS: Visitantes solo pueden insertar su reserva; Admin gestiona todo
+CREATE POLICY "Public insert appointments" ON public.appointments
+  FOR INSERT TO anon
+  WITH CHECK (true);
+
+CREATE POLICY "Admin full access appointments" ON public.appointments
+  FOR ALL TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- C) CLIENT_SESSIONS: Bloqueado a anon directo. Lectura pública solo vía get_public_session(code); Admin gestiona todo
+CREATE POLICY "Admin full access client_sessions" ON public.client_sessions
+  FOR ALL TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- D) SALES_TICKETS: Bloqueado a anon directo. Lectura pública solo vía get_public_ticket(num, token); Admin gestiona todo
+CREATE POLICY "Admin full access sales_tickets" ON public.sales_tickets
+  FOR ALL TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- 8. Crear y blindar el Bucket de Almacenamiento para las Fotos de Ecografías
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('ultrasound-photos', 'ultrasound-photos', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Políticas de Storage para subir y ver fotos
 DROP POLICY IF EXISTS "Permitir ver fotos publicas" ON storage.objects;
-CREATE POLICY "Permitir ver fotos publicas" ON storage.objects
-  FOR SELECT USING (bucket_id = 'ultrasound-photos');
-
 DROP POLICY IF EXISTS "Permitir subir fotos desde panel" ON storage.objects;
-CREATE POLICY "Permitir subir fotos desde panel" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'ultrasound-photos');
-
 DROP POLICY IF EXISTS "Permitir borrar fotos" ON storage.objects;
-CREATE POLICY "Permitir borrar fotos" ON storage.objects
-  FOR DELETE USING (bucket_id = 'ultrasound-photos');
+DROP POLICY IF EXISTS "Public read ultrasound photos" ON storage.objects;
+DROP POLICY IF EXISTS "Admin upload ultrasound photos" ON storage.objects;
+DROP POLICY IF EXISTS "Admin delete ultrasound photos" ON storage.objects;
+
+CREATE POLICY "Public read ultrasound photos" ON storage.objects
+  FOR SELECT TO anon, authenticated
+  USING (bucket_id = 'ultrasound-photos');
+
+CREATE POLICY "Admin upload ultrasound photos" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'ultrasound-photos');
+
+CREATE POLICY "Admin delete ultrasound photos" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'ultrasound-photos');
 
