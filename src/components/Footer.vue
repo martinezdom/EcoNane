@@ -325,7 +325,7 @@ const benefits: Benefit[] = [
 
     <!-- Modal: Política de Cookies -->
     <div v-if="isCookiesOpen" class="modal-overlay" @click.self="isCookiesOpen = false">
-      <div class="modal-card text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+      <div class="modal-card !max-w-3xl text-brand-brown-dark flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
         <div class="border-brand-pink-light/30 flex items-center justify-between border-b pb-4">
           <h3 class="text-brand-brown-dark font-serif text-xl font-bold">{{ t('cookieModal.title', 'Política de Cookies y Analítica Web') }}</h3>
           <button
@@ -359,30 +359,30 @@ const benefits: Benefit[] = [
             <table class="w-full text-center border-collapse">
               <thead class="bg-brand-cream/80 text-brand-brown-dark font-bold border-b border-brand-pink-light/30">
                 <tr>
-                  <th class="p-2.5 text-center">{{ t('cookieModal.thName') }}</th>
-                  <th class="p-2.5 text-center">{{ t('cookieModal.thType') }}</th>
-                  <th class="p-2.5 text-center">{{ t('cookieModal.thPurpose') }}</th>
-                  <th class="p-2.5 text-center">{{ t('cookieModal.thExpiry') }}</th>
+                  <th class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.thName') }}</th>
+                  <th class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.thType') }}</th>
+                  <th class="p-3 text-center">{{ t('cookieModal.thPurpose') }}</th>
+                  <th class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.thExpiry') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-brand-pink-light/20">
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie1Name') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Type') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Purpose') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie1Expiry') }}</td>
+                  <td class="p-3 font-mono font-semibold text-center whitespace-nowrap">{{ t('cookieModal.cookie1Name') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie1Type') }}</td>
+                  <td class="p-3 text-center">{{ t('cookieModal.cookie1Purpose') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie1Expiry') }}</td>
                 </tr>
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie2Name') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Type') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Purpose') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie2Expiry') }}</td>
+                  <td class="p-3 font-mono font-semibold text-center whitespace-nowrap">{{ t('cookieModal.cookie2Name') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie2Type') }}</td>
+                  <td class="p-3 text-center">{{ t('cookieModal.cookie2Purpose') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie2Expiry') }}</td>
                 </tr>
                 <tr>
-                  <td class="p-2.5 font-mono font-semibold text-center">{{ t('cookieModal.cookie3Name') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Type') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Purpose') }}</td>
-                  <td class="p-2.5 text-center">{{ t('cookieModal.cookie3Expiry') }}</td>
+                  <td class="p-3 font-mono font-semibold text-center whitespace-nowrap">{{ t('cookieModal.cookie3Name') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie3Type') }}</td>
+                  <td class="p-3 text-center">{{ t('cookieModal.cookie3Purpose') }}</td>
+                  <td class="p-3 text-center whitespace-nowrap">{{ t('cookieModal.cookie3Expiry') }}</td>
                 </tr>
               </tbody>
             </table>
