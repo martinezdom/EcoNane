@@ -103,11 +103,12 @@ ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
 -- 6. Funciones RPC Seguras (SECURITY DEFINER) para Consultas Públicas Controladas
 -- Permite que los visitantes consulten huecos ocupados para el calendario SIN filtrar nombres ni teléfonos
+DROP FUNCTION IF EXISTS public.get_public_occupied_slots();
 CREATE OR REPLACE FUNCTION public.get_public_occupied_slots()
 RETURNS TABLE (
   id TEXT,
-  date TEXT,
-  time TEXT,
+  "date" TEXT,
+  "time" TEXT,
   duration_minutes INTEGER,
   status TEXT
 )
@@ -115,9 +116,9 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT id, date, time, duration_minutes, status
-  FROM public.appointments
-  WHERE status = 'confirmed';
+  SELECT a.id, a.date, a.time, a.duration_minutes, a.status
+  FROM public.appointments a
+  WHERE a.status = 'confirmed';
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_public_occupied_slots() TO anon, authenticated;
