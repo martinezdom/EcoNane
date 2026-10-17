@@ -37,7 +37,15 @@ function acceptAll() {
   const win = window as any
   if (typeof win.gtag === 'function') {
     win.gtag('consent', 'update', {
-      analytics_storage: 'granted'
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    })
+    win.gtag('event', 'page_view', {
+      page_title: document.title,
+      page_location: window.location.href,
+      page_path: window.location.pathname
     })
   }
   if (Array.isArray(win.dataLayer)) {
@@ -55,7 +63,10 @@ function rejectNonEssential() {
   const win = window as any
   if (typeof win.gtag === 'function') {
     win.gtag('consent', 'update', {
-      analytics_storage: 'denied'
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
     })
   }
 
