@@ -776,8 +776,14 @@ if (isCloudActive()) {
 if (supabase && isSupabaseConfigured && typeof window !== 'undefined') {
   supabase.auth.getSession().then(({ data }) => {
     if (data?.session) {
-      isAdminLoggedIn.value = true
-      sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+      const email = (data.session.user?.email || '').toLowerCase()
+      if (email.includes('agenda') || email.includes('colaborador') || email.includes('penelope')) {
+        isCollaboratorLoggedIn.value = true
+        sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
+      } else {
+        isAdminLoggedIn.value = true
+        sessionStorage.setItem(STORAGE_KEY_AUTH, 'true')
+      }
       syncAdminDataFromSupabase()
     }
   }).catch(() => {})
@@ -1104,20 +1110,57 @@ export function useSiteData() {
     await syncFromSupabase()
   }
 
-  async function loginCollaborator(enteredPin: string): Promise<boolean> {
-    const clean = enteredPin.trim().toLowerCase()
-    if (clean === 'agenda2026' || clean === 'foto2026' || clean === 'penelope2026' || clean === 'econane2026') {
-      isCollaboratorLoggedIn.value = true
-      sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
-      await syncAdminDataFromSupabase()
-      return true
+  async function loginCollaborator(enteredPasswordOrPin: string, enteredEmail = 'agenda@econane.es'): Promise<boolean> {
+    const cleanPassword = (enteredPasswordOrPin || '').trim()
+    const cleanEmail = (enteredEmail || 'agenda@econane.es').trim()
+
+    if (!cleanPassword) return false
+
+    // 1. En producción con Supabase activo: autenticación obligatoria en Supabase Auth
+    if (supabase && isSupabaseConfigured && isCloudActive()) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword
+        })
+        if (!error && data?.session) {
+          isCollaboratorLoggedIn.value = true
+          sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
+          await syncAdminDataFromSupabase()
+          return true
+        }
+        return false
+      } catch (e) {
+        console.warn('Supabase Auth error:', e)
+        return false
+      }
     }
+
+    // 2. Solo para desarrollo local offline sin Supabase
+    if (isDevEnvironment && !isCloudActive() && !isSupabaseConfigured) {
+      if (cleanPassword === 'Agenda-2026.') {
+        isCollaboratorLoggedIn.value = true
+        sessionStorage.setItem(STORAGE_KEY_COLLAB_AUTH, 'true')
+        return true
+      }
+    }
+
     return false
   }
 
-  function logoutCollaborator() {
+  async function logoutCollaborator() {
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut()
+      } catch (e) {}
+    }
     isCollaboratorLoggedIn.value = false
     sessionStorage.removeItem(STORAGE_KEY_COLLAB_AUTH)
+    appointments.value = []
+    try {
+      localStorage.removeItem(STORAGE_KEY_APPOINTMENTS)
+    } catch (e) {}
+    await syncFromSupabase()
   }
 
   async function setAdminPin(newPin: string) {

@@ -39,14 +39,17 @@ const {
 // Auth State
 const enteredPin = ref('')
 const pinError = ref('')
+const isLoading = ref(false)
 
-function handleLogin() {
+async function handleLogin() {
   pinError.value = ''
   if (!enteredPin.value.trim()) {
     pinError.value = 'Introduce la clave de acceso.'
     return
   }
-  const success = loginCollaborator(enteredPin.value)
+  isLoading.value = true
+  const success = await loginCollaborator(enteredPin.value)
+  isLoading.value = false
   if (!success) {
     pinError.value = 'Clave incorrecta. Solicítala a la dirección de EcoNane.'
   } else {
@@ -369,8 +372,9 @@ const settlementSummary = computed(() => {
             </p>
           </div>
 
-          <button type="submit" class="btn-primary w-full py-3 text-sm font-bold shadow-md">
-            Entrar a la Agenda
+          <button type="submit" :disabled="isLoading" class="btn-primary w-full py-3 text-sm font-bold shadow-md disabled:opacity-50">
+            <span v-if="isLoading">Verificando acceso...</span>
+            <span v-else>Entrar a la Agenda</span>
           </button>
         </form>
 
