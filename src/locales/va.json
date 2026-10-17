@@ -1,0 +1,134 @@
+{
+  "nav": {
+    "home": "Inici",
+    "about": "Sobre Nosaltres",
+    "experiences": "Ecografies",
+    "gallery": "Galeria",
+    "faq": "Preguntes Freqüents",
+    "contact": "Contacte",
+    "bookAppointment": "Demana la teua cita"
+  },
+  "hero": {
+    "badge": "Ecografies Emocionals",
+    "titlePrefix": "Viu la màgia de",
+    "titleHighlight": "veure el teu bebé",
+    "titleSuffix": "3D, 4D i 5D",
+    "description": "Imatges d'alta definició per a gaudir dels primers moments de connexió amb el teu bebé en un ambient càlid i inoblidable.",
+    "ctaBook": "Demana la teua cita",
+    "ctaExperiences": "Veure Experiències",
+    "badgeMemories": "Records",
+    "badgeForever": "que duren per sempre"
+  },
+  "promotion": {
+    "badge": "OFERTA D'OBERTURA",
+    "title": "Gran Promoció d'Obertura a l'Octubre!",
+    "description": "Celebra amb nosaltres la nostra obertura durant tot el mes d'octubre. Gaudeix d'un 20% de descompte en la teua primera ecografia 4D/5D per a conéixer el teu bebé.",
+    "btn": "Reservar promoció",
+    "whatsappText": "Hola, m'agradaria reservar la meua ecografia amb el 20% de descompte d'obertura."
+  },
+  "features": {
+    "tag": "Per què triar-nos?",
+    "title": "Una experiència pensada amb el cor",
+    "subtitle": "Cada detall a EcoNane està dissenyat perquè visques un moment màgic, tranquil i ple d'emoció al costat dels teus éssers estimats.",
+    "items": {
+      "repetition": {
+        "title": "Garantia de Repetició",
+        "description": "El teu bebé s'amaga o no es deixa veure? Repetim la sessió sense cap cost addicional perquè te'n vages amb el millor record."
+      },
+      "vr": {
+        "title": "Ulleres de Realitat Virtual VR",
+        "description": "Pioners a la Marina Baixa: submergeix-te en una experiència immersiva única sentint el teu bebé més a prop que mai."
+      },
+      "companions": {
+        "title": "Acompanyants Il·limitats",
+        "description": "Sala espaiosa i acollidora perquè compartisques esta emoció amb la teua parella, avis, tiets, germans o qui tu tries."
+      },
+      "digital": {
+        "title": "Fotos i Vídeos a l'Instant",
+        "description": "Accés a la teua volta digital privada per a descarregar totes les fotos i vídeos de la teua sessió en alta resolució des del mòbil."
+      }
+    }
+  },
+  "experiences": {
+    "tag": "Les Nostres Experiències",
+    "title": "Viu cada batec, guarda cada emoció",
+    "subtitle": "Sessions d'ecografies 4D i 5D a la Vila Joiosa amb l'última tecnologia i un entorn pensat per a tu i la teua família.",
+    "collabBadge": "Col·laboració Especial",
+    "collabTitle": "Packs Ecografia + Record Fotogràfic",
+    "collabSubtitle": "En exclusiva amb Penélope Photograph. L'emoció de veure el teu bebé en directe combinada amb una sessió fotogràfica professional de premamà o família.",
+    "tabEcos": "Ecografies 4D/5D",
+    "tabPacks": "Packs Ecografies",
+    "tabCollab": "Packs Eco + Fotos",
+    "tabCollabBadge": "Novetat",
+    "packsSubtitle": "Acompanya cada etapa del teu embaràs amb sessions de seguiment i preu especial.",
+    "bookPack": "Reservar este pack",
+    "guaranteeTag": "Garantia EcoNane",
+    "guaranteeTitle": "Inclou en totes les nostres sessions",
+    "guaranteeSubtitle": "Volem que la teua experiència siga inoblidable des del primer minut.",
+    "guaranteeList": [
+      "Espai càlid i acollidor",
+      "Acompanyants inclosos",
+      "Fotos i vídeos digitals",
+      "Record del batec",
+      "Atenció personalitzada"
+    ]
+  },
+  "gallery": {
+    "tag": "Galeria de Moments",
+    "title": "L'emoció que se sent",
+    "subtitle": "Somriures, badalls i mirades que enamoren des del primer instant a la nostra sala de la Vila Joiosa."
+  },
+  "about": {
+    "tag": "La Nostra Essència",
+    "title": "T'acompanyem en el moment més bonic de la teua vida",
+    "p1": "A EcoNane no realitzem proves mèdiques diagnòstiques: creem moments de connexió pura i emocionant entre tu, el teu bebé i la teua família.",
+    "p2": "Amb la millor tecnologia 5D i unes ulleres de realitat virtual pioneres a la zona, cuidem cada segon perquè guardes al cor el record més dolç del teu embaràs."
+  },
+  "reviews": {
+    "tag": "Opinions Reals",
+    "title": "Famílies felices a EcoNane",
+    "subtitle": "La satisfacció i l'afecte de les mares i pares que ja han viscut l'emoció de veure el seu bebé amb nosaltres.",
+    "googleRating": "5.0 a Google",
+    "googleVerified": "Ressenya verificada a Google",
+    "googleBadge": "100% valoracions de 5 estrelles",
+    "viewOnGoogle": "Veure opinions a Google",
+    "leaveReview": "Escriure una ressenya"
+  },
+  "contact": {
+    "tag": "On Som i Cites",
+    "title": "Demana la teua cita o vine a conéixer-nos",
+    "subtitle": "Reserva online en 2 minuts amb confirmació instantània o escriu-nos directament per WhatsApp si tens qualsevol dubte.",
+    "locationTitle": "Ubicació",
+    "address": "Carrer Colón, 114, La Vila Joiosa (Alacant)",
+    "parkingTitle": "Fàcil Accés i Aparcament",
+    "parkingDesc": "Aparcament còmode als voltants. A només 10 minuts de Benidorm, Finestrat i el Campello per la N-332 i AP-7.",
+    "hoursTitle": "Horari d'Atenció",
+    "hoursWeekdays": "Dilluns a Dissabte: 9:45 - 20:30",
+    "hoursSunday": "Diumenges: Tancat",
+    "phone": "+34 644 18 98 56",
+    "email": "info@econane.es",
+    "whatsappBtn": "Escriu-nos per WhatsApp",
+    "viewMap": "Com arribar a Google Maps"
+  },
+  "faq": {
+    "tag": "Preguntes Freqüents",
+    "title": "Resolem tots els teus dubtes",
+    "subtitle": "Tot el que necessites saber abans de la teua sessió d'ecografia emocional a EcoNane.",
+    "q1": "En quina setmana d'embaràs és millor fer l'ecografia 5D?",
+    "a1": "Es pot fer a partir de la setmana 12 per a conéixer el sexe o escoltar batecs, però les millors setmanes per a apreciar la carona i trets amb gran realisme solen ser entre la 24 i la 30.",
+    "q2": "Què passa si el meu bebé no es deixa veure el dia de la cita?",
+    "a2": "No et preocupes en absolut! A EcoNane disposem de Garantia de Repetició: si el bebé està d'esquena o tapant-se la carona, pausem o reprogramem la sessió sense cost perquè t'emportes les millors imatges.",
+    "q3": "Poden vindre familiars o xiquets amb mi a la sessió?",
+    "a3": "I tant! Les nostres instal·lacions estan adaptades amb pantalla gegant i sofàs còmodes perquè vingues acompanyada de tota la família.",
+    "q4": "Com funcionen els packs combinats d'ecografia i fotografia?",
+    "a4": "En col·laboració amb Penélope Photograph, fem l'ecografia i la sessió de fotos el mateix dia (generalment els divendres). Pagues còmodament un únic import al centre i Penélope t'entrega les fotos digitals professionals."
+  },
+  "footer": {
+    "rights": "Tots els drets reservats.",
+    "legal": "Avís Legal",
+    "privacy": "Política de Privacitat",
+    "cookies": "Política de Cookies",
+    "clientAccess": "Volta de Fotos (Clientes)",
+    "adminAccess": "Accés Equip"
+  }
+}

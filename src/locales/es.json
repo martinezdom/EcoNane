@@ -19,6 +19,13 @@
     "badgeMemories": "Recuerdos",
     "badgeForever": "que duran para siempre"
   },
+  "promotion": {
+    "badge": "OFERTA DE APERTURA",
+    "title": "¡Gran Promoción de Apertura en Octubre!",
+    "description": "Celebra con nosotros nuestra apertura durante todo el mes de octubre. Disfruta de un 20% de descuento en tu primera ecografía 4D/5D para conocer a tu bebé.",
+    "btn": "Reservar promoción",
+    "whatsappText": "Hola, me gustaría reservar mi ecografía con el 20% de descuento de apertura."
+  },
   "features": {
     "tag": "¿Por qué elegirnos?",
     "title": "Una experiencia pensada con el corazón",

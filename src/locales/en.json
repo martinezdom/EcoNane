@@ -19,6 +19,13 @@
     "badgeMemories": "Memories",
     "badgeForever": "that last forever"
   },
+  "promotion": {
+    "badge": "OPENING SPECIAL OFFER",
+    "title": "Grand Opening Promotion in October!",
+    "description": "Celebrate our grand opening with us throughout October. Enjoy a 20% discount on your first 4D/5D ultrasound session to meet your baby.",
+    "btn": "Book Promotion",
+    "whatsappText": "Hello, I would like to book my ultrasound with the 20% opening discount."
+  },
   "features": {
     "tag": "Why Choose EcoNane?",
     "title": "An experience designed from the heart",

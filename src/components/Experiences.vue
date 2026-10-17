@@ -5,15 +5,20 @@ import { useSiteData } from '@/composables/useSiteData'
 import { useI18n } from '@/composables/useI18n'
 
 const { experiences, packs, collaboratorPacks } = useSiteData()
-const { t } = useI18n()
+const { t, tArray } = useI18n()
 
-const generalIncludes = [
-  'Espacio cálido y acogedor',
-  'Acompañantes incluidos',
-  'Fotos y vídeos digitales',
-  'Recuerdo del latido',
-  'Atención personalizada'
-]
+const generalIncludes = computed(() => {
+  const list = tArray('experiences.guaranteeList')
+  return list.length > 0
+    ? list
+    : [
+        'Espacio cálido y acogedor',
+        'Acompañantes incluidos',
+        'Fotos y vídeos digitales',
+        'Recuerdo del latido',
+        'Atención personalizada'
+      ]
+})
 
 // Filtrar solo las experiencias activas
 const activeExperiences = computed(() => {

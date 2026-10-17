@@ -36,9 +36,14 @@ function navigateToSection(href: string) {
   }
 }
 
-function toggleLanguage() {
-  const next = currentLanguage.value === 'es' ? 'en' : 'es'
-  setLanguage(next)
+function cycleLanguage() {
+  if (currentLanguage.value === 'es') {
+    setLanguage('va')
+  } else if (currentLanguage.value === 'va') {
+    setLanguage('en')
+  } else {
+    setLanguage('es')
+  }
 }
 </script>
 
@@ -87,18 +92,39 @@ function toggleLanguage() {
             </a>
           </div>
 
-          <!-- Language Switcher Pill -->
-          <button
-            @click="toggleLanguage"
-            type="button"
-            class="inline-flex items-center gap-1.5 rounded-full border border-brand-pink-light/60 bg-white/70 px-3 py-1.5 text-xs font-bold text-brand-brown-dark transition-all hover:bg-brand-pink-light/30 hover:border-brand-pink cursor-pointer"
-            :title="currentLanguage === 'es' ? 'Switch to English' : 'Cambiar a Español'"
+          <!-- Language Switcher Pill (ES | VAL | EN) -->
+          <div
+            class="inline-flex items-center gap-0.5 rounded-full border border-brand-pink-light/60 bg-white/80 p-1 text-xs font-bold text-brand-brown-dark shadow-2xs"
           >
-            <Globe class="h-3.5 w-3.5 text-brand-pink" />
-            <span :class="currentLanguage === 'es' ? 'text-brand-brown font-extrabold' : 'text-gray-400'">ES</span>
-            <span class="text-gray-300 text-[10px]">|</span>
-            <span :class="currentLanguage === 'en' ? 'text-brand-brown font-extrabold' : 'text-gray-400'">EN</span>
-          </button>
+            <Globe class="mx-1 h-3.5 w-3.5 text-brand-pink shrink-0" />
+            <button
+              @click="setLanguage('es')"
+              type="button"
+              class="rounded-full px-2 py-0.5 transition-all cursor-pointer"
+              :class="currentLanguage === 'es' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70 hover:text-brand-brown'"
+              title="Español"
+            >
+              ES
+            </button>
+            <button
+              @click="setLanguage('va')"
+              type="button"
+              class="rounded-full px-2 py-0.5 transition-all cursor-pointer"
+              :class="currentLanguage === 'va' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70 hover:text-brand-brown'"
+              title="Valencià"
+            >
+              VAL
+            </button>
+            <button
+              @click="setLanguage('en')"
+              type="button"
+              class="rounded-full px-2 py-0.5 transition-all cursor-pointer"
+              :class="currentLanguage === 'en' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70 hover:text-brand-brown'"
+              title="English"
+            >
+              EN
+            </button>
+          </div>
 
           <!-- Book Appointment Button -->
           <a
@@ -113,12 +139,13 @@ function toggleLanguage() {
         <!-- Mobile Menu & Lang Toggle -->
         <div class="flex items-center gap-2 lg:hidden">
           <button
-            @click="toggleLanguage"
+            @click="cycleLanguage"
             type="button"
-            class="inline-flex items-center gap-1 rounded-full border border-brand-pink-light/50 bg-white/70 px-2.5 py-1 text-xs font-bold text-brand-brown-dark"
+            class="inline-flex items-center gap-1 rounded-full border border-brand-pink-light/50 bg-white/70 px-2.5 py-1 text-xs font-bold text-brand-brown-dark cursor-pointer"
+            :title="currentLanguage === 'es' ? 'Canviar a Valencià' : currentLanguage === 'va' ? 'Switch to English' : 'Cambiar a Español'"
           >
             <Globe class="h-3 w-3 text-brand-pink" />
-            <span>{{ currentLanguage.toUpperCase() }}</span>
+            <span>{{ currentLanguage === 'va' ? 'VAL' : currentLanguage.toUpperCase() }}</span>
           </button>
 
           <button
@@ -163,7 +190,41 @@ function toggleLanguage() {
         >
           {{ item.name }}
         </a>
-        <div class="border-brand-pink-light/20 border-t pt-4">
+
+        <!-- Mobile Language Selector in Menu -->
+        <div class="flex items-center justify-between border-brand-pink-light/20 border-t pt-3 pb-1">
+          <span class="text-xs font-semibold text-brand-brown/80 inline-flex items-center gap-1.5">
+            <Globe class="h-3.5 w-3.5 text-brand-pink" /> Idioma
+          </span>
+          <div class="inline-flex items-center gap-0.5 rounded-full border border-brand-pink-light/60 bg-white/90 p-0.5 text-xs font-bold">
+            <button
+              @click="setLanguage('es')"
+              type="button"
+              class="rounded-full px-2.5 py-1 transition-all cursor-pointer"
+              :class="currentLanguage === 'es' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70'"
+            >
+              ES
+            </button>
+            <button
+              @click="setLanguage('va')"
+              type="button"
+              class="rounded-full px-2.5 py-1 transition-all cursor-pointer"
+              :class="currentLanguage === 'va' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70'"
+            >
+              VAL
+            </button>
+            <button
+              @click="setLanguage('en')"
+              type="button"
+              class="rounded-full px-2.5 py-1 transition-all cursor-pointer"
+              :class="currentLanguage === 'en' ? 'bg-brand-pink text-white font-extrabold shadow-xs' : 'text-brand-brown/70'"
+            >
+              EN
+            </button>
+          </div>
+        </div>
+
+        <div class="border-brand-pink-light/20 border-t pt-3">
           <a
             href="#contacto"
             @click.prevent="navigateToSection('#contacto')"

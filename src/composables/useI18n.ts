@@ -1,12 +1,14 @@
 import { ref, computed } from 'vue'
 import es from '@/locales/es.json'
 import en from '@/locales/en.json'
+import va from '@/locales/va.json'
 
-export type SupportedLanguage = 'es' | 'en'
+export type SupportedLanguage = 'es' | 'en' | 'va'
 
 const messages: Record<SupportedLanguage, Record<string, any>> = {
   es,
-  en
+  en,
+  va
 }
 
 const savedLang = (typeof localStorage !== 'undefined'
@@ -14,12 +16,17 @@ const savedLang = (typeof localStorage !== 'undefined'
   : null) as SupportedLanguage | null
 
 const currentLanguage = ref<SupportedLanguage>(
-  savedLang === 'en' || savedLang === 'es' ? savedLang : 'es'
+  savedLang === 'en' || savedLang === 'es' || savedLang === 'va' ? savedLang : 'es'
 )
+
+function getHtmlLangAttr(lang: SupportedLanguage): string {
+  if (lang === 'va') return 'ca-ES'
+  return lang
+}
 
 // Sincronizar atributo lang del <html>
 if (typeof document !== 'undefined') {
-  document.documentElement.lang = currentLanguage.value
+  document.documentElement.lang = getHtmlLangAttr(currentLanguage.value)
 }
 
 export function useI18n() {
@@ -29,7 +36,7 @@ export function useI18n() {
       localStorage.setItem('econane_lang', lang)
     }
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = lang
+      document.documentElement.lang = getHtmlLangAttr(lang)
     }
   }
 
@@ -84,6 +91,7 @@ export function useI18n() {
 
   const isSpanish = computed(() => currentLanguage.value === 'es')
   const isEnglish = computed(() => currentLanguage.value === 'en')
+  const isValencian = computed(() => currentLanguage.value === 'va')
 
   return {
     currentLanguage,
@@ -91,6 +99,7 @@ export function useI18n() {
     t,
     tArray,
     isSpanish,
-    isEnglish
+    isEnglish,
+    isValencian
   }
 }
